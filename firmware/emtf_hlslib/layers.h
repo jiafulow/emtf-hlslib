@@ -5,6 +5,7 @@
 #include "common.h"
 #include "traits.h"
 #include "layer_constants.h"
+#include "pattern_bank.h"
 #include "nnet_weights.h"
 
 namespace emtf {
@@ -14,7 +15,8 @@ namespace emtf {
 
 struct model_config {
   static const unsigned int n_in = num_emtf_chambers * num_emtf_segments;
-  static const unsigned int n_out = num_emtf_tracks * num_emtf_features;
+  static const unsigned int n_out_per_trk = (num_emtf_features + num_emtf_sites + 2);
+  static const unsigned int n_out = num_emtf_tracks * n_out_per_trk;
 
   // Set target clock freq to 4 times the input freq (= 4 x 40MHz)
   // Consume 1 input every input clock cycle, or every 4 target clock cycle
@@ -89,18 +91,19 @@ struct trkbuilding_config {
   static const int target_lat = 9;
 };
 
-struct nnet_config {
+struct duperemoval_config {
   static const unsigned int n_in = trkbuilding_config::n_out;
   static const unsigned int n_out = n_in;
   static const int layer_target_ii = model_config::target_ii;
   static const int target_ii = 1;
-  static const int target_lat = 40;
 };
 
-struct duperemoval_config {
-  static const unsigned int n_in = nnet_config::n_out;
+struct nnet_config {
+  static const unsigned int n_in = duperemoval_config::n_out;
   static const unsigned int n_out = n_in;
-  static const int target_ii = model_config::target_ii;
+  static const int layer_target_ii = model_config::target_ii;
+  static const int target_ii = 1;
+  static const int target_lat = 40;
 };
 
 // _____________________________________________________________________________
@@ -368,19 +371,19 @@ template <typename Category>
 struct select_nnet_weight_type {};
 
 template <> struct select_nnet_weight_type<m_nnet_0_layer_0_tag> { typedef ap_fixed<11,1> type; };
-template <> struct select_nnet_weight_type<m_nnet_0_layer_1_tag> { typedef ap_fixed<11,4> type; };
-template <> struct select_nnet_weight_type<m_nnet_0_layer_2_tag> { typedef ap_fixed<11,4> type; };
-template <> struct select_nnet_weight_type<m_nnet_0_layer_3_tag> { typedef ap_fixed<11,3> type; };
-template <> struct select_nnet_weight_type<m_nnet_0_layer_4_tag> { typedef ap_fixed<11,3> type; };
+template <> struct select_nnet_weight_type<m_nnet_0_layer_1_tag> { typedef ap_fixed<10,4> type; };
+template <> struct select_nnet_weight_type<m_nnet_0_layer_2_tag> { typedef ap_fixed<10,4> type; };
+template <> struct select_nnet_weight_type<m_nnet_0_layer_3_tag> { typedef ap_fixed<10,4> type; };
+template <> struct select_nnet_weight_type<m_nnet_0_layer_4_tag> { typedef ap_fixed<12,3> type; };
 
 template <typename Category>
 struct select_nnet_preactivation_type {};
 
-template <> struct select_nnet_preactivation_type<m_nnet_0_layer_0_tag> { typedef ap_fixed<14,4> type; };
-template <> struct select_nnet_preactivation_type<m_nnet_0_layer_1_tag> { typedef ap_fixed<14,4> type; };
-template <> struct select_nnet_preactivation_type<m_nnet_0_layer_2_tag> { typedef ap_fixed<14,4> type; };
-template <> struct select_nnet_preactivation_type<m_nnet_0_layer_3_tag> { typedef ap_fixed<14,4> type; };
-template <> struct select_nnet_preactivation_type<m_nnet_0_layer_4_tag> { typedef ap_fixed<14,4> type; };
+template <> struct select_nnet_preactivation_type<m_nnet_0_layer_0_tag> { typedef ap_fixed<12,3> type; };
+template <> struct select_nnet_preactivation_type<m_nnet_0_layer_1_tag> { typedef ap_fixed<12,3> type; };
+template <> struct select_nnet_preactivation_type<m_nnet_0_layer_2_tag> { typedef ap_fixed<12,3> type; };
+template <> struct select_nnet_preactivation_type<m_nnet_0_layer_3_tag> { typedef ap_fixed<12,3> type; };
+template <> struct select_nnet_preactivation_type<m_nnet_0_layer_4_tag> { typedef ap_fixed<12,3> type; };
 
 template <typename Category>
 struct select_nnet_activation_type {};
@@ -806,15 +809,6 @@ void init_2d_table_op(T* arr, U op) {
     for (unsigned j = 0; j < N; j++) {
       arr[(i * N) + j] = op(i, j);
     }
-  }
-}
-
-// Helper function to init a lookup table while casting to ap_fixed<AP_W, AP_I>
-template <unsigned int N, int AP_W, int AP_I, typename U>
-void init_nnet_weights_op(ap_fixed<AP_W, AP_I>* arr, U op) {
-  for (unsigned i = 0; i < N; i++) {
-    ap_int<AP_W> w = op(i);
-    arr[i].range() = w.range();
   }
 }
 

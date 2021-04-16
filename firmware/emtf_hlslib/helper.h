@@ -139,6 +139,12 @@
     for (unsigned i = 0; i < trk_valid_t::width; i++) { \
       std::cout << trk_valid_rm[i] << ", "; \
     } \
+    std::cout << "]" << std::endl; \
+    std::cout << "Printing 'trk_invpt' all elements:" << std::endl; \
+    std::cout << "trk_invpt: ["; \
+    for (unsigned i = 0; i < num_emtf_tracks; i++) { \
+      std::cout << trk_invpt[i] << ", "; \
+    } \
     std::cout << "]" << std::endl;
 #else
 #define PRINT_TOP_FN_ARRAYS_OTHER

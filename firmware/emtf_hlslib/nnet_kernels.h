@@ -1,71 +1,46 @@
 #ifndef __EMTF_HLSLIB_NNET_KERNELS_H__
 #define __EMTF_HLSLIB_NNET_KERNELS_H__
 
+#include <cmath>  // provides std::tanh, std::pow, std::round
+
 namespace emtf {
 
 namespace details {
 
-// Piecewise-linear tanh-like activation function
-// This version is designed for ap_fixed<14,1> output
-template <int W, int I>
-dio_hard_tanh_t hard_tanh(const ap_fixed<W,I>& in0) {
+template <unsigned int N, typename T_IN, typename T_OUT>
+void init_nnet_weights_op(const T_IN w[N], T_OUT table[N]) {
+  static_assert(is_same<T_IN, int>::value, "T_IN type check failed");
+  static_assert(is_ap_fixed_type<T_OUT>::value, "T_OUT type check failed");
+  constexpr int W_OUT = T_OUT::width;
 
-#pragma HLS PIPELINE II=nnet_config::target_ii
-
-//#pragma HLS INTERFACE ap_ctrl_none port=return
-
-//#pragma HLS INLINE
-
-  constexpr int W_OUT = dio_hard_tanh_t::width;
-  constexpr int I_OUT = dio_hard_tanh_t::iwidth;
-  constexpr int F = W - I;
-  constexpr int F_OUT = W_OUT - I_OUT;
-
-  // Use unsigned value
-  const ap_uint<1> sign0 = in0[W-1];
-  const ap_ufixed<W,I> inabs = (sign0 == 0) ? ap_ufixed<W,I>(in0) : ap_ufixed<W,I>(-in0);
-
-  // Threshold terms
-  const ap_ufixed<1,0> b0 = 0.5;
-  const ap_ufixed<1,1> b1 = 1.0;
-  const ap_ufixed<2,1> b2 = 1.5;
-  const ap_ufixed<2,2> b3 = 2.0;
-  const ap_ufixed<3,2> b4 = 2.5;
-
-  // Subtract-and-divide terms
-  // The number of bits needs to be extended before right shift
-  const ap_ufixed<W,I-1> c0 = (inabs >= b0) ? ap_ufixed<W,I-1>(ap_ufixed<W+1,I>(inabs - b0) >> 1) : ap_ufixed<W,I-1>(0);
-  const ap_ufixed<W,I-2> c1 = (inabs >= b1) ? ap_ufixed<W,I-2>(ap_ufixed<W+2,I>(inabs - b1) >> 2) : ap_ufixed<W,I-2>(0);
-  const ap_ufixed<W,I-3> c2 = (inabs >= b2) ? ap_ufixed<W,I-3>(ap_ufixed<W+3,I>(inabs - b2) >> 3) : ap_ufixed<W,I-3>(0);
-  const ap_ufixed<W,I-4> c3 = (inabs >= b3) ? ap_ufixed<W,I-4>(ap_ufixed<W+4,I>(inabs - b3) >> 4) : ap_ufixed<W,I-4>(0);
-  const ap_ufixed<W,I-5> c4 = (inabs >= b4) ? ap_ufixed<W,I-5>(ap_ufixed<W+5,I>(inabs - b4) >> 5) : ap_ufixed<W,I-5>(0);
-
-  // Compute
-  ap_fixed<W+6,I+1> out_tmp = inabs;  // signed
-  out_tmp -= c0;
-  out_tmp -= c1;
-  out_tmp -= c2;
-  out_tmp -= c3;
-  out_tmp -= c4;
-  emtf_assert(out_tmp >= 0);
-  emtf_assert(out_tmp < (1<<(I-1)));
-
-  // Round
-  emtf_assert((F+5) >= (F_OUT+1));
-  ap_ufixed<1,-F_OUT> half_val = 0;
-  half_val[0] = 1;  // 0.5 * LSB
-  out_tmp += half_val;
-
-  // Saturate
-  ap_fixed<W_OUT,I_OUT,AP_TRN,AP_SAT> out_tmp_sat = out_tmp;
-
-  // Remember the sign
-  ap_fixed<W_OUT,I_OUT> out = (sign0 == 0) ? ap_fixed<W_OUT,I_OUT>(out_tmp_sat) : ap_fixed<W_OUT,I_OUT>(-out_tmp_sat);
-  emtf_assert(in0 == 0 or (in0 != 0 && out != 0));
-  return out;
+  for (unsigned i = 0; i < N; i++) {
+    // Cast from integer to ap_int
+    ap_int<W_OUT> w_i = w[i];
+    // Reinterpret an integer w_i as fixed point T_OUT
+    table[i].range() = w_i.range();
+  }
 }
 
-// Returns activation(X)
+template <unsigned int N, typename T_IN, typename T_OUT>
+void init_tanh_table_op(T_OUT table[N]) {
+  static_assert(is_ap_fixed_type<T_IN>::value, "T_IN type check failed");
+  static_assert(is_ap_fixed_type<T_OUT>::value, "T_OUT type check failed");
+  constexpr int F_OUT = find_ap_fixed_fwidth<T_OUT>::value;
+
+  T_IN x = 0;
+
+  for (unsigned i = 0; i < N; i++) {
+    // Reinterpret an integer i as fixed point T_IN
+    x.range() = i;
+    // Cast from fixed point T_IN to float32, call tanh(), cast to fixed point T_OUT
+    float x_f32 = static_cast<float>(x);
+    float y_f32 = std::tanh(x_f32);
+    float q_f32 = std::pow(2.f, -F_OUT);
+    table[i] = static_cast<T_OUT>(std::round(y_f32 / q_f32) * q_f32);
+  }
+}
+
+// Returns activation(X) using tanh
 template <unsigned int N, typename T_IN, typename T_OUT>
 void vector_activate(const T_IN x[N], T_OUT out[N]) {
   static_assert(is_ap_fixed_type<T_IN>::value, "T_IN type check failed");
@@ -77,22 +52,37 @@ void vector_activate(const T_IN x[N], T_OUT out[N]) {
 
 #pragma HLS INLINE
 
-  emtf_assert((is_same<T_OUT, dio_hard_tanh_t>::value));
+  const unsigned int N_TABLE = (1u << T_IN::width);
+
+#ifndef __SYNTHESIS__
+  static bool initialized = false;
+  static T_OUT tanh_table[N_TABLE];
+#else
+  bool initialized = false;
+  T_OUT tanh_table[N_TABLE];
+#endif
+
+  if (!initialized) {
+    init_tanh_table_op<N_TABLE, T_IN>(tanh_table);
+    initialized = true;
+  }
+
+  ap_uint<T_IN::width> index = 0;
 
   LOOP_ACT: for (unsigned i = 0; i < N; i++) {
 
 #pragma HLS UNROLL
 
     const T_IN x_i = x[i];
-    out[i] = hard_tanh(x_i);
+    const ap_uint<T_IN::width> index = x_i.range();
+    out[i] = tanh_table[index];
   }
 }
 
-// Returns normalization(X), which is the same as doing X * Y
-template <unsigned int N, typename T_IN0, typename T_IN1, typename T_OUT>
-void vector_normalize(const T_IN0 x[N], const T_IN1 y[N], T_OUT out[N]) {
-  static_assert(is_ap_fixed_type<T_IN0>::value, "T_IN0 type check failed");
-  static_assert(is_ap_int_type<T_IN1>::value, "T_IN1 type check failed");  // ap_int instead of ap_fixed
+// Returns static_cast<T_OUT>(x)
+template <unsigned int N, typename T_IN, typename T_OUT>
+void vector_cast(const T_IN x[N], T_OUT out[N]) {
+  static_assert(is_ap_int_type<T_IN>::value, "T_IN type check failed");
   static_assert(is_ap_fixed_type<T_OUT>::value, "T_OUT type check failed");
 
 #pragma HLS PIPELINE II=nnet_config::target_ii
@@ -101,7 +91,29 @@ void vector_normalize(const T_IN0 x[N], const T_IN1 y[N], T_OUT out[N]) {
 
 #pragma HLS INLINE
 
-  LOOP_MULT: for (unsigned i = 0; i < N; i++) {
+  LOOP_CAST: for (unsigned i = 0; i < N; i++) {
+
+#pragma HLS UNROLL
+
+    const T_IN x_i = x[i];
+    out[i] = static_cast<T_OUT>(x_i);
+  }
+}
+
+// Returns normalization(X), which is the same as doing X * Y
+template <unsigned int N, typename T_IN0, typename T_IN1, typename T_OUT>
+void vector_normalize(const T_IN0 x[N], const T_IN1 y[N], T_OUT out[N]) {
+  static_assert(is_ap_fixed_type<T_IN0>::value, "T_IN0 type check failed");
+  static_assert(is_ap_fixed_type<T_IN1>::value, "T_IN1 type check failed");
+  static_assert(is_ap_fixed_type<T_OUT>::value, "T_OUT type check failed");
+
+#pragma HLS PIPELINE II=nnet_config::target_ii
+
+#pragma HLS INTERFACE ap_ctrl_none port=return
+
+#pragma HLS INLINE
+
+  LOOP_NORM: for (unsigned i = 0; i < N; i++) {
 
 #pragma HLS UNROLL
 
@@ -131,7 +143,7 @@ void vector_vector_mult_biasadd(const T_IN0 x[N], const T_IN1 y[N], const T_IN2&
 
   constexpr int W_MULT = (T_IN0::width + T_IN1::width);
   constexpr int I_MULT = (T_IN0::iwidth + T_IN1::iwidth);
-  constexpr int W_ACCUM = W_MULT + 4;  // additional bits to prevent overflow (with 15<=x<31 accumulation terms)
+  constexpr int W_ACCUM = W_MULT + 4;  // additional bits to prevent overflow (for 15<=x<31 accumulation terms)
   constexpr int I_ACCUM = I_MULT + 4;
   constexpr int W_OUT = T_OUT::width;
   constexpr int I_OUT = T_OUT::iwidth;
@@ -154,10 +166,10 @@ void vector_vector_mult_biasadd(const T_IN0 x[N], const T_IN1 y[N], const T_IN2&
     mult[i] = m;
   }
 
-  ap_fixed<W_ACCUM,I_ACCUM> accum = z;  // init with bias
+  ap_fixed<W_ACCUM,I_ACCUM> accum = z;  // init with the bias term
 
   // Accumulate
-  LOOP_ACC: for (unsigned i = 0; i < N; i++) {
+  LOOP_ACCUM: for (unsigned i = 0; i < N; i++) {
 
 #pragma HLS UNROLL
 
@@ -170,11 +182,11 @@ void vector_vector_mult_biasadd(const T_IN0 x[N], const T_IN1 y[N], const T_IN2&
   // Sanity check
 #ifndef __SYNTHESIS__
   {
-    double f_accum = static_cast<double>(z);
+    float f_accum = static_cast<float>(z);
     for (unsigned i = 0; i < N; i++) {
-      f_accum += static_cast<double>(x[i]) * static_cast<double>(y[i]);
+      f_accum += static_cast<float>(x[i]) * static_cast<float>(y[i]);
     }
-    emtf_assert(std::abs(f_accum) < static_cast<double>(1<<(I_ACCUM-1)));  // make sure no overflow
+    emtf_assert(std::abs(f_accum) < static_cast<float>(1 << (I_ACCUM-1)));  // make sure no overflow
   }
 #endif
 
@@ -200,7 +212,7 @@ void matrix_vector_mult_biasadd(const T_IN0 x[M * N], const T_IN1 y[M], const T_
 
   constexpr int W_MULT = (T_IN0::width + T_IN1::width);
   constexpr int I_MULT = (T_IN0::iwidth + T_IN1::iwidth);
-  constexpr int W_ACCUM = W_MULT + 4;  // additional bits to prevent overflow (with 15<=x<31 accumulation terms)
+  constexpr int W_ACCUM = W_MULT + 4;  // additional bits to prevent overflow (for 15<=x<31 accumulation terms)
   constexpr int I_ACCUM = I_MULT + 4;
   constexpr int W_OUT = T_OUT::width;
   constexpr int I_OUT = T_OUT::iwidth;
@@ -230,13 +242,13 @@ void matrix_vector_mult_biasadd(const T_IN0 x[M * N], const T_IN1 y[M], const T_
   }
 
   // Accumulate
-  LOOP_ACC_J: for (unsigned j = 0; j < N; j++) {
+  LOOP_ACCUM_J: for (unsigned j = 0; j < N; j++) {
 
 #pragma HLS UNROLL
 
-    ap_fixed<W_ACCUM,I_ACCUM> accum = z[j];  // init with bias
+    ap_fixed<W_ACCUM,I_ACCUM> accum = z[j];  // init with the bias term
 
-    LOOP_ACC_I: for (unsigned i = 0; i < M; i++) {
+    LOOP_ACCUM_I: for (unsigned i = 0; i < M; i++) {
 
 #pragma HLS UNROLL
 
@@ -250,11 +262,11 @@ void matrix_vector_mult_biasadd(const T_IN0 x[M * N], const T_IN1 y[M], const T_
   // Sanity check
 #ifndef __SYNTHESIS__
   for (unsigned j = 0; j < N; j++) {
-    double f_accum = static_cast<double>(z[j]);
+    float f_accum = static_cast<float>(z[j]);
     for (unsigned i = 0; i < M; i++) {
-      f_accum += static_cast<double>(x[(i * N) + j]) * static_cast<double>(y[i]);
+      f_accum += static_cast<float>(x[(i * N) + j]) * static_cast<float>(y[i]);
     }
-    emtf_assert(std::abs(f_accum) < static_cast<double>(1<<(I_ACCUM-1)));  // make sure no overflow
+    emtf_assert(std::abs(f_accum) < static_cast<float>(1 << (I_ACCUM-1)));  // make sure no overflow
   }
 #endif
 

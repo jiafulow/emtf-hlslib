@@ -37,6 +37,7 @@ struct is_same : false_type {};
 template <typename T>
 struct is_same<T, T> : true_type {};
 
+// _____________________________________________________________________________
 // Check for ap datatype
 template <typename T>
 struct is_ap_int_type : false_type {};
@@ -91,14 +92,22 @@ template <int M, int N> struct make_concat<ap_uint<M>, ap_uint<N> > { typedef ap
 template <typename T, int U>
 struct make_repeat {};
 
-template <int N, int U> struct make_repeat<ap_int<N>, U> { typedef ap_int<N*U> type; };
-template <int N, int U> struct make_repeat<ap_uint<N>, U> { typedef ap_uint<N*U> type; };
+template <int M, int N> struct make_repeat<ap_int<M>, N> { typedef ap_int<M*N> type; };
+template <int M, int N> struct make_repeat<ap_uint<M>, N> { typedef ap_uint<M*N> type; };
 
-// Find max allowed value (for ap_uint<N>)
+// Find max allowed value for ap datatype
 template <typename T>
 struct find_ap_int_max_allowed {};
 
+template <int N> struct find_ap_int_max_allowed<ap_int<N> > { static const int value = ((1 << N) / 2) - 1; };
 template <int N> struct find_ap_int_max_allowed<ap_uint<N> > { static const int value = (1 << N) - 1; };
+
+// Find fractional bit width for ap datatype
+template <typename T>
+struct find_ap_fixed_fwidth {};
+
+template <int W, int I> struct find_ap_fixed_fwidth<ap_fixed<W, I> > { static const int value = W - I; };
+template <int W, int I> struct find_ap_fixed_fwidth<ap_ufixed<W, I> > { static const int value = W - I; };
 
 }  // namespace emtf
 

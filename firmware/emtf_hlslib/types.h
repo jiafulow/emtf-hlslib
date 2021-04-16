@@ -1,9 +1,6 @@
 #ifndef __EMTF_HLSLIB_TYPES_H__
 #define __EMTF_HLSLIB_TYPES_H__
 
-// Xilinx HLS
-#include "ap_int.h"
-
 // EMTF HLS
 #include "traits.h"
 
@@ -185,12 +182,11 @@ typedef ap_uint<1>                 bool_t;
 typedef ap_uint<num_emtf_img_cols> dio_col_accum_t;
 typedef ap_uint<num_emtf_img_rows> dio_row_accum_t;
 typedef ap_uint<num_emtf_tracks>   dio_trk_accum_t;
-typedef ap_uint<11>                dio_ph_diff_t;  // bw: ceil(log2(20 / 0.01667))
-typedef ap_uint<6>                 dio_th_diff_t;  // bw: ceil(log2(14 / 0.28515625))
-typedef ap_uint<5>                 dio_ph_idx_t;   // bw: ceil(log2(site_num_segments)) = ceil(log2(24))
-typedef ap_uint<2>                 dio_ph_area_t;  // bw: ceil(log2(num_emtf_areas)) = ceil(log2(3))
-typedef dio_trk_accum_t            dio_survivor_t;
-typedef ap_fixed<14,1>             dio_hard_tanh_t;  // fixed-point output of hard_tanh()
+typedef ap_uint<11>                dio_ph_diff_t;   // bw: ceil(log2(20 / 0.01667))
+typedef ap_uint<6>                 dio_th_diff_t;   // bw: ceil(log2(14 / 0.28515625))
+typedef ap_uint<5>                 dio_ph_idx_t;    // bw: ceil(log2(site_num_segments)) = ceil(log2(24))
+typedef ap_uint<2>                 dio_ph_area_t;   // bw: ceil(log2(num_emtf_areas)) = ceil(log2(3))
+typedef dio_trk_accum_t            dio_survivor_t;  // output of find_dupes()
 
 // These appear in the layer interfaces
 typedef dio_col_accum_t                                 zoning_out_t;

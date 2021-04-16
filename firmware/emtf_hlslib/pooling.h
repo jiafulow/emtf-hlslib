@@ -15,23 +15,23 @@ void pooling_activate_op(const T_IN& in0, T_OUT& out) {
 
 //#pragma HLS INLINE
 
-  const unsigned int N = (1u << T_IN::width);
+  const unsigned int N_TABLE = (1u << T_IN::width);
 
-#if !defined(__SYNTHESIS__)
+#ifndef __SYNTHESIS__
   static bool initialized = false;
-  static int lookup_table[N];
+  static int lookup_table[N_TABLE];
 #else
   bool initialized = false;
-  int lookup_table[N];
+  int lookup_table[N_TABLE];
 #endif
 
   if (!initialized) {
-    details::init_table_op<N>(lookup_table, details::get_pattern_activation_op<Category>());
+    details::init_table_op<N_TABLE>(lookup_table, details::get_pattern_activation_op<Category>());
     initialized = true;
   }
 
   // Lookup
-  emtf_assert(in0 < N);
+  emtf_assert(in0 < N_TABLE);
   out = static_cast<T_OUT>(lookup_table[in0]);
 }
 
@@ -85,7 +85,7 @@ void pooling_reduce_argmax_op(const T_IN& in0, T_OUT& out) {
     const unsigned int node_index = (num_nodes_io - 1) - i;
     const unsigned int child_l_index = (2 * node_index) + 1;
     const unsigned int child_r_index = (2 * node_index) + 2;
-    emtf_assert((child_l_index < num_nodes) && (child_r_index < num_nodes));
+    emtf_assert((child_l_index < num_nodes) and (child_r_index < num_nodes));
     nodes[node_index] = (nodes[child_l_index] >= nodes[child_r_index]) ? nodes[child_l_index] : nodes[child_r_index];
   }
 
