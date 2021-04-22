@@ -46,7 +46,7 @@ void vector_activate(const T_IN x[N], T_OUT out[N]) {
   static_assert(is_ap_fixed_type<T_IN>::value, "T_IN type check failed");
   static_assert(is_ap_fixed_type<T_OUT>::value, "T_OUT type check failed");
 
-#pragma HLS PIPELINE II=nnet_config::target_ii
+#pragma HLS PIPELINE II=fullyconnect_config::target_ii
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
@@ -85,7 +85,7 @@ void vector_cast(const T_IN x[N], T_OUT out[N]) {
   static_assert(is_ap_int_type<T_IN>::value, "T_IN type check failed");
   static_assert(is_ap_fixed_type<T_OUT>::value, "T_OUT type check failed");
 
-#pragma HLS PIPELINE II=nnet_config::target_ii
+#pragma HLS PIPELINE II=fullyconnect_config::target_ii
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
@@ -107,7 +107,7 @@ void vector_normalize(const T_IN0 x[N], const T_IN1 y[N], T_OUT out[N]) {
   static_assert(is_ap_fixed_type<T_IN1>::value, "T_IN1 type check failed");
   static_assert(is_ap_fixed_type<T_OUT>::value, "T_OUT type check failed");
 
-#pragma HLS PIPELINE II=nnet_config::target_ii
+#pragma HLS PIPELINE II=fullyconnect_config::target_ii
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
@@ -133,7 +133,7 @@ void vector_vector_mult_biasadd(const T_IN0 x[N], const T_IN1 y[N], const T_IN2&
   static_assert(is_ap_fixed_type<T_IN2>::value, "T_IN2 type check failed");
   static_assert(is_ap_fixed_type<T_OUT>::value, "T_OUT type check failed");
 
-#pragma HLS PIPELINE II=nnet_config::target_ii
+#pragma HLS PIPELINE II=fullyconnect_config::target_ii
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
@@ -202,7 +202,7 @@ void matrix_vector_mult_biasadd(const T_IN0 x[M * N], const T_IN1 y[M], const T_
   static_assert(is_ap_fixed_type<T_IN2>::value, "T_IN2 type check failed");
   static_assert(is_ap_fixed_type<T_OUT>::value, "T_OUT type check failed");
 
-#pragma HLS PIPELINE II=nnet_config::target_ii
+#pragma HLS PIPELINE II=fullyconnect_config::target_ii
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 

@@ -98,12 +98,11 @@ struct duperemoval_config {
   static const int target_ii = 1;
 };
 
-struct nnet_config {
+struct fullyconnect_config {
   static const unsigned int n_in = duperemoval_config::n_out;
   static const unsigned int n_out = n_in;
   static const int layer_target_ii = model_config::target_ii;
   static const int target_ii = 1;
-  static const int target_lat = 40;
 };
 
 // _____________________________________________________________________________

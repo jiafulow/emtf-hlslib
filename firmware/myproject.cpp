@@ -159,12 +159,12 @@ void myproject(
   trk_seg_v_t trk_seg_rm_v [duperemoval_config::n_out];
   trk_feat_t  trk_feat_rm  [duperemoval_config::n_out * num_emtf_features];
   trk_valid_t trk_valid_rm [duperemoval_config::n_out];
-  trk_invpt_t trk_invpt    [nnet_config::n_out];
-  trk_phi_t   trk_phi      [nnet_config::n_out];
-  trk_eta_t   trk_eta      [nnet_config::n_out];
-  trk_d0_t    trk_d0       [nnet_config::n_out];
-  trk_z0_t    trk_z0       [nnet_config::n_out];
-  trk_beta_t  trk_beta     [nnet_config::n_out];
+  trk_invpt_t trk_invpt    [fullyconnect_config::n_out];
+  trk_phi_t   trk_phi      [fullyconnect_config::n_out];
+  trk_eta_t   trk_eta      [fullyconnect_config::n_out];
+  trk_d0_t    trk_d0       [fullyconnect_config::n_out];
+  trk_z0_t    trk_z0       [fullyconnect_config::n_out];
+  trk_beta_t  trk_beta     [fullyconnect_config::n_out];
 
 #pragma HLS ARRAY_PARTITION variable=trk_seg complete dim=0
 #pragma HLS ARRAY_PARTITION variable=trk_seg_v complete dim=0
@@ -195,9 +195,9 @@ void myproject(
       trk_seg, trk_seg_v, trk_feat, trk_valid, trk_seg_rm, trk_seg_rm_v, trk_feat_rm, trk_valid_rm
   );
 
-  // Layer 7 - Neural network
+  // Layer 7 - Fully connected
 
-  nnet_layer<m_zone_any_tag>(
+  fullyconnect_layer<m_zone_any_tag>(
       trk_feat_rm, trk_invpt, trk_phi, trk_eta, trk_d0, trk_z0, trk_beta
   );
 

@@ -8,7 +8,7 @@ void myproject(
     top_out_t out[TOP_N_OUT]
 ) {
 
-#pragma HLS PIPELINE II=1
+#pragma HLS PIPELINE II=fullyconnect_config::target_ii
 
 #pragma HLS INTERFACE ap_vld port=in0
 #pragma HLS INTERFACE ap_vld port=out
@@ -17,7 +17,7 @@ void myproject(
 #pragma HLS ARRAY_RESHAPE variable=in0 complete dim=0
 #pragma HLS ARRAY_PARTITION variable=out complete dim=0
 
-  // Initialize variables
+  // Prepare input and output variables
   trk_feat_t  curr_trk_feat  [num_emtf_features];
 
 #pragma HLS ARRAY_PARTITION variable=curr_trk_feat complete dim=0
@@ -38,7 +38,7 @@ void myproject(
   }  // end loop over in0
 
   // Call
-  nnet_op<m_zone_any_tag, m_timezone_0_tag>(
+  fullyconnect_op<m_zone_any_tag>(
       curr_trk_feat, curr_trk_invpt, curr_trk_phi, curr_trk_eta,
       curr_trk_d0, curr_trk_z0, curr_trk_beta
   );
