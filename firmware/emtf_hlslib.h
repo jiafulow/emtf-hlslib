@@ -2,7 +2,9 @@
 #define __EMTF_HLSLIB_H__
 
 #include "emtf_hlslib/common.h"
+#include "emtf_hlslib/traits.h"
 #include "emtf_hlslib/types.h"
+#include "emtf_hlslib/model.h"
 #include "emtf_hlslib/layers.h"
 #include "emtf_hlslib/helper.h"
 
