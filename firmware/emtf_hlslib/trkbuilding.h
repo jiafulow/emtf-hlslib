@@ -306,6 +306,7 @@ void trkbuilding_match_ph_site_op(
           (seg_valid[iseg] == 1) and \
           (seg_zones[iseg][(num_emtf_zones - 1) - curr_trk_zone] == 1) and \
           (seg_tzones[iseg][(num_emtf_zones - 1) - curr_trk_tzone] == 1) and \
+          (curr_trk_qual > 0) and \
           (col_start <= padded_col) and (padded_col <= col_stop)
       );
 
@@ -517,8 +518,7 @@ void trkbuilding_extract_features_op(
     const trk_qual_t& curr_trk_qual,
     const trk_seg_t curr_trk_seg[num_emtf_sites],
     const trk_seg_v_t& curr_trk_seg_v,
-    trk_feat_t curr_trk_feat[num_emtf_features],
-    const trk_valid_t& curr_trk_valid
+    trk_feat_t curr_trk_feat[num_emtf_features]
 ) {
 
 #pragma HLS PIPELINE II=trkbuilding_config::target_ii
@@ -591,10 +591,10 @@ void trkbuilding_extract_features_op(
   curr_trk_feat[k++] = details::take_value_if(curr_trk_seg_v[11], emtf_qual1[curr_trk_seg[11]]);
 
   // additional features
-  curr_trk_feat[k++] = details::take_value_if(curr_trk_valid, details::calc_signed_diff(phi_median, phi_img_center));
-  curr_trk_feat[k++] = details::take_value_if(curr_trk_valid, theta_median);
-  curr_trk_feat[k++] = details::take_value_if(curr_trk_valid, curr_trk_qual);
-  curr_trk_feat[k++] = 0;
+  curr_trk_feat[k++] = details::take_value_if(curr_trk_qual > 0, details::calc_signed_diff(phi_median, phi_img_center));
+  curr_trk_feat[k++] = details::take_value_if(curr_trk_qual > 0, theta_median);
+  curr_trk_feat[k++] = curr_trk_qual;
+  curr_trk_feat[k++] = 0;  // unused
   emtf_assert(k == num_emtf_features);
 }
 
@@ -667,10 +667,10 @@ void trkbuilding_op(
 
   // Set segment valid flag and track valid flag
   details::pack_boolean_values(curr_trk_seg_v_from_th, curr_trk_seg_v);
-  curr_trk_valid = (bool) curr_trk_seg_v;  // OR reduced
+  curr_trk_valid = (bool) curr_trk_seg_v;  // logical OR reduced
 
   // Extract features
-  trkbuilding_extract_features_op(emtf_phi, emtf_bend, emtf_qual1, emtf_qual2, emtf_time, phi_median, theta_median, emtf_theta_best, curr_trk_qual, curr_trk_seg, curr_trk_seg_v, curr_trk_feat, curr_trk_valid);
+  trkbuilding_extract_features_op(emtf_phi, emtf_bend, emtf_qual1, emtf_qual2, emtf_time, phi_median, theta_median, emtf_theta_best, curr_trk_qual, curr_trk_seg, curr_trk_seg_v, curr_trk_feat);
 }
 
 // _____________________________________________________________________________
