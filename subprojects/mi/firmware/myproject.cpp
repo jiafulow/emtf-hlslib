@@ -22,7 +22,6 @@ void myproject(
 
 #pragma HLS ARRAY_PARTITION variable=curr_trk_feat complete dim=0
 
-  trk_valid_t curr_trk_valid = 1;
   trk_invpt_t curr_trk_invpt = 0;
   trk_phi_t   curr_trk_phi   = 0;
   trk_eta_t   curr_trk_eta   = 0;
@@ -40,10 +39,12 @@ void myproject(
 
   // Call
   nnet_op<m_zone_any_tag, m_timezone_0_tag>(
-      curr_trk_feat, curr_trk_valid, curr_trk_invpt, curr_trk_phi,
-      curr_trk_eta, curr_trk_d0, curr_trk_z0, curr_trk_beta
+      curr_trk_feat, curr_trk_invpt, curr_trk_phi, curr_trk_eta,
+      curr_trk_d0, curr_trk_z0, curr_trk_beta
   );
 
-  // Copy to output
-  out[0] = curr_trk_invpt;
+  // Copy to output: curr_trk_invpt
+  {
+    out[0] = curr_trk_invpt;
+  }
 }

@@ -3,8 +3,10 @@
 
 #include <cassert>
 #include <cstdint>
+#include <cmath>
 #include <array>
 #include <map>
+#include <set>
 #include <vector>
 #include <string>
 #include <iostream>
@@ -12,42 +14,80 @@
 #include <sstream>
 #include <iterator>
 #include <algorithm>
+#include <numeric>
 
 namespace testbench {
 
-// Hits contains 15 integer values.
+// Hits contains N integer values.
 struct HitsType {
   typedef int type;
-  static const unsigned int len = 15;
+  static const unsigned int len = 15;  // num_emtf_variables + 2
 };
+
 typedef std::array<HitsType::type, HitsType::len> Hits;
 
 // Event contains a list of Hits objects.
 struct EventType {
   typedef Hits type;
 };
+
 typedef std::vector<EventType::type> Event;
 
-// Tracks contains 40 integer values.
+// Tracks contains N integer values.
 struct TracksType {
   typedef int type;
-  static const unsigned int len = 40;
+  static const unsigned int len = 54;  // num_emtf_features + num_emtf_sites + 2
 };
+
 typedef std::array<TracksType::type, TracksType::len> Tracks;
 
 // Result contains a list of Tracks objects.
 struct ResultType {
   typedef Tracks type;
 };
+
 typedef std::vector<ResultType::type> Result;
 
-// FPGAEvent contains the input, which is a list of max num of chambers,
+// Event & Result for subprojects (pr, fe, rm, mi)
+typedef Event PrEvent;
+
+struct PrResultType {
+  typedef std::array<int, 4> type;  // trk_qual, trk_patt, trk_col, trk_zone
+};
+
+typedef std::vector<PrResultType::type> PrResult;
+
+typedef PrResult FeEvent;
+
+struct FeResultType {
+  typedef std::array<int, 52> type;  // num_emtf_features + num_emtf_sites
+};
+
+typedef std::vector<FeResultType::type> FeResult;
+
+typedef FeResult RmEvent;
+
+typedef RmEvent RmResult;
+
+struct MiEventType {
+  typedef std::array<int, 40> type;  // num_emtf_features
+};
+
+typedef std::vector<MiEventType::type> MiEvent;
+
+struct MiResultType {
+  typedef std::array<int, 1> type;  // num_emtf_predictions
+};
+
+typedef std::vector<MiResultType::type> MiResult;
+
+// FpgaEvent contains the input, which is a list of max num of chambers,
 // with max num of segments per chamber.
-struct FPGAEvent {
+struct FpgaEvent {
   static const unsigned int num_chambers = emtf::num_emtf_chambers;
   static const unsigned int num_segments = emtf::num_emtf_segments;
   static const unsigned int num_variables = emtf::num_emtf_variables;
-  static const unsigned int len = num_chambers * num_segments;
+  static const unsigned int len = (num_chambers * num_segments);
 
   emtf::model_in_t data[len];
 
@@ -65,7 +105,7 @@ struct FPGAEvent {
   };
 
   // Constructor
-  explicit FPGAEvent(const Event& evt) {
+  explicit FpgaEvent(const Event& evt) {
     assert(num_variables == 13);
 
     // Initialize
@@ -80,8 +120,14 @@ struct FPGAEvent {
     for (unsigned ihit = 0; ihit < evt.size(); ihit++) {
       const int emtf_chamber = evt[ihit][0];
       const int emtf_segment = evt[ihit][1];
+
+      // Accept at most 2 segments
+      if (!(static_cast<unsigned int>(emtf_segment) < num_segments))
+        continue;
+
       const int iseg = index_fn(emtf_chamber, emtf_segment);
 
+      // 13 variables
       data[iseg].emtf_phi    = evt[ihit][2];
       data[iseg].emtf_bend   = evt[ihit][3];
       data[iseg].emtf_theta1 = evt[ihit][4];
@@ -95,34 +141,36 @@ struct FPGAEvent {
       data[iseg].seg_dl      = evt[ihit][12];
       data[iseg].seg_bx      = evt[ihit][13];
       data[iseg].seg_valid   = evt[ihit][14];
+
+      assert(data[iseg].seg_valid == 1);  // segment must be valid
     }
   }  // end constructor
 };
 
-// FPGAResult contains the output that is going to be sent to the NN.
-// It is a list of max num of tracks, with fixed num of features per track.
-struct FPGAResult {
+// FpgaResult contains the output that is going to be sent to the NN.
+// It is a list of max num of tracks, with fixed num of variables per track.
+struct FpgaResult {
   static const unsigned int num_tracks = emtf::num_emtf_tracks;
-  static const unsigned int num_features = emtf::num_emtf_features;
-  static const unsigned int len = num_tracks * num_features;
+  static const unsigned int num_trk_variables = (emtf::num_emtf_features + emtf::num_emtf_sites + 2);
+  static const unsigned int len = (num_tracks * num_trk_variables);
 
   emtf::model_out_t data[len];
 
   struct ArrayIndex {
-    inline unsigned int operator ()(unsigned int track, unsigned int feature) const {
+    inline unsigned int operator ()(unsigned int track, unsigned int variable) const {
       assert(track < num_tracks);
-      assert(feature < num_features);
-      return (track * num_features) + feature;
+      assert(variable < num_trk_variables);
+      return (track * num_trk_variables) + variable;
     }
-    inline int operator ()(int track, int feature) const {
+    inline int operator ()(int track, int variable) const {
       assert(static_cast<unsigned int>(track) < num_tracks);
-      assert(static_cast<unsigned int>(feature) < num_features);
-      return (track * num_features) + feature;
+      assert(static_cast<unsigned int>(variable) < num_trk_variables);
+      return (track * num_trk_variables) + variable;
     }
   };
 
   // Constructor
-  explicit FPGAResult(const Result& res) {
+  explicit FpgaResult(const Result& res) {
     assert(res.size() == num_tracks);
 
     // Initialize
@@ -134,9 +182,9 @@ struct FPGAResult {
     auto index_fn = ArrayIndex();
 
     for (unsigned itrk = 0; itrk < num_tracks; itrk++) {
-      for (unsigned ifeat = 0; ifeat < num_features; ifeat++) {
-        const unsigned i = index_fn(itrk, ifeat);
-        data[i] = res[itrk][ifeat];
+      for (unsigned ivar = 0; ivar < num_trk_variables; ivar++) {
+        const unsigned int i = index_fn(itrk, ivar);
+        data[i] = res[itrk][ivar];
       }
     }
   }  // end constructor
@@ -146,10 +194,13 @@ struct FPGAResult {
 // _____________________________________________________________________________
 // Read test bench text files.
 // Note that the text files are whitespace-sensitive. Removing linebreaks or
-// changing num of spaces can break this stupid function.
+// changing num of spaces can break this stupid function. It is also assumed
+// that the arrays printed in the text files are 2-D, thus each array has
+// at least 2 '[' characters and at least 2 ']' characters.
 template <typename T>
 int read_tb_data(const std::string filename, T& evt) {
   typename T::value_type line_buf;  // it should be a std::array
+  assert(line_buf.size() != 0);
 
   std::string line;  // line in file
   char c;            // delimiter in line
@@ -177,7 +228,7 @@ int read_tb_data(const std::string filename, T& evt) {
       }
       ss >> c;  // get rid of '['
       for (unsigned i = 0; i < line_buf.size(); i++) {
-        ss >> line_buf[i] >> c;  // extract int, then get rid of ','
+        ss >> line_buf.at(i) >> c;  // extract int, then get rid of ','
       }
       ss >> c;  // get rid of ']'
       ss >> c;  // get rid of ',' or ending ']'
@@ -190,13 +241,14 @@ int read_tb_data(const std::string filename, T& evt) {
         std::cout << "Line: " << line << std::endl;
         std::cout << "Parsed line: ";
         for (unsigned i = 0; i < line_buf.size(); i++) {
-          std::cout << line_buf[i] << " ";
+          std::cout << line_buf.at(i) << " ";
         }
         std::cout << std::endl;
       }
     }
   } else {
     std::cerr << "Failed to open file: " << filename << std::endl;
+    return 1;
   }
   infile.close();
   return 0;
@@ -204,28 +256,10 @@ int read_tb_data(const std::string filename, T& evt) {
 
 
 // _____________________________________________________________________________
-// Initialize array to zeros
-template <typename T, size_t N>
-void init_array_as_zeros(T (&arr)[N]) {
-  std::fill(arr, arr + N, 0);
-}
-
-// Initialize array to ones
-template <typename T, size_t N>
-void init_array_as_ones(T (&arr)[N]) {
-  std::fill(arr, arr + N, 1);
-}
-
-// Initialize array to ones
-template <typename T, size_t N>
-void copy_array(T const (&arr1)[N], T (&arr2)[N]) {
-  std::copy(arr1, arr1 + N, arr2);
-}
-
 // Print plain array
-template <typename T, size_t N>
+template <typename T, std::size_t N>
 void print_array(T const (&arr)[N]) {
-  std::copy(arr, arr + N, std::ostream_iterator<T>(std::cout, ", "));
+  std::copy(std::begin(arr), std::end(arr), std::ostream_iterator<T>(std::cout, ", "));
 }
 
 // Print std::array, std::vector
@@ -235,17 +269,20 @@ void print_std_array(T const& arr) {
 }
 
 // Get array length
-template <typename T, size_t N>
-size_t get_array_length(T const (&arr)[N]) {
+template <typename T, std::size_t N>
+std::size_t get_array_length(T const (&arr)[N]) {
   return N;
 }
 
 // Count mismatches
 template <typename InputIt1, typename InputIt2>
-int count_mismatches(InputIt1 first1, InputIt1 last1, InputIt2 first2) {
+int count_mismatches(InputIt1 first1, InputIt1 last1, InputIt2 first2, int tol=0) {
   int cnt = 0;
+  assert(tol >= 0);  // tol must be a positive integer
   for (; first1 != last1; ++first1, ++first2) {
-    if (*first1 != *first2) {
+    // Condition: !((gold0 <= x) and (x <= gold1))
+    // If tol = 0, condition is simply (gold != x)
+    if (!(((*first1 - tol) <= *first2) and (*first2 <= (*first1 + tol)))) {
       ++cnt;
     }
   }
