@@ -8,7 +8,7 @@ set XPART xc7vx690tffg1927-2
 set CLKP 160MHz
 #set CLKP 240MHz
 set CFLAGS "-std=c++11"
-set CSIMFLAGS "-Wall -Wextra -Wno-ignored-attributes -Wno-unused-parameter -Wno-unused-variable -Wno-unused-label"
+set CSIMFLAGS "-Wall -Wextra -Wno-unused-label -Wno-unused-parameter"
 set CSIM 1
 set CSYNTH 1
 set COSIM 0
