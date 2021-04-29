@@ -35,11 +35,13 @@
 #if !defined(__SYNTHESIS__) && !defined(NDEBUG)
 #define PRINT_TOP_FN_ARRAYS_OTHER \
     std::cout << "Printing 'seg_valid' non-zero indices:" << std::endl; \
+    std::cout << "iseg: ["; \
     for (unsigned iseg = 0; iseg < model_config::n_in; iseg++) { \
       if (seg_valid[iseg] == 1) { \
-        std::cout << iseg << std::endl; \
+        std::cout << iseg << ", "; \
       } \
     } \
+    std::cout << "]" << std::endl; \
     std::cout << "Printing 'zoning_0_out' non-zero elements:" << std::endl; \
     std::cout << "row: ["; \
     for (unsigned i = 0; i < zoning_config::n_out; i++) { \
@@ -98,6 +100,28 @@
     std::cout << "value: ["; \
     for (unsigned i = 0; i < zonemerging_config::n_out; i++) { \
       std::cout << zonemerging_0_out[i].range(trk_qual_t::width - 1, 0) << ", "; \
+    } \
+    std::cout << "]" << std::endl; \
+    std::cout << "Printing 'trk_qual', 'trk_patt', 'trk_col', 'trk_zone', 'trk_tzone' all elements:" << std::endl; \
+    std::cout << "trk_qual: ["; \
+    for (unsigned i = 0; i < trkbuilding_config::n_in; i++) { \
+      std::cout << trk_qual[i] << ", "; \
+    } \
+    std::cout << "] trk_patt: ["; \
+    for (unsigned i = 0; i < trkbuilding_config::n_in; i++) { \
+      std::cout << trk_patt[i] << ", "; \
+    } \
+    std::cout << "] trk_col: ["; \
+    for (unsigned i = 0; i < trkbuilding_config::n_in; i++) { \
+      std::cout << trk_col[i] << ", "; \
+    } \
+    std::cout << "] trk_zone: ["; \
+    for (unsigned i = 0; i < trkbuilding_config::n_in; i++) { \
+      std::cout << trk_zone[i] << ", "; \
+    } \
+    std::cout << "] trk_tzone: ["; \
+    for (unsigned i = 0; i < trkbuilding_config::n_in; i++) { \
+      std::cout << trk_tzone[i] << ", "; \
     } \
     std::cout << "]" << std::endl; \
     std::cout << "Printing 'trk_seg', 'trk_seg_v' first-track elements:" << std::endl; \

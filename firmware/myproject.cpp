@@ -150,6 +150,39 @@ void myproject(
       zonesorting_0_out, zonesorting_1_out, zonesorting_2_out, zonemerging_0_out
   );
 
+  // Unpack from in1 (a.k.a. zonemerging_0_out)
+  trk_qual_t  trk_qual     [trkbuilding_config::n_in];
+  trk_patt_t  trk_patt     [trkbuilding_config::n_in];
+  trk_col_t   trk_col      [trkbuilding_config::n_in];
+  trk_zone_t  trk_zone     [trkbuilding_config::n_in];
+  trk_tzone_t trk_tzone    [trkbuilding_config::n_in];
+
+#pragma HLS ARRAY_PARTITION variable=trk_qual complete dim=0
+#pragma HLS ARRAY_PARTITION variable=trk_patt complete dim=0
+#pragma HLS ARRAY_PARTITION variable=trk_col complete dim=0
+#pragma HLS ARRAY_PARTITION variable=trk_zone complete dim=0
+#pragma HLS ARRAY_PARTITION variable=trk_tzone complete dim=0
+
+  // Loop over in1
+  LOOP_IN1: for (unsigned itrk = 0; itrk < trkbuilding_config::n_in; itrk++) {
+
+#pragma HLS UNROLL
+
+    const trkbuilding_in_t curr_trk_in = zonemerging_0_out[itrk];
+
+    constexpr int bits_lo_0 = 0;
+    constexpr int bits_lo_1 = bits_lo_0 + trk_qual_t::width;
+    constexpr int bits_lo_2 = bits_lo_1 + trk_patt_t::width;
+    constexpr int bits_lo_3 = bits_lo_2 + trk_col_t::width;
+    constexpr int bits_lo_4 = bits_lo_3 + trk_zone_t::width;
+
+    trk_qual[itrk]  = curr_trk_in.range(bits_lo_1 - 1, bits_lo_0);
+    trk_patt[itrk]  = curr_trk_in.range(bits_lo_2 - 1, bits_lo_1);
+    trk_col[itrk]   = curr_trk_in.range(bits_lo_3 - 1, bits_lo_2);
+    trk_zone[itrk]  = curr_trk_in.range(bits_lo_4 - 1, bits_lo_3);
+    trk_tzone[itrk] = details::timezone_traits<m_timezone_0_tag>::value;  // default timezone
+  }  // end loop over in1
+
   // Intermediate arrays (for layers 5..7)
   trk_seg_t   trk_seg      [trkbuilding_config::n_out * num_emtf_sites];
   trk_seg_v_t trk_seg_v    [trkbuilding_config::n_out];
@@ -186,7 +219,8 @@ void myproject(
   trkbuilding_layer<m_zone_any_tag>(
       emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_qual2,
       emtf_time, seg_zones, seg_tzones, seg_fr, seg_dl, seg_bx,
-      seg_valid, zonemerging_0_out, trk_seg, trk_seg_v, trk_feat, trk_valid
+      seg_valid, trk_qual, trk_patt, trk_col, trk_zone, trk_tzone,
+      trk_seg, trk_seg_v, trk_feat, trk_valid
   );
 
   // Layer 6 - Duplicate removal

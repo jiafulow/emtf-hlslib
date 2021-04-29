@@ -601,7 +601,7 @@ void trkbuilding_extract_features_op(
 // _____________________________________________________________________________
 // Track building op
 
-template <typename Zone, typename Timezone>
+template <typename Zone>
 void trkbuilding_op(
     const emtf_phi_t        emtf_phi       [model_config::n_in],
     const emtf_bend_t       emtf_bend      [model_config::n_in],
@@ -616,7 +616,11 @@ void trkbuilding_op(
     const seg_dl_t          seg_dl         [model_config::n_in],
     const seg_bx_t          seg_bx         [model_config::n_in],
     const seg_valid_t       seg_valid      [model_config::n_in],
-    const trkbuilding_in_t& curr_trk_in    ,
+    const trk_qual_t&       curr_trk_qual  ,
+    const trk_patt_t&       curr_trk_patt  ,
+    const trk_col_t&        curr_trk_col   ,
+    const trk_zone_t&       curr_trk_zone  ,
+    const trk_tzone_t&      curr_trk_tzone ,
     trk_seg_t               curr_trk_seg   [num_emtf_sites],
     trk_seg_v_t&            curr_trk_seg_v ,
     trk_feat_t              curr_trk_feat  [num_emtf_features],
@@ -630,21 +634,6 @@ void trkbuilding_op(
 #pragma HLS INLINE
 
   typedef emtf_theta1_t emtf_theta_t;
-
-  // Unpack from curr_trk_in (a.k.a. trkbuilding_in[itrk])
-  constexpr int bits_lo_0 = 0;
-  constexpr int bits_lo_1 = bits_lo_0 + trk_qual_t::width;
-  constexpr int bits_lo_2 = bits_lo_1 + trk_patt_t::width;
-  constexpr int bits_lo_3 = bits_lo_2 + trk_col_t::width;
-  constexpr int bits_lo_4 = bits_lo_3 + trk_zone_t::width;
-
-  const trk_qual_t  curr_trk_qual  = curr_trk_in.range(bits_lo_1 - 1, bits_lo_0);
-  const trk_patt_t  curr_trk_patt  = curr_trk_in.range(bits_lo_2 - 1, bits_lo_1);
-  const trk_col_t   curr_trk_col   = curr_trk_in.range(bits_lo_3 - 1, bits_lo_2);
-  const trk_zone_t  curr_trk_zone  = curr_trk_in.range(bits_lo_4 - 1, bits_lo_3);
-  const trk_tzone_t curr_trk_tzone = details::timezone_traits<Timezone>::value;  // dummy
-
-  //std::cout << "[DEBUG] " << curr_trk_qual << " " << curr_trk_patt << " " << curr_trk_col << " " << curr_trk_zone << " " << curr_trk_tzone << std::endl;
 
   // Intermediate arrays
   bool_t curr_trk_seg_v_from_ph[num_emtf_sites];
@@ -691,7 +680,11 @@ void trkbuilding_layer(
     const seg_dl_t          seg_dl         [model_config::n_in],
     const seg_bx_t          seg_bx         [model_config::n_in],
     const seg_valid_t       seg_valid      [model_config::n_in],
-    const trkbuilding_in_t  trkbuilding_in [trkbuilding_config::n_in],
+    const trk_qual_t        trk_qual       [trkbuilding_config::n_in],
+    const trk_patt_t        trk_patt       [trkbuilding_config::n_in],
+    const trk_col_t         trk_col        [trkbuilding_config::n_in],
+    const trk_zone_t        trk_zone       [trkbuilding_config::n_in],
+    const trk_tzone_t       trk_tzone      [trkbuilding_config::n_in],
     trk_seg_t               trk_seg        [trkbuilding_config::n_out * num_emtf_sites],
     trk_seg_v_t             trk_seg_v      [trkbuilding_config::n_out],
     trk_feat_t              trk_feat       [trkbuilding_config::n_out * num_emtf_features],
@@ -711,8 +704,6 @@ void trkbuilding_layer(
   static_assert(num_emtf_features == 40, "num_emtf_features must be 40");
   static_assert(num_emtf_img_areas == 3, "num_emtf_areas must be 3");
 
-  typedef m_timezone_0_tag Timezone;  // default timezone
-
   // Loop over tracks
   LOOP_TRK: for (unsigned itrk = 0; itrk < trkbuilding_config::n_in; itrk++) {
 
@@ -721,10 +712,11 @@ void trkbuilding_layer(
     auto curr_trk_seg = &(trk_seg[itrk * num_emtf_sites]);
     auto curr_trk_feat = &(trk_feat[itrk * num_emtf_features]);
 
-    trkbuilding_op<Zone, Timezone>(
+    trkbuilding_op<Zone>(
         emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_qual2,
         emtf_time, seg_zones, seg_tzones, seg_fr, seg_dl, seg_bx,
-        seg_valid, trkbuilding_in[itrk], curr_trk_seg, trk_seg_v[itrk], curr_trk_feat, trk_valid[itrk]
+        seg_valid, trk_qual[itrk], trk_patt[itrk], trk_col[itrk], trk_zone[itrk], trk_tzone[itrk],
+        curr_trk_seg, trk_seg_v[itrk], curr_trk_feat, trk_valid[itrk]
     );
   }  // end loop over tracks
 }

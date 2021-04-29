@@ -71,32 +71,8 @@ void myproject(
     seg_valid[iseg]   = in0[iseg].seg_valid;
   }  // end loop over in0
 
-  // Unpack from in1
+  // Check assumptions
   static_assert(TOP_N_IN1 == 4, "TOP_N_IN1 check failed");
-
-  trkbuilding_in_t trkbuilding_in [trkbuilding_config::n_in];
-
-#pragma HLS ARRAY_PARTITION variable=trkbuilding_in complete dim=0
-
-  // Loop over in1
-  LOOP_IN1: for (unsigned itrk = 0; itrk < 1; itrk++) {
-
-#pragma HLS UNROLL
-
-    trkbuilding_in_t& curr_trk_in = trkbuilding_in[itrk];
-
-    // Pack into curr_trk_in (a.k.a. trkbuilding_in[itrk])
-    constexpr int bits_lo_0 = 0;
-    constexpr int bits_lo_1 = bits_lo_0 + trk_qual_t::width;
-    constexpr int bits_lo_2 = bits_lo_1 + trk_patt_t::width;
-    constexpr int bits_lo_3 = bits_lo_2 + trk_col_t::width;
-    constexpr int bits_lo_4 = bits_lo_3 + trk_zone_t::width;
-
-    curr_trk_in.range(bits_lo_1 - 1, bits_lo_0) = in1[0];
-    curr_trk_in.range(bits_lo_2 - 1, bits_lo_1) = in1[1];
-    curr_trk_in.range(bits_lo_3 - 1, bits_lo_2) = in1[2];
-    curr_trk_in.range(bits_lo_4 - 1, bits_lo_3) = in1[3];
-  }  // end loop over in1
 
   // Prepare input and output variables
   trk_feat_t  curr_trk_feat [num_emtf_features];
@@ -105,16 +81,20 @@ void myproject(
 #pragma HLS ARRAY_PARTITION variable=curr_trk_feat complete dim=0
 #pragma HLS ARRAY_PARTITION variable=curr_trk_seg complete dim=0
 
+  trk_qual_t  curr_trk_qual  = in1[0];
+  trk_patt_t  curr_trk_patt  = in1[1];
+  trk_col_t   curr_trk_col   = in1[2];
+  trk_zone_t  curr_trk_zone  = in1[3];
+  trk_tzone_t curr_trk_tzone = details::timezone_traits<m_timezone_0_tag>::value;  // default timezone
   trk_seg_v_t curr_trk_seg_v = 0;
   trk_valid_t curr_trk_valid = 0;
 
-  const auto curr_trk_in = trkbuilding_in[0];
-
   // Call
-  trkbuilding_op<m_zone_any_tag, m_timezone_0_tag>(
+  trkbuilding_op<m_zone_any_tag>(
       emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_qual2,
       emtf_time, seg_zones, seg_tzones, seg_fr, seg_dl, seg_bx,
-      seg_valid, curr_trk_in, curr_trk_seg, curr_trk_seg_v, curr_trk_feat, curr_trk_valid
+      seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone,
+      curr_trk_seg, curr_trk_seg_v, curr_trk_feat, curr_trk_valid
   );
 
   // Copy to output: curr_trk_feat, curr_trk_seg
@@ -125,6 +105,7 @@ void myproject(
     const unsigned n_out_per_trk = TOP_N_OUT;
     const unsigned itrk = i / n_out_per_trk;
     const unsigned ivar = i % n_out_per_trk;
+    emtf_unused(itrk);
 
     const trk_seg_t invalid_marker_ph_seg = model_config::n_in;
 

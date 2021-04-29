@@ -150,14 +150,23 @@ void myproject(
       zonesorting_0_out, zonesorting_1_out, zonesorting_2_out, zonemerging_0_out
   );
 
-  // Copy to output: trk_qual, trk_patt, trk_col, trk_zone
-  LOOP_OUT: for (unsigned i = 0; i < TOP_N_OUT; i++) {
+  // Unpack from in1 (a.k.a. zonemerging_0_out)
+  trk_qual_t  trk_qual     [trkbuilding_config::n_in];
+  trk_patt_t  trk_patt     [trkbuilding_config::n_in];
+  trk_col_t   trk_col      [trkbuilding_config::n_in];
+  trk_zone_t  trk_zone     [trkbuilding_config::n_in];
+  trk_tzone_t trk_tzone    [trkbuilding_config::n_in];
+
+#pragma HLS ARRAY_PARTITION variable=trk_qual complete dim=0
+#pragma HLS ARRAY_PARTITION variable=trk_patt complete dim=0
+#pragma HLS ARRAY_PARTITION variable=trk_col complete dim=0
+#pragma HLS ARRAY_PARTITION variable=trk_zone complete dim=0
+#pragma HLS ARRAY_PARTITION variable=trk_tzone complete dim=0
+
+  // Loop over in1
+  LOOP_IN1: for (unsigned itrk = 0; itrk < trkbuilding_config::n_in; itrk++) {
 
 #pragma HLS UNROLL
-
-    const unsigned n_out_per_trk = TOP_N_OUT / num_emtf_tracks;
-    const unsigned itrk = i / n_out_per_trk;
-    const unsigned ivar = i % n_out_per_trk;
 
     const trkbuilding_in_t curr_trk_in = zonemerging_0_out[itrk];
 
@@ -167,19 +176,30 @@ void myproject(
     constexpr int bits_lo_3 = bits_lo_2 + trk_col_t::width;
     constexpr int bits_lo_4 = bits_lo_3 + trk_zone_t::width;
 
-    const trk_qual_t curr_trk_qual = curr_trk_in.range(bits_lo_1 - 1, bits_lo_0);
-    const trk_patt_t curr_trk_patt = curr_trk_in.range(bits_lo_2 - 1, bits_lo_1);
-    const trk_col_t  curr_trk_col  = curr_trk_in.range(bits_lo_3 - 1, bits_lo_2);
-    const trk_zone_t curr_trk_zone = curr_trk_in.range(bits_lo_4 - 1, bits_lo_3);
+    trk_qual[itrk]  = curr_trk_in.range(bits_lo_1 - 1, bits_lo_0);
+    trk_patt[itrk]  = curr_trk_in.range(bits_lo_2 - 1, bits_lo_1);
+    trk_col[itrk]   = curr_trk_in.range(bits_lo_3 - 1, bits_lo_2);
+    trk_zone[itrk]  = curr_trk_in.range(bits_lo_4 - 1, bits_lo_3);
+    trk_tzone[itrk] = details::timezone_traits<m_timezone_0_tag>::value;  // default timezone
+  }  // end loop over in1
+
+  // Copy to output: trk_qual, trk_patt, trk_col, trk_zone
+  LOOP_OUT: for (unsigned i = 0; i < TOP_N_OUT; i++) {
+
+#pragma HLS UNROLL
+
+    const unsigned n_out_per_trk = TOP_N_OUT / num_emtf_tracks;
+    const unsigned itrk = i / n_out_per_trk;
+    const unsigned ivar = i % n_out_per_trk;
 
     if (ivar == 0) {
-      out[i] = curr_trk_qual;
+      out[i] = trk_qual[itrk];
     } else if (ivar == 1) {
-      out[i] = curr_trk_patt;
+      out[i] = trk_patt[itrk];
     } else if (ivar == 2) {
-      out[i] = curr_trk_col;
+      out[i] = trk_col[itrk];
     } else if (ivar == 3) {
-      out[i] = curr_trk_zone;
+      out[i] = trk_zone[itrk];
     }
   }  // end loop over out
 }
