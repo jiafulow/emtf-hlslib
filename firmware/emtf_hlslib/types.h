@@ -29,15 +29,17 @@ enum struct TrackDataType {
   trk_col   = 2,
   trk_zone  = 3,
   trk_tzone = 4,
-  trk_seg   = 5,
-  trk_seg_v = 6,
-  trk_feat  = 7,
-  trk_invpt = 8,
-  trk_phi   = 9,
-  trk_eta   = 10,
-  trk_d0    = 11,
-  trk_z0    = 12,
-  trk_beta  = 13
+  trk_gate  = 5,
+  trk_seg   = 6,
+  trk_seg_v = 7,
+  trk_feat  = 8,
+  trk_invpt = 9,
+  trk_phi   = 10,
+  trk_eta   = 11,
+  trk_d0    = 12,
+  trk_z0    = 13,
+  trk_beta  = 14,
+  trk_valid = 15
 };
 
 // Bit width
@@ -62,6 +64,7 @@ template <> struct track_data_bw_traits<TrackDataType::trk_patt>  { static const
 template <> struct track_data_bw_traits<TrackDataType::trk_col>   { static const int value = 9; };
 template <> struct track_data_bw_traits<TrackDataType::trk_zone>  { static const int value = 2; };
 template <> struct track_data_bw_traits<TrackDataType::trk_tzone> { static const int value = 2; };
+template <> struct track_data_bw_traits<TrackDataType::trk_gate>  { static const int value = 2; };
 template <> struct track_data_bw_traits<TrackDataType::trk_seg>   { static const int value = 8; };
 template <> struct track_data_bw_traits<TrackDataType::trk_seg_v> { static const int value = 12; };
 template <> struct track_data_bw_traits<TrackDataType::trk_feat>  { static const int value = 13; };
@@ -71,6 +74,7 @@ template <> struct track_data_bw_traits<TrackDataType::trk_eta>   { static const
 template <> struct track_data_bw_traits<TrackDataType::trk_d0>    { static const int value = 14; };
 template <> struct track_data_bw_traits<TrackDataType::trk_z0>    { static const int value = 14; };
 template <> struct track_data_bw_traits<TrackDataType::trk_beta>  { static const int value = 14; };
+template <> struct track_data_bw_traits<TrackDataType::trk_valid> { static const int value = 1; };
 
 // Is signed
 template <SegmentDataType T> struct segment_data_sg_traits {};
@@ -94,6 +98,7 @@ template <> struct track_data_sg_traits<TrackDataType::trk_patt>  { static const
 template <> struct track_data_sg_traits<TrackDataType::trk_col>   { static const bool value = 0; };
 template <> struct track_data_sg_traits<TrackDataType::trk_zone>  { static const bool value = 0; };
 template <> struct track_data_sg_traits<TrackDataType::trk_tzone> { static const bool value = 0; };
+template <> struct track_data_sg_traits<TrackDataType::trk_gate>  { static const bool value = 0; };
 template <> struct track_data_sg_traits<TrackDataType::trk_seg>   { static const bool value = 0; };
 template <> struct track_data_sg_traits<TrackDataType::trk_seg_v> { static const bool value = 0; };
 template <> struct track_data_sg_traits<TrackDataType::trk_feat>  { static const bool value = 1; };
@@ -103,6 +108,7 @@ template <> struct track_data_sg_traits<TrackDataType::trk_eta>   { static const
 template <> struct track_data_sg_traits<TrackDataType::trk_d0>    { static const bool value = 1; };
 template <> struct track_data_sg_traits<TrackDataType::trk_z0>    { static const bool value = 1; };
 template <> struct track_data_sg_traits<TrackDataType::trk_beta>  { static const bool value = 1; };
+template <> struct track_data_sg_traits<TrackDataType::trk_valid> { static const bool value = 0; };
 
 // Use bw and sign traits to select the ap datatype
 template <SegmentDataType T> struct select_segment_datatype {
@@ -142,6 +148,7 @@ DEFINE_TRACK_DATATYPE(trk_patt)
 DEFINE_TRACK_DATATYPE(trk_col)
 DEFINE_TRACK_DATATYPE(trk_zone)
 DEFINE_TRACK_DATATYPE(trk_tzone)
+DEFINE_TRACK_DATATYPE(trk_gate)
 DEFINE_TRACK_DATATYPE(trk_seg)
 DEFINE_TRACK_DATATYPE(trk_seg_v)
 DEFINE_TRACK_DATATYPE(trk_feat)
@@ -151,6 +158,7 @@ DEFINE_TRACK_DATATYPE(trk_eta)
 DEFINE_TRACK_DATATYPE(trk_d0)
 DEFINE_TRACK_DATATYPE(trk_z0)
 DEFINE_TRACK_DATATYPE(trk_beta)
+DEFINE_TRACK_DATATYPE(trk_valid)
 #undef DEFINE_TRACK_DATATYPE
 
 // _____________________________________________________________________________
@@ -179,14 +187,20 @@ typedef trk_feat_t model_out_t;
 
 // These do not appear in the layer interfaces
 typedef ap_uint<1>                 bool_t;
+typedef ap_int<18>                 s18_t;  // for 27x18 multiplier (DSP48E2)
+typedef ap_int<27>                 s27_t;  // for 27x18 multiplier (DSP48E2)
+typedef ap_int<12>                 s12_t;  // for quad 12-bit adder (DSP48E2)
+typedef ap_int<24>                 s24_t;  // for dual 24-bit adder (DSP48E2)
+typedef ap_int<48>                 s48_t;  // for 48-bit adder (DSP48E2)
 typedef ap_uint<num_emtf_img_cols> dio_col_accum_t;
 typedef ap_uint<num_emtf_img_rows> dio_row_accum_t;
 typedef ap_uint<num_emtf_tracks>   dio_trk_accum_t;
-typedef ap_uint<11>                dio_ph_diff_t;   // bw: ceil(log2(20 / 0.01667))
-typedef ap_uint<6>                 dio_th_diff_t;   // bw: ceil(log2(14 / 0.28515625))
-typedef ap_uint<5>                 dio_ph_idx_t;    // bw: ceil(log2(site_num_segments)) = ceil(log2(24))
-typedef ap_uint<2>                 dio_ph_area_t;   // bw: ceil(log2(num_emtf_areas)) = ceil(log2(3))
-typedef dio_trk_accum_t            dio_survivor_t;  // output of find_dupes()
+typedef ap_uint<11>                dio_ph_diff_t;      // bw: ceil(log2(24 / 0.01667))
+typedef ap_uint<6>                 dio_th_diff_t;      // bw: ceil(log2(18 / 0.28515625))
+typedef ap_uint<5>                 dio_ph_diff_idx_t;  // bw: ceil(log2(12 * num_emtf_segments))
+typedef ap_uint<7>                 dio_patt_param_t;   // bw: ceil(log2(36 * 2))
+typedef dio_row_accum_t            dio_patt_preact_t;  // used in pooling_col_pool_op()
+typedef dio_trk_accum_t            dio_survivor_t;     // used in duperemoval_find_dupes_op()
 
 // These appear in the layer interfaces
 typedef dio_col_accum_t                                 zoning_out_t;
@@ -201,7 +215,8 @@ typedef make_concat<trk_zone_t, zonemerging_in_t>::type zonemerging_out_t;
 typedef zonemerging_out_t                               trkbuilding_in_t;
 
 // Misc
-typedef bool_t trk_valid_t;
+typedef emtf_theta1_t emtf_theta_t;
+typedef emtf_qual1_t  emtf_qual_t;
 
 }  // namespace emtf
 

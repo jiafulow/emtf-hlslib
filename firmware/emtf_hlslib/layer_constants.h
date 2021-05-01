@@ -13,6 +13,10 @@ constexpr static const int num_chambers_10deg = 7;
 constexpr static const int num_chambers_20deg = 4;
 constexpr static const int num_chambers_20deg_ext = 11;
 
+// Num of chambers in a row, including fake chambers
+// max allowed: ceil_mul4(num_chambers_20deg_ext)
+constexpr static const int num_chambers_max_allowed = 12;
+
 // Zone 0: 9 rows, 45 chambers
 constexpr static const int chamber_id_zone_0_row_0[7]     = {108, 109, 110, 111, 112, 113, 114};  // ME0
 constexpr static const int chamber_id_zone_0_row_1[7]     = { 54,  55,  56,  63,  64,  65,  99};  // GE1/1
@@ -74,21 +78,31 @@ constexpr static const int chamber_ph_cover_20deg[4]      = {165, 240, 315,  90}
 constexpr static const int chamber_ph_cover_20deg_ext[11] = {165, 240, 315,  90, 127, 165, 202, 240, 277, 315,  90};
 
 // Chamber img width
-// They must be compatible with num_emtf_img_cols
+// The values must be compatible with num_emtf_img_cols
 constexpr static const int chamber_img_bw = 90;          // 24 deg
 constexpr static const int chamber_img_joined_bw = 315;  // 84 deg
 constexpr static const int chamber_img_joined_col_start = chamber_img_joined_bw - 288;  // 27
 constexpr static const int chamber_img_joined_col_stop = chamber_img_joined_bw - 1;     // 314
 
 // Chamber order on each site
-constexpr static const int site_chamber_order_10deg[8]      = {6, 7, 0, 1, 2, 3, 4, 5};
-constexpr static const int site_chamber_order_20deg[4]      = {3, 0, 1, 2};
-constexpr static const int site_chamber_order_20deg_ext[12] = {3, 10, 11, 0, 4, 5, 1, 6, 7, 2, 8, 9};
+// array lengths must match num_chambers_max_allowed
+constexpr static const int chamber_order_10deg[12]     = {-1, -1,  6, -1,  0,  1, -1,  2,  3, -1,  4,  5};  // 7 real + 5 fake
+constexpr static const int chamber_order_20deg[12]     = { 3, -1, -1,  0, -1, -1,  1, -1, -1,  2, -1, -1};  // 4 real + 8 fake
+constexpr static const int chamber_order_20deg_ext[12] = { 3, -1, 10,  0,  4,  5,  1,  6,  7,  2,  8,  9};  // 11 real + 1 fake
 
 // Mapping site number to row number
-constexpr static const int site_to_row_zone_0[12] = { 2, 2, 4, 5, 7, 2, 4, 6, 7, 1, 3, 0};
-constexpr static const int site_to_row_zone_1[12] = { 1, 2, 4, 5, 7, 2, 4, 6, 7, 0, 3, 0};
-constexpr static const int site_to_row_zone_2[12] = { 0, 0, 3, 4, 6, 1, 2, 5, 7, 0, 3, 0};
+// array lengths must match num_emtf_sites
+constexpr static const int site_to_row_zone_0[12] = {2, 2, 4, 5, 7, 2, 4, 6, 7, 1, 3, 0};
+constexpr static const int site_to_row_zone_1[12] = {1, 2, 4, 5, 7, 2, 4, 6, 7, 0, 3, 0};
+constexpr static const int site_to_row_zone_2[12] = {0, 0, 3, 4, 6, 1, 2, 5, 7, 0, 3, 0};
+
+// Theta indices for finding th_median
+// canonical: [th1_ME2, th1_ME3, th1_ME4, th2_ME2, th2_ME3, th2_ME4, th1_GE2, th1_RE3, th1_RE4]
+// alt: [th1_ME2, th1_ME3, th1_ME4, th2_ME2, th2_ME3, th2_ME4, th1_RE2, th1_RE3, th1_RE4]
+// me1: [th1_ME12, th1_ME11, th2_ME0, th2_ME12, th2_ME11, th2_ME0, th1_RE12, th1_GE11, th1_ME0]
+constexpr static const int trk_theta_indices[9]     = { 2,  3,  4, 14, 15, 16, 10,  7,  8};
+constexpr static const int trk_theta_indices_alt[9] = { 2,  3,  4, 14, 15, 16,  6,  7,  8};
+constexpr static const int trk_theta_indices_me1[9] = { 1,  0, 23, 13, 12, 23,  5,  9, 11};
 
 // Theta window
 constexpr static const int th_invalid = 0;

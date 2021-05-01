@@ -111,25 +111,6 @@ template <int I> struct pattern_col_pad_traits<m_zone_0_tag, I> { static const i
 template <int I> struct pattern_col_pad_traits<m_zone_1_tag, I> { static const int value = pattern_col_pad_zone_1[I]; };
 template <int I> struct pattern_col_pad_traits<m_zone_2_tag, I> { static const int value = pattern_col_pad_zone_2[I]; };
 
-// Helper class to round up to the nearest multiple of 4
-template <unsigned int N>
-struct ceil_mul4 {
-  static const unsigned int value = ((N + 4 - 1) / 4) * 4;
-};
-
-template <typename Category>
-struct site_num_segments_traits {
-  static const int num_chambers = num_chambers_traits<Category>::value;
-  static const int num_chambers_round = ceil_mul4<num_chambers>::value;
-  static const int value = num_chambers_round * num_emtf_segments;
-};
-
-template <typename Category>
-struct area_num_segments_traits {
-  static const int site_num_segments = site_num_segments_traits<Category>::value;
-  static const int value = site_num_segments / ((num_emtf_img_areas + 1) / 2);
-};
-
 template <typename Category, int I>
 struct select_pattern_col_padding_type {
   static const int pad = pattern_col_pad_traits<Category, I>::value;
@@ -276,6 +257,37 @@ template <> struct get_chamber_ph_cover_op<m_10deg_chamber_tag> { inline int ope
 template <> struct get_chamber_ph_cover_op<m_20deg_chamber_tag> { inline int operator ()(int i) const { return chamber_ph_cover_20deg[i]; } };
 template <> struct get_chamber_ph_cover_op<m_20deg_ext_chamber_tag> { inline int operator ()(int i) const { return chamber_ph_cover_20deg_ext[i]; } };
 
+template <typename Category>
+struct get_chamber_order_op {};
+
+template <> struct get_chamber_order_op<m_10deg_chamber_tag> { inline int operator ()(int i) const { return chamber_order_10deg[i]; } };
+template <> struct get_chamber_order_op<m_20deg_chamber_tag> { inline int operator ()(int i) const { return chamber_order_20deg[i]; } };
+template <> struct get_chamber_order_op<m_20deg_ext_chamber_tag> { inline int operator ()(int i) const { return chamber_order_20deg_ext[i]; } };
+
+template <typename Category>
+struct get_segment_id_op {
+  typedef typename chamber_category_traits<Category>::chamber_category chamber_category;
+
+  inline int operator ()(int i) const {
+    auto get_chamber_id = get_chamber_id_op<Category>();
+    auto get_chamber_order = get_chamber_order_op<chamber_category>();
+    const int invalid_marker = model_config::n_in;
+
+    const int tmp_chm_0 = (i / num_emtf_segments);
+    const int tmp_seg_0 = (i % num_emtf_segments);
+
+    const int tmp_chm_1 = get_chamber_order(tmp_chm_0);
+    const bool is_valid_chm = (tmp_chm_1 != -1);
+
+    int iseg = invalid_marker;  // default to 'invalid'
+    if (is_valid_chm) {
+      const int tmp_chm_2 = get_chamber_id(tmp_chm_1);
+      iseg = ((tmp_chm_2 * num_emtf_segments) + tmp_seg_0);
+    }
+    return iseg;
+  }
+};
+
 // Text replacement macro ("token pasting") used to define the getters for col_start, col_mid, col_stop.
 // The template parameter takes zone. The operator () takes patt i row j. Note that padding is added.
 #define DEFINE_PATTERN_GETTER_OP(NAME) \
@@ -340,42 +352,6 @@ template <> struct get_pattern_activation_op<m_zone_0_tag> { inline int operator
 template <> struct get_pattern_activation_op<m_zone_1_tag> { inline int operator ()(int i) const { return pattern_activation_zone_1[i]; } };
 template <> struct get_pattern_activation_op<m_zone_2_tag> { inline int operator ()(int i) const { return pattern_activation_zone_2[i]; } };
 
-template <typename Category>
-struct get_site_chamber_order_op {};
-
-template <> struct get_site_chamber_order_op<m_10deg_chamber_tag> { inline int operator ()(int i) const { return site_chamber_order_10deg[i]; } };
-template <> struct get_site_chamber_order_op<m_20deg_chamber_tag> { inline int operator ()(int i) const { return site_chamber_order_20deg[i]; } };
-template <> struct get_site_chamber_order_op<m_20deg_ext_chamber_tag> { inline int operator ()(int i) const { return site_chamber_order_20deg_ext[i]; } };
-
-template <typename Category>
-struct get_site_chamber_valid_op {
-  inline bool operator ()(int i) const { return (i < (num_chambers_traits<Category>::value)); }
-};
-
-template <typename Category>
-struct get_site_segment_id_op {
-  typedef typename chamber_category_traits<Category>::chamber_category chamber_category;
-
-  inline int operator ()(int i) const {
-    auto get_chamber_id = get_chamber_id_op<Category>();
-    auto get_site_chamber_order = get_site_chamber_order_op<chamber_category>();
-    auto get_site_chamber_valid = get_site_chamber_valid_op<chamber_category>();
-
-    const int tmp_chm_0 = (i / num_emtf_segments);
-    const int tmp_chm_1 = get_site_chamber_order(tmp_chm_0);
-    const bool is_valid_chm = get_site_chamber_valid(tmp_chm_1);
-
-    const int invalid_marker = model_config::n_in;
-    int iseg = invalid_marker;  // default to 'invalid'
-    if (is_valid_chm) {
-      const int tmp_chm = get_chamber_id(tmp_chm_1);
-      const int tmp_seg = (i % num_emtf_segments);
-      iseg = ((tmp_chm * num_emtf_segments) + tmp_seg);
-    }
-    return iseg;
-  }
-};
-
 // Text replacement macro ("token pasting") used to define the getters for col_start, col_mid, col_stop.
 // The template parameter takes site. The operator () takes zone i patt j. Note that padding is added.
 #define DEFINE_SITE_PATTERN_GETTER_OP(NAME) \
@@ -430,7 +406,7 @@ DEFINE_SITE_PATTERN_GETTER_OP(col_stop)
 
 template <typename Site>
 struct get_site_pattern_col_pad_op {
-  inline int operator ()(int i) const {
+  inline int operator ()(int i, int j) const {
     const int site = site_traits<Site>::value;
     switch (i) {
       case 0: return pattern_col_pad_zone_0[site_to_row_zone_0[site]];
@@ -440,6 +416,12 @@ struct get_site_pattern_col_pad_op {
     }
   }
 };
+
+struct get_trk_theta_indices_op { inline int operator ()(int i) const { return trk_theta_indices[i]; } };
+
+struct get_trk_theta_indices_alt_op { inline int operator ()(int i) const { return trk_theta_indices_alt[i]; } };
+
+struct get_trk_theta_indices_me1_op { inline int operator ()(int i) const { return trk_theta_indices_me1[i]; } };
 
 template <typename Category>
 struct get_nnet_weights_op {};
@@ -482,45 +464,29 @@ struct ceil_log2 {
   static const unsigned int value = (N > 0) ? (1 + floor_log2<N - 1>::value) : 0;
 };
 
-// Helper class for argsort
-template <typename T, typename U>
-struct argsort_pair {
-  typedef T first_type;
-  typedef U second_type;
-  T first;
-  U second;
-  argsort_pair() : first(), second() {}
-  argsort_pair(const T& a, const U& b) : first(a), second(b) {}
-  argsort_pair(const argsort_pair& p) : first(p.first), second(p.second) {}
-
-  friend bool operator <(const argsort_pair& lhs, const argsort_pair& rhs) {
-
-#pragma HLS INLINE
-
-    return lhs.second < rhs.second;
-  }
-
-  friend bool operator <=(const argsort_pair& lhs, const argsort_pair& rhs) {
-
-#pragma HLS INLINE
-
-    return lhs.second <= rhs.second;
-  }
-
-  friend bool operator >(const argsort_pair& lhs, const argsort_pair& rhs) {
-
-#pragma HLS INLINE
-
-    return lhs.second > rhs.second;
-  }
-
-  friend bool operator >=(const argsort_pair& lhs, const argsort_pair& rhs) {
-
-#pragma HLS INLINE
-
-    return lhs.second >= rhs.second;
-  }
+// Helper classes to round up/down to the nearest multiple of 4
+template <unsigned int N>
+struct ceil_mul4 {
+  static const unsigned int divisor = 4;
+  static const unsigned int value = ((N + divisor - 1) / divisor) * divisor;
 };
+
+template <unsigned int N>
+struct floor_mul4 {
+  static const unsigned int divisor = 4;
+  static const unsigned int value = (N / divisor) * divisor;
+};
+
+// Helper function to force registering
+template <typename T>
+T force_reg(const T& x) {
+
+#pragma HLS INLINE self off
+
+#pragma HLS INTERFACE ap_none port=return register
+
+  return x;
+}
 
 // Helper function to calculate abs difference
 template <typename T>
@@ -531,7 +497,7 @@ T calc_abs_diff(const T& lhs, const T& rhs) {
   return (lhs >= rhs) ? static_cast<T>(lhs - rhs) : static_cast<T>(rhs - lhs);
 }
 
-// Helper function to calculate rectified difference i.e. max(0, x)
+// Helper function to calculate rectified difference i.e. max(0, lhs - rhs)
 template <typename T>
 T calc_rectified_diff(const T& lhs, const T& rhs) {
 
@@ -546,21 +512,12 @@ U calc_signed_diff(const T& lhs, const T& rhs) {
 
 #pragma HLS INLINE
 
-  return (static_cast<U>(lhs) - static_cast<U>(rhs));
-}
-
-// Helper function to choose value based on condition
-template <typename T>
-T choose_value_if(bool cond, const T& a, const T& b) {
-
-#pragma HLS INLINE
-
-  return cond ? a : b;
+  return static_cast<U>(static_cast<U>(lhs) - static_cast<U>(rhs));
 }
 
 // Helper function to suppress value if condition is false
-template <typename T>
-T take_value_if(bool cond, const T& a) {
+template <typename B, typename T>
+T take_value_if(B cond, const T& a) {
 
 #pragma HLS INLINE
 
@@ -592,21 +549,6 @@ void fill_n_values(T out[N], const T& value) {
 #pragma HLS UNROLL
 
     out[i] = value;
-  }
-}
-
-template <unsigned int N, typename T_IN, typename T_OUT>
-void pack_boolean_values(const T_IN (&in0)[N], T_OUT& out) {
-  static_assert(is_same<T_IN, ap_uint<1> >::value, "T_IN type check failed");
-  static_assert(is_same<T_OUT, ap_uint<N> >::value, "T_OUT type check failed");
-
-#pragma HLS INLINE
-
-  for (unsigned i = 0; i < N; i++) {
-
-#pragma HLS UNROLL
-
-    out[i] = in0[i];
   }
 }
 

@@ -42,72 +42,71 @@ struct is_same<T, T> : true_type {};
 template <typename T>
 struct is_ap_int_type : false_type {};
 
-template <int N> struct is_ap_int_type<ap_int<N> > : true_type {};  // toggle to true
-template <int N> struct is_ap_int_type<ap_uint<N> > : true_type {};
+template <int W> struct is_ap_int_type<ap_int<W> > : true_type {};  // toggle to true
+template <int W> struct is_ap_int_type<ap_uint<W> > : true_type {};
 
 template <typename T>
 struct is_ap_fixed_type : false_type {};
 
-template <int W, int I> struct is_ap_fixed_type<ap_fixed<W, I> > : true_type {};  // toggle to true
-template <int W, int I> struct is_ap_fixed_type<ap_ufixed<W, I> > : true_type {};
+template <int W, int I, ap_q_mode Q, ap_o_mode O> struct is_ap_fixed_type<ap_fixed<W, I, Q, O> > : true_type {};  // toggle to true
+template <int W, int I, ap_q_mode Q, ap_o_mode O> struct is_ap_fixed_type<ap_ufixed<W, I, Q, O> > : true_type {};
 
-// Make ap datatype - ap_int<N> or ap_uint<N>
-template <int N, bool S>
-struct make_ap_int_type { typedef typename conditional<S, ap_int<N>, ap_uint<N> >::type type; };
+// Make ap datatype - ap_int<W> or ap_uint<W>
+template <int W, bool S>
+struct make_ap_int_type { typedef typename conditional<S, ap_int<W>, ap_uint<W> >::type type; };
 
 // Make signed ap datatype
 template <typename T>
 struct make_signed { typedef T type; };
 
-template <int N> struct make_signed<ap_uint<N> > { typedef ap_int<N> type; };
+template <int W> struct make_signed<ap_uint<W> > { typedef ap_int<W> type; };
+template <int W> struct make_signed<const ap_uint<W> > { typedef const ap_int<W> type; };
 
 // Make unsigned ap datatype
 template <typename T>
 struct make_unsigned { typedef T type; };
 
-template <int N> struct make_unsigned<ap_int<N> > { typedef ap_uint<N> type; };
+template <int W> struct make_unsigned<ap_int<W> > { typedef ap_uint<W> type; };
+template <int W> struct make_unsigned<const ap_int<W> > { typedef const ap_uint<W> type; };
 
 // Make wider ap datatype
 template <typename T>
 struct make_wider { typedef T type; };
 
-template <int N> struct make_wider<ap_int<N> > { typedef ap_int<N+1> type; };
-template <int N> struct make_wider<ap_uint<N> > { typedef ap_uint<N+1> type; };
+template <int W> struct make_wider<ap_int<W> > { typedef ap_int<W+1> type; };
+template <int W> struct make_wider<ap_uint<W> > { typedef ap_uint<W+1> type; };
+template <int W> struct make_wider<const ap_int<W> > { typedef const ap_int<W+1> type; };
+template <int W> struct make_wider<const ap_uint<W> > { typedef const ap_uint<W+1> type; };
 
 // Make narrower ap datatype
 template <typename T>
 struct make_narrower { typedef T type; };
 
-template <int N> struct make_narrower<ap_int<N> > { typedef ap_int<N-1> type; };
-template <int N> struct make_narrower<ap_uint<N> > { typedef ap_uint<N-1> type; };
+template <int W> struct make_narrower<ap_int<W> > { typedef ap_int<W-1> type; };
+template <int W> struct make_narrower<ap_uint<W> > { typedef ap_uint<W-1> type; };
+template <int W> struct make_narrower<const ap_int<W> > { typedef const ap_int<W-1> type; };
+template <int W> struct make_narrower<const ap_uint<W> > { typedef const ap_uint<W-1> type; };
 
 // Make concatenated ap datatype
 template <typename T, typename U>
 struct make_concat {};
 
-template <int M, int N> struct make_concat<ap_int<M>, ap_int<N> > { typedef ap_int<M+N> type; };
-template <int M, int N> struct make_concat<ap_uint<M>, ap_uint<N> > { typedef ap_uint<M+N> type; };
+template <int W1, int W2> struct make_concat<ap_int<W1>, ap_int<W2> > { typedef ap_int<W1+W2> type; };
+template <int W1, int W2> struct make_concat<ap_uint<W1>, ap_uint<W2> > { typedef ap_uint<W1+W2> type; };
 
 // Make repeated ap datatype
 template <typename T, int U>
 struct make_repeat {};
 
-template <int M, int N> struct make_repeat<ap_int<M>, N> { typedef ap_int<M*N> type; };
-template <int M, int N> struct make_repeat<ap_uint<M>, N> { typedef ap_uint<M*N> type; };
+template <int W, int N> struct make_repeat<ap_int<W>, N> { typedef ap_int<W*N> type; };
+template <int W, int N> struct make_repeat<ap_uint<W>, N> { typedef ap_uint<W*N> type; };
 
 // Find max allowed value for ap datatype
 template <typename T>
 struct find_ap_int_max_allowed {};
 
-template <int N> struct find_ap_int_max_allowed<ap_int<N> > { static const int value = ((1 << N) / 2) - 1; };
-template <int N> struct find_ap_int_max_allowed<ap_uint<N> > { static const int value = (1 << N) - 1; };
-
-// Find fractional bit width for ap datatype
-template <typename T>
-struct find_ap_fixed_fwidth {};
-
-template <int W, int I> struct find_ap_fixed_fwidth<ap_fixed<W, I> > { static const int value = W - I; };
-template <int W, int I> struct find_ap_fixed_fwidth<ap_ufixed<W, I> > { static const int value = W - I; };
+template <int W> struct find_ap_int_max_allowed<ap_int<W> > { static const int value = ((1 << W) / 2) - 1; };
+template <int W> struct find_ap_int_max_allowed<ap_uint<W> > { static const int value = (1 << W) - 1; };
 
 }  // namespace emtf
 

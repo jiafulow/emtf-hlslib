@@ -50,7 +50,7 @@ constexpr int num_emtf_sites_rm = 5;     // per track
 
 constexpr int num_emtf_img_rows = 8;
 constexpr int num_emtf_img_cols = 288;
-constexpr int num_emtf_img_areas = 3;
+constexpr int num_emtf_img_gates = 3;
 
 constexpr int emtf_img_col_factor = 16;
 constexpr int emtf_img_col_factor_log2 = 4;  // (1 << 4) = 16
