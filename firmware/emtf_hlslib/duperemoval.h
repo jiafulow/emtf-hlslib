@@ -1,6 +1,14 @@
 #ifndef __EMTF_HLSLIB_DUPEREMOVAL_H__
 #define __EMTF_HLSLIB_DUPEREMOVAL_H__
 
+// Function hierarchy
+//
+// duperemoval_layer
+// +-- duperemoval_op (INLINE)
+//     |-- duperemoval_preprocess_op (INLINE)
+//     |-- duperemoval_find_dupes_op (INLINE)
+//     +-- duperemoval_remove_dupes_op (INLINE)
+
 namespace emtf {
 
 template <typename T=void>
@@ -15,7 +23,7 @@ void duperemoval_preprocess_op(
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
-//#pragma HLS INLINE
+#pragma HLS INLINE
 
   // Reduce to 5 sites for duplicate removal: ME1, ME2, ME3, ME4, ME0
   //
@@ -27,16 +35,13 @@ void duperemoval_preprocess_op(
   // ME4        | ME4, RE4
   // ME0        | ME0
 
+  const unsigned int N = duperemoval_config::n_in;
+  typedef trk_seg_t data_t;
+
   // Loop over tracks
-  LOOP_TRK_1: for (unsigned i = 0; i < duperemoval_config::n_in; i++) {
+  LOOP_TRK_1: for (unsigned i = 0; i < N; i++) {
 
 #pragma HLS UNROLL
-
-    const auto trk_seg_rhs = &(trk_seg[i * num_emtf_sites]);
-    const trk_seg_v_t& vld_rhs = trk_seg_v[i];
-
-    auto trk_seg_lhs = &(trk_seg_reduced[i * num_emtf_sites_rm]);
-    trk_seg_v_t& vld_lhs = trk_seg_reduced_v[i];
 
     // Priority encoder (input at lower index has higher priority)
     //
@@ -46,30 +51,50 @@ void duperemoval_preprocess_op(
     //  4,  8         -> 3
     // 11             -> 4
 
-    // The following is basically a loop over trk_seg and trk_seg_v
-    trk_seg_lhs[0] = vld_rhs[0] ? trk_seg_rhs[0] : (vld_rhs[9] ? trk_seg_rhs[9] : (vld_rhs[1] ? trk_seg_rhs[1] : trk_seg_rhs[5]));
-    trk_seg_lhs[1] = vld_rhs[2] ? trk_seg_rhs[2] : (vld_rhs[10] ? trk_seg_rhs[10] : trk_seg_rhs[6]);
-    trk_seg_lhs[2] = vld_rhs[3] ? trk_seg_rhs[3] : trk_seg_rhs[7];
-    trk_seg_lhs[3] = vld_rhs[4] ? trk_seg_rhs[4] : trk_seg_rhs[8];
-    trk_seg_lhs[4] = trk_seg_rhs[11];
+    const unsigned begin_index = (i * num_emtf_sites);
+    const unsigned reduced_begin_index = (i * num_emtf_sites_rm);
 
-    vld_lhs[0] = vld_rhs[0] | vld_rhs[9] | vld_rhs[1] | vld_rhs[5];
-    vld_lhs[1] = vld_rhs[2] | vld_rhs[10] | vld_rhs[6];
-    vld_lhs[2] = vld_rhs[3] | vld_rhs[7];
-    vld_lhs[3] = vld_rhs[4] | vld_rhs[8];
-    vld_lhs[4] = vld_rhs[11];
+    // Loop over trk_seg and trk_seg_v manually
+    const data_t tmp_0 = trk_seg[begin_index + 0];
+    const data_t tmp_1 = trk_seg[begin_index + 1];
+    const data_t tmp_2 = trk_seg[begin_index + 2];
+    const data_t tmp_3 = trk_seg[begin_index + 3];
+    const data_t tmp_4 = trk_seg[begin_index + 4];
+    const data_t tmp_5 = trk_seg[begin_index + 5];
+    const data_t tmp_6 = trk_seg[begin_index + 6];
+    const data_t tmp_7 = trk_seg[begin_index + 7];
+    const data_t tmp_8 = trk_seg[begin_index + 8];
+    const data_t tmp_9 = trk_seg[begin_index + 9];
+    const data_t tmp_a = trk_seg[begin_index + 10];
+    const data_t tmp_b = trk_seg[begin_index + 11];
 
-    //std::cout << "[DEBUG] trk " << i << " sites (in): [";
-    //const trk_seg_t invalid_marker_ph_seg = model_config::n_in;
-    //for (unsigned j = 0; j < num_emtf_sites; j++) {
-    //  std::cout << (vld_rhs[j] ? trk_seg_rhs[j] : invalid_marker_ph_seg) << ", ";
-    //}
-    //std::cout << "] sites (out): [";
-    //for (unsigned j = 0; j < num_emtf_sites_rm; j++) {
-    //  std::cout << (vld_lhs[j] ? trk_seg_lhs[j] : invalid_marker_ph_seg) << ", ";
-    //}
-    //std::cout << "]" << std::endl;
-  }
+    const bool_t vld_0 = trk_seg_v[i][0];
+    const bool_t vld_1 = trk_seg_v[i][1];
+    const bool_t vld_2 = trk_seg_v[i][2];
+    const bool_t vld_3 = trk_seg_v[i][3];
+    const bool_t vld_4 = trk_seg_v[i][4];
+    const bool_t vld_5 = trk_seg_v[i][5];
+    const bool_t vld_6 = trk_seg_v[i][6];
+    const bool_t vld_7 = trk_seg_v[i][7];
+    const bool_t vld_8 = trk_seg_v[i][8];
+    const bool_t vld_9 = trk_seg_v[i][9];
+    const bool_t vld_a = trk_seg_v[i][10];
+    const bool_t vld_b = trk_seg_v[i][11];
+
+    // Mux
+    trk_seg_reduced[reduced_begin_index + 0] = vld_0 ? tmp_0 : (vld_9 ? tmp_9 : (vld_1 ? tmp_1 : tmp_5));
+    trk_seg_reduced[reduced_begin_index + 1] = vld_2 ? tmp_2 : (vld_a ? tmp_a : tmp_6);
+    trk_seg_reduced[reduced_begin_index + 2] = vld_3 ? tmp_3 : tmp_7;
+    trk_seg_reduced[reduced_begin_index + 3] = vld_4 ? tmp_4 : tmp_8;
+    trk_seg_reduced[reduced_begin_index + 4] = tmp_b;
+
+    // Logical OR
+    trk_seg_reduced_v[i][0] = vld_0 | vld_9 | vld_1 | vld_5;
+    trk_seg_reduced_v[i][1] = vld_2 | vld_a | vld_6;
+    trk_seg_reduced_v[i][2] = vld_3 | vld_7;
+    trk_seg_reduced_v[i][3] = vld_4 | vld_8;
+    trk_seg_reduced_v[i][4] = vld_b;
+  }  // end loop over tracks
 }
 
 template <typename T=void>
@@ -83,31 +108,40 @@ void duperemoval_find_dupes_op(
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
-//#pragma HLS INLINE
+#pragma HLS INLINE
 
-  // Find duplicates by checking pairs of tracks and their associated segments
+  // Find duplicates by checking pairs of tracks and their associated segments. Basically:
+  //
+  // for i in tracks:
+  //   for j in tracks:
+  //     for k in range(num_emtf_sites_rm):
+  //       has_shared_seg(...)
+
+  const unsigned int N = duperemoval_config::n_in;
+  const unsigned int N_sq = N * N;
 
   // survivors_tmp is used to keep the not-duplicate tracks
-  dio_survivor_t survivors_tmp[duperemoval_config::n_in];
+  bool_t survivors_tmp[N_sq];
 
 #pragma HLS ARRAY_PARTITION variable=survivors_tmp complete dim=0
 
-  typedef ap_uint<details::ceil_log2<duperemoval_config::n_in>::value> idx_t;
-  idx_t cnt = 0;  // survivor count
-
-  LOOP_TRK_2: for (unsigned i = 0; i < duperemoval_config::n_in; i++) {
+  LOOP_TRK_2: for (unsigned i = 0; i < N_sq; i++) {
 
 #pragma HLS UNROLL
 
     survivors_tmp[i] = 0;  // init as zero
   }  // end i loop
 
+  // Survivor count
+  typedef ap_uint<details::ceil_log2<N - 1>::value> idx_t;
+  idx_t cnt = 0;
+
   // trk 0 is not a duplicate by construction
-  survivors_tmp[cnt][0] = static_cast<bool_t>(1);
+  survivors_tmp[(static_cast<unsigned>(cnt) * N) + 0] = 1;  // set bit to 1
   cnt++;
 
   // Loop over pairs of tracks (trk 0 is skipped), and check all 5 sites for each pair
-  LOOP_TRK_3: for (unsigned i = 1; i < duperemoval_config::n_in; i++) {
+  LOOP_TRK_3: for (unsigned i = 1; i < N; i++) {
 
 #pragma HLS UNROLL
 
@@ -127,8 +161,7 @@ void duperemoval_find_dupes_op(
         const bool_t vld_i = trk_seg_reduced_v[i][k];
         const bool_t vld_j = trk_seg_reduced_v[j][k];
         const bool_t has_shared_seg = (
-            (trk_seg_reduced[(i * num_emtf_sites_rm) + k] == trk_seg_reduced[(j * num_emtf_sites_rm) + k]) ?
-            static_cast<bool_t>(1) : static_cast<bool_t>(0)
+            trk_seg_reduced[(i * num_emtf_sites_rm) + k] == trk_seg_reduced[(j * num_emtf_sites_rm) + k]
         );
         killed_tmp |= (vld_i & vld_j & has_shared_seg);  // logical OR over all 5 sites
       }  // end k loop
@@ -138,29 +171,35 @@ void duperemoval_find_dupes_op(
 
     // Survive if not a duplicate
     if (!killed) {
-      survivors_tmp[cnt][i] = static_cast<bool_t>(1);
+      survivors_tmp[(static_cast<unsigned>(cnt) * N) + i] = 1;  // set bit to 1
       cnt++;
     }
   }  // end i loop
 
-  // Copy survivors_tmp to survivors
-  LOOP_TRK_4: for (unsigned i = 0; i < duperemoval_config::n_in; i++) {
+  // Output
+  LOOP_TRK_4: for (unsigned i = 0; i < N; i++) {
 
 #pragma HLS UNROLL
 
-    survivors[i] = survivors_tmp[i];
+    const auto survivors_i = (
+        survivors_tmp[(i * N) + 3],
+        survivors_tmp[(i * N) + 2],
+        survivors_tmp[(i * N) + 1],
+        survivors_tmp[(i * N) + 0]
+    );
+    survivors[i] = survivors_i;
   }  // end i loop
 
   //std::cout << "[DEBUG] trk_seg_reduced_v: " << std::endl;
-  //for (unsigned i = 0; i < duperemoval_config::n_in; i++) {
+  //for (unsigned i = 0; i < N; i++) {
   //  for (unsigned j = 0; j < num_emtf_sites_rm; j++) {
   //    std::cout << trk_seg_reduced_v[i][j] << " ";
   //  }
   //  std::cout << std::endl;
   //}
   //std::cout << "[DEBUG] survivors: " << std::endl;
-  //for (unsigned i = 0; i < duperemoval_config::n_in; i++) {
-  //  for (unsigned j = 0; j < duperemoval_config::n_in; j++) {
+  //for (unsigned i = 0; i < N; i++) {
+  //  for (unsigned j = 0; j < N; j++) {
   //    std::cout << survivors[i][j] << " ";
   //  }
   //  std::cout << std::endl;
@@ -184,10 +223,11 @@ void duperemoval_remove_dupes_op(
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
-//#pragma HLS INLINE
+#pragma HLS INLINE
 
   // Remove duplicates by saving only the survivors
   const trk_seg_t invalid_marker_ph_seg = model_config::n_in;
+  const trk_feat_t invalid_marker_trk_feat = 0;
 
   // Multiplex to output
   LOOP_TRK_5: for (unsigned i = 0; i < duperemoval_config::n_out; i++) {
@@ -195,13 +235,13 @@ void duperemoval_remove_dupes_op(
 #pragma HLS UNROLL
 
     // Fill with default values
-    trk_valid_rm[i] = static_cast<trk_valid_t>(0);
-    trk_seg_rm_v[i] = static_cast<trk_seg_v_t>(0);
+    trk_valid_rm[i] = 0;
+    trk_seg_rm_v[i] = 0;
     details::fill_n_values<num_emtf_sites>(
         &(trk_seg_rm[i * num_emtf_sites]), invalid_marker_ph_seg
     );
     details::fill_n_values<num_emtf_features>(
-        &(trk_feat_rm[i * num_emtf_features]), static_cast<trk_feat_t>(0)
+        &(trk_feat_rm[i * num_emtf_features]), invalid_marker_trk_feat
     );
 
     // Loop over possible tracks (j >= i)
@@ -219,6 +259,7 @@ void duperemoval_remove_dupes_op(
       if (survived) {
         trk_valid_rm[i] = trk_valid[j];
         trk_seg_rm_v[i] = trk_seg_v[j];
+        // Copy to arrays
         details::copy_n_values<num_emtf_sites>(
             &(trk_seg[j * num_emtf_sites]), &(trk_seg_rm[i * num_emtf_sites])
         );
@@ -235,9 +276,9 @@ void duperemoval_remove_dupes_op(
     return ((x & (x - 1)) == 0);
   };
   for (unsigned i = 0; i < duperemoval_config::n_out; i++) {
-    emtf_assert(is_power_of_two(survivors[i]));  // make sure is either zero or power of 2
+    emtf_assert(is_power_of_two(survivors[i]));  // make sure it is either zero or power of 2
   }
-#endif
+#endif  // __SYNTHESIS__ not defined
 
 }
 
@@ -262,9 +303,9 @@ void duperemoval_op(
 
 #pragma HLS INLINE
 
-  trk_seg_t trk_seg_reduced[duperemoval_config::n_in * num_emtf_sites_rm];
-  trk_seg_v_t trk_seg_reduced_v[duperemoval_config::n_in];
-  dio_survivor_t survivors[duperemoval_config::n_in];
+  trk_seg_t      trk_seg_reduced   [duperemoval_config::n_in * num_emtf_sites_rm];
+  trk_seg_v_t    trk_seg_reduced_v [duperemoval_config::n_in];
+  dio_survivor_t survivors         [duperemoval_config::n_in];
 
 #pragma HLS ARRAY_PARTITION variable=trk_seg_reduced complete dim=0
 #pragma HLS ARRAY_PARTITION variable=trk_seg_reduced_v complete dim=0
@@ -294,7 +335,7 @@ void duperemoval_layer(
     trk_valid_t       trk_valid_rm [duperemoval_config::n_out]
 ) {
 
-#pragma HLS PIPELINE II=duperemoval_config::layer_target_ii
+#pragma HLS PIPELINE II=duperemoval_config::target_ii
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
@@ -303,6 +344,7 @@ void duperemoval_layer(
   static_assert(duperemoval_config::n_out == num_emtf_tracks, "duperemoval_config::n_out check failed");
   static_assert(num_emtf_sites == 12, "num_emtf_sites must be 12");
   static_assert(num_emtf_sites_rm == 5, "num_emtf_sites_rm must be 5");
+  static_assert(dio_survivor_t::width == duperemoval_config::n_in, "dio_survivor_t type check failed");
 
   duperemoval_op<Zone>(
       trk_seg, trk_seg_v, trk_feat, trk_valid, trk_seg_rm, trk_seg_rm_v, trk_feat_rm, trk_valid_rm

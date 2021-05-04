@@ -1,5 +1,18 @@
-#ifndef __EMTF_HLSLIB_NNET_H__
-#define __EMTF_HLSLIB_NNET_H__
+#ifndef __EMTF_HLSLIB_FULLYCONNECT_H__
+#define __EMTF_HLSLIB_FULLYCONNECT_H__
+
+// Function hierarchy
+//
+// fullyconnect_layer
+// +-- fullyconnect_op (INLINE)
+//     |-- fullyconnect_preprocessing_op
+//     |-- fullyconnect_dense_op
+//     |-- fullyconnect_activation_op
+//     |-- fullyconnect_dense_op
+//     |-- fullyconnect_activation_op
+//     |-- fullyconnect_dense_op
+//     |-- fullyconnect_activation_op
+//     +-- fullyconnect_dense_final_op
 
 // EMTF HLS
 #include "nnet_kernels.h"
@@ -18,9 +31,9 @@ void fullyconnect_activation_op(
 
 //#pragma HLS INLINE
 
-  const int N = details::nnet_num_outbound_nodes_traits<Category>::value;
+  const unsigned int N = details::nnet_num_outbound_nodes_traits<Category>::value;
 
-  details::vector_activate<N>(in0, out);
+  details::vector_tanh_activate_op<N>(in0, out);
 }
 
 template <typename Category, typename T_IN, typename T_OUT>
@@ -36,14 +49,21 @@ void fullyconnect_preprocessing_op(
 //#pragma HLS INLINE
 
   typedef typename details::select_nnet_weight_type<Category>::type weight_t;
-  const int M = details::nnet_num_inbound_nodes_traits<Category>::value;
-  const int N = details::nnet_num_outbound_nodes_traits<Category>::value;
+  const unsigned int M = details::nnet_num_inbound_nodes_traits<Category>::value;
+  const unsigned int N = details::nnet_num_outbound_nodes_traits<Category>::value;
 
-  int weights_int[N];
-  details::init_table_op<N>(weights_int, details::get_nnet_weights_op<Category>());
-
+#ifndef __SYNTHESIS__
+  static bool initialized = false;
+  static weight_t weights[N];
+#else
+  bool initialized = false;
   weight_t weights[N];
-  details::init_nnet_weights_op<N>(weights_int, weights);
+#endif
+
+  if (!initialized) {
+    initialized = true;
+    details::init_nnet_weights_op<N>(weights, details::get_nnet_weights_op<Category>());
+  }
 
   ap_fixed<T_IN::width, T_IN::width> in0_cast[N];  // cast from ap_int to ap_fixed
 
@@ -51,8 +71,8 @@ void fullyconnect_preprocessing_op(
 #pragma HLS ARRAY_PARTITION variable=in0_cast complete dim=0
 
   emtf_assert(M == N);
-  details::vector_cast<N>(in0, in0_cast);
-  details::vector_normalize<N>(weights, in0_cast, out);
+  details::vector_cast_op<N>(in0, in0_cast);
+  details::vec_vec_mult_op<N>(in0_cast, weights, out);
 }
 
 template <typename Category, typename T_IN, typename T_OUT>
@@ -69,25 +89,29 @@ void fullyconnect_dense_op(
 
   typedef typename details::select_nnet_weight_type<Category>::type weight_t;
   typedef typename details::select_nnet_weight_type<Category>::type bias_t;
-  const int M = details::nnet_num_inbound_nodes_traits<Category>::value;
-  const int N = details::nnet_num_outbound_nodes_traits<Category>::value;
+  const unsigned int M = details::nnet_num_inbound_nodes_traits<Category>::value;
+  const unsigned int N = details::nnet_num_outbound_nodes_traits<Category>::value;
 
-  int weights_int[M * N];
-  details::init_table_op<M * N>(weights_int, details::get_nnet_weights_op<Category>());
-
-  int biases_int[N];
-  details::init_table_op<N>(biases_int, details::get_nnet_biases_op<Category>());
-
+#ifndef __SYNTHESIS__
+  static bool initialized = false;
+  static weight_t weights[M * N];
+  static bias_t biases[N];
+#else
+  bool initialized = false;
   weight_t weights[M * N];
-  details::init_nnet_weights_op<M * N>(weights_int, weights);
-
   bias_t biases[N];
-  details::init_nnet_weights_op<N>(biases_int, biases);
+#endif
+
+  if (!initialized) {
+    initialized = true;
+    details::init_nnet_weights_op<M * N>(weights, details::get_nnet_weights_op<Category>());
+    details::init_nnet_weights_op<N>(biases, details::get_nnet_biases_op<Category>());
+  }
 
 #pragma HLS ARRAY_PARTITION variable=weights complete dim=0
 #pragma HLS ARRAY_PARTITION variable=biases complete dim=0
 
-  details::matrix_vector_mult_biasadd<M, N>(weights, in0, biases, out);
+  details::mat_vec_mult_biasadd_op<M, N>(in0, weights, biases, out);
 }
 
 template <typename Category, typename T_IN, typename T_OUT>
@@ -104,41 +128,44 @@ void fullyconnect_dense_final_op(
 
   typedef typename details::select_nnet_weight_type<Category>::type weight_t;
   typedef typename details::select_nnet_weight_type<Category>::type bias_t;
-  const int M = details::nnet_num_inbound_nodes_traits<Category>::value;
-  const int N = details::nnet_num_outbound_nodes_traits<Category>::value;
+  const unsigned int M = details::nnet_num_inbound_nodes_traits<Category>::value;
+  const unsigned int N = details::nnet_num_outbound_nodes_traits<Category>::value;
 
-  int weights_int[M * N];
-  details::init_table_op<M * N>(weights_int, details::get_nnet_weights_op<Category>());
-
-  int biases_int[N];
-  details::init_table_op<N>(biases_int, details::get_nnet_biases_op<Category>());
-
+#ifndef __SYNTHESIS__
+  static bool initialized = false;
+  static weight_t weights[M * N];
+  static bias_t biases[N];
+#else
+  bool initialized = false;
   weight_t weights[M * N];
-  details::init_nnet_weights_op<M * N>(weights_int, weights);
-
   bias_t biases[N];
-  details::init_nnet_weights_op<N>(biases_int, biases);
+#endif
+
+  if (!initialized) {
+    initialized = true;
+    details::init_nnet_weights_op<M * N>(weights, details::get_nnet_weights_op<Category>());
+    details::init_nnet_weights_op<N>(biases, details::get_nnet_biases_op<Category>());
+  }
 
 #pragma HLS ARRAY_PARTITION variable=weights complete dim=0
 #pragma HLS ARRAY_PARTITION variable=biases complete dim=0
 
   emtf_assert(N == 1);
-  details::vector_vector_mult_biasadd<M>(weights, in0, biases[0], out[0]);
+  details::vec_vec_mult_biasadd_op<M>(in0, weights, biases[0], out[0]);
 }
-
 
 // _____________________________________________________________________________
 // Fully connected op
 
 template <typename Zone>
 void fullyconnect_op(
-    const trk_feat_t   curr_trk_feat  [num_emtf_features],
-    trk_invpt_t&       curr_trk_invpt ,
-    trk_phi_t&         curr_trk_phi   ,
-    trk_eta_t&         curr_trk_eta   ,
-    trk_d0_t&          curr_trk_d0    ,
-    trk_z0_t&          curr_trk_z0    ,
-    trk_beta_t&        curr_trk_beta
+    const trk_feat_t curr_trk_feat  [num_emtf_features],
+    trk_invpt_t&     curr_trk_invpt ,
+    trk_phi_t&       curr_trk_phi   ,
+    trk_eta_t&       curr_trk_eta   ,
+    trk_d0_t&        curr_trk_d0    ,
+    trk_z0_t&        curr_trk_z0    ,
+    trk_beta_t&      curr_trk_beta
 ) {
 
 #pragma HLS PIPELINE II=fullyconnect_config::target_ii
@@ -147,41 +174,42 @@ void fullyconnect_op(
 
 #pragma HLS INLINE
 
+  const unsigned int n_layer_0 = details::nnet_num_outbound_nodes_traits<m_nnet_0_layer_0_tag>::value;
+  const unsigned int n_layer_1 = details::nnet_num_outbound_nodes_traits<m_nnet_0_layer_1_tag>::value;
+  const unsigned int n_layer_2 = details::nnet_num_outbound_nodes_traits<m_nnet_0_layer_2_tag>::value;
+  const unsigned int n_layer_3 = details::nnet_num_outbound_nodes_traits<m_nnet_0_layer_3_tag>::value;
+  const unsigned int n_layer_4 = details::nnet_num_outbound_nodes_traits<m_nnet_0_layer_4_tag>::value;
+
+  // Preactivation types, only needed for the hidden dense layers
+  typedef details::select_nnet_preactivation_type<m_nnet_0_layer_1_tag>::type layer_1_preact_t;
+  typedef details::select_nnet_preactivation_type<m_nnet_0_layer_2_tag>::type layer_2_preact_t;
+  typedef details::select_nnet_preactivation_type<m_nnet_0_layer_3_tag>::type layer_3_preact_t;
+
+  // Output types
   typedef details::select_nnet_activation_type<m_nnet_0_layer_0_tag>::type layer_0_out_t;
   typedef details::select_nnet_activation_type<m_nnet_0_layer_1_tag>::type layer_1_out_t;
   typedef details::select_nnet_activation_type<m_nnet_0_layer_2_tag>::type layer_2_out_t;
   typedef details::select_nnet_activation_type<m_nnet_0_layer_3_tag>::type layer_3_out_t;
   typedef details::select_nnet_activation_type<m_nnet_0_layer_4_tag>::type layer_4_out_t;
 
-  // Preactivation is only needed for the hidden layers
-  typedef details::select_nnet_preactivation_type<m_nnet_0_layer_1_tag>::type layer_1_preact_t;
-  typedef details::select_nnet_preactivation_type<m_nnet_0_layer_2_tag>::type layer_2_preact_t;
-  typedef details::select_nnet_preactivation_type<m_nnet_0_layer_3_tag>::type layer_3_preact_t;
+  // Intermediate arrays
+  layer_1_preact_t layer_1_preact [n_layer_1];
+  layer_2_preact_t layer_2_preact [n_layer_2];
+  layer_3_preact_t layer_3_preact [n_layer_3];
+  layer_0_out_t    layer_0_out    [n_layer_0];
+  layer_1_out_t    layer_1_out    [n_layer_1];
+  layer_2_out_t    layer_2_out    [n_layer_2];
+  layer_3_out_t    layer_3_out    [n_layer_3];
+  layer_4_out_t    layer_4_out    [n_layer_4];
 
-  const int n_layer_0 = details::nnet_num_outbound_nodes_traits<m_nnet_0_layer_0_tag>::value;
-  const int n_layer_1 = details::nnet_num_outbound_nodes_traits<m_nnet_0_layer_1_tag>::value;
-  const int n_layer_2 = details::nnet_num_outbound_nodes_traits<m_nnet_0_layer_2_tag>::value;
-  const int n_layer_3 = details::nnet_num_outbound_nodes_traits<m_nnet_0_layer_3_tag>::value;
-  const int n_layer_4 = details::nnet_num_outbound_nodes_traits<m_nnet_0_layer_4_tag>::value;
-
-  layer_0_out_t layer_0_out[n_layer_0];
-  layer_1_out_t layer_1_out[n_layer_1];
-  layer_2_out_t layer_2_out[n_layer_2];
-  layer_3_out_t layer_3_out[n_layer_3];
-  layer_4_out_t layer_4_out[n_layer_4];
-
-  layer_1_preact_t layer_1_preact[n_layer_1];
-  layer_2_preact_t layer_2_preact[n_layer_2];
-  layer_3_preact_t layer_3_preact[n_layer_3];
-
+#pragma HLS ARRAY_PARTITION variable=layer_1_preact complete dim=0
+#pragma HLS ARRAY_PARTITION variable=layer_2_preact complete dim=0
+#pragma HLS ARRAY_PARTITION variable=layer_3_preact complete dim=0
 #pragma HLS ARRAY_PARTITION variable=layer_0_out complete dim=0
 #pragma HLS ARRAY_PARTITION variable=layer_1_out complete dim=0
 #pragma HLS ARRAY_PARTITION variable=layer_2_out complete dim=0
 #pragma HLS ARRAY_PARTITION variable=layer_3_out complete dim=0
 #pragma HLS ARRAY_PARTITION variable=layer_4_out complete dim=0
-#pragma HLS ARRAY_PARTITION variable=layer_1_preact complete dim=0
-#pragma HLS ARRAY_PARTITION variable=layer_2_preact complete dim=0
-#pragma HLS ARRAY_PARTITION variable=layer_3_preact complete dim=0
 
   // Layer 0 - preprocessing
   fullyconnect_preprocessing_op<m_nnet_0_layer_0_tag>(curr_trk_feat, layer_0_out);
@@ -202,6 +230,7 @@ void fullyconnect_op(
   fullyconnect_dense_final_op<m_nnet_0_layer_4_tag>(layer_3_out, layer_4_out);
 
   // Output
+  // Reinterpret ap_fixed as ap_int
   curr_trk_invpt.range() = layer_4_out[0].range();
   curr_trk_phi.range()   = 0;
   curr_trk_eta.range()   = 0;
@@ -211,27 +240,27 @@ void fullyconnect_op(
 
   //// Debug
   //std::cout << "[DEBUG] layer 0: ";
-  //for (int i = 0; i < n_layer_0; i++) {
+  //for (unsigned i = 0; i < n_layer_0; i++) {
   //  std::cout << layer_0_out[i] * (1 << 10) << " ";
   //}
   //std::cout << std::endl;
   //std::cout << "[DEBUG] layer 1: ";
-  //for (int i = 0; i < n_layer_1; i++) {
+  //for (unsigned i = 0; i < n_layer_1; i++) {
   //  std::cout << layer_1_out[i] * (1 << 13) << " ";
   //}
   //std::cout << std::endl;
   //std::cout << "[DEBUG] layer 2: ";
-  //for (int i = 0; i < n_layer_2; i++) {
+  //for (unsigned i = 0; i < n_layer_2; i++) {
   //  std::cout << layer_2_out[i] * (1 << 13) << " ";
   //}
   //std::cout << std::endl;
   //std::cout << "[DEBUG] layer 3: ";
-  //for (int i = 0; i < n_layer_3; i++) {
+  //for (unsigned i = 0; i < n_layer_3; i++) {
   //  std::cout << layer_3_out[i] * (1 << 13) << " ";
   //}
   //std::cout << std::endl;
   //std::cout << "[DEBUG] layer 4: ";
-  //for (int i = 0; i < n_layer_4; i++) {
+  //for (unsigned i = 0; i < n_layer_4; i++) {
   //  std::cout << layer_4_out[i] * (1 << 13) << " ";
   //}
   //std::cout << std::endl;
@@ -242,13 +271,13 @@ void fullyconnect_op(
 
 template <typename Zone>
 void fullyconnect_layer(
-    const trk_feat_t  trk_feat  [fullyconnect_config::n_in * num_emtf_features],
-    trk_invpt_t       trk_invpt [fullyconnect_config::n_out],
-    trk_phi_t         trk_phi   [fullyconnect_config::n_out],
-    trk_eta_t         trk_eta   [fullyconnect_config::n_out],
-    trk_d0_t          trk_d0    [fullyconnect_config::n_out],
-    trk_z0_t          trk_z0    [fullyconnect_config::n_out],
-    trk_beta_t        trk_beta  [fullyconnect_config::n_out]
+    const trk_feat_t trk_feat  [fullyconnect_config::n_in * num_emtf_features],
+    trk_invpt_t      trk_invpt [fullyconnect_config::n_out],
+    trk_phi_t        trk_phi   [fullyconnect_config::n_out],
+    trk_eta_t        trk_eta   [fullyconnect_config::n_out],
+    trk_d0_t         trk_d0    [fullyconnect_config::n_out],
+    trk_z0_t         trk_z0    [fullyconnect_config::n_out],
+    trk_beta_t       trk_beta  [fullyconnect_config::n_out]
 ) {
 
 #pragma HLS PIPELINE II=fullyconnect_config::layer_target_ii
@@ -265,7 +294,15 @@ void fullyconnect_layer(
 
 #pragma HLS UNROLL
 
-    const auto curr_trk_feat = &(trk_feat[itrk * num_emtf_features]);
+    // Intermediate arrays
+    trk_feat_t curr_trk_feat[num_emtf_features];
+
+#pragma HLS ARRAY_PARTITION variable=curr_trk_feat complete dim=0
+
+    // Copy from array
+    details::copy_n_values<num_emtf_features>(
+        &(trk_feat[itrk * num_emtf_features]), curr_trk_feat
+    );
 
     fullyconnect_op<Zone>(
         curr_trk_feat, trk_invpt[itrk], trk_phi[itrk], trk_eta[itrk],
@@ -276,4 +313,4 @@ void fullyconnect_layer(
 
 }  // namespace emtf
 
-#endif  // __EMTF_HLSLIB_NNET_H__ not defined
+#endif  // __EMTF_HLSLIB_FULLYCONNECT_H__ not defined

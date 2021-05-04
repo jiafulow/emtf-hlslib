@@ -7,17 +7,15 @@ namespace emtf {
 
 namespace details {
 
-template <unsigned int N, typename T_IN, typename T_OUT>
-void init_nnet_weights_op(const T_IN w[N], T_OUT table[N]) {
-  static_assert(is_same<T_IN, int>::value, "T_IN type check failed");
-  static_assert(is_ap_fixed_type<T_OUT>::value, "T_OUT type check failed");
-  constexpr int W_OUT = T_OUT::width;
+template <unsigned int N, typename T, typename U>
+void init_nnet_weights_op(T* arr, U op) {
+  static_assert(is_ap_fixed_type<T>::value, "T type check failed");
 
   for (unsigned i = 0; i < N; i++) {
-    // Cast from integer to ap_int
-    ap_int<W_OUT> w_i = w[i];
-    // Reinterpret an integer w_i as fixed point T_OUT
-    table[i].range() = w_i.range();
+    // Cast from int to ap_int
+    ap_int<T::width> w = op(i);
+    // Reinterpret ap_int as ap_fixed
+    arr[i].range() = w.range();
   }
 }
 
@@ -25,14 +23,20 @@ template <unsigned int N, typename T_IN, typename T_OUT>
 void init_tanh_table_op(T_OUT table[N]) {
   static_assert(is_ap_fixed_type<T_IN>::value, "T_IN type check failed");
   static_assert(is_ap_fixed_type<T_OUT>::value, "T_OUT type check failed");
-  constexpr int F_OUT = find_ap_fixed_fwidth<T_OUT>::value;
+  static_assert(N == (1u << T_IN::width), "N value check failed");
+
+  constexpr int W_OUT = T_OUT::width;
+  constexpr int I_OUT = T_OUT::iwidth;
+  constexpr int F_OUT = W_OUT - I_OUT;
 
   T_IN x = 0;
 
   for (unsigned i = 0; i < N; i++) {
-    // Reinterpret an integer i as fixed point T_IN
-    x.range() = i;
-    // Cast from fixed point T_IN to float32, call tanh(), cast to fixed point T_OUT
+    // Cast from unsigned to ap_uint
+    ap_uint<T_IN::width> w = i;
+    // Reinterpret ap_uint as ap_fixed
+    x.range() = w.range();
+    // Cast from ap_fixed T_IN to float32, call tanh(), cast to ap_fixed T_OUT
     float x_f32 = static_cast<float>(x);
     float y_f32 = std::tanh(x_f32);
     float q_f32 = std::pow(2.f, -F_OUT);
@@ -42,7 +46,7 @@ void init_tanh_table_op(T_OUT table[N]) {
 
 // Returns activation(X) using tanh
 template <unsigned int N, typename T_IN, typename T_OUT>
-void vector_activate(const T_IN x[N], T_OUT out[N]) {
+void vector_tanh_activate_op(const T_IN x[N], T_OUT out[N]) {
   static_assert(is_ap_fixed_type<T_IN>::value, "T_IN type check failed");
   static_assert(is_ap_fixed_type<T_OUT>::value, "T_OUT type check failed");
 
@@ -63,27 +67,28 @@ void vector_activate(const T_IN x[N], T_OUT out[N]) {
 #endif
 
   if (!initialized) {
-    init_tanh_table_op<N_TABLE, T_IN>(tanh_table);
     initialized = true;
+    details::init_tanh_table_op<N_TABLE, T_IN>(tanh_table);
   }
-
-  ap_uint<T_IN::width> index = 0;
 
   LOOP_ACT: for (unsigned i = 0; i < N; i++) {
 
 #pragma HLS UNROLL
 
+    // Reinterpret ap_fixed as ap_uint
     const T_IN x_i = x[i];
     const ap_uint<T_IN::width> index = x_i.range();
+    emtf_assert(index < N_TABLE);
     out[i] = tanh_table[index];
   }
 }
 
 // Returns static_cast<T_OUT>(x)
 template <unsigned int N, typename T_IN, typename T_OUT>
-void vector_cast(const T_IN x[N], T_OUT out[N]) {
+void vector_cast_op(const T_IN x[N], T_OUT out[N]) {
   static_assert(is_ap_int_type<T_IN>::value, "T_IN type check failed");
   static_assert(is_ap_fixed_type<T_OUT>::value, "T_OUT type check failed");
+  static_assert(T_IN::width == T_OUT::width, "T_OUT type check faild");
 
 #pragma HLS PIPELINE II=fullyconnect_config::target_ii
 
@@ -95,14 +100,15 @@ void vector_cast(const T_IN x[N], T_OUT out[N]) {
 
 #pragma HLS UNROLL
 
+    // Cast from ap_int to ap_fixed
     const T_IN x_i = x[i];
     out[i] = static_cast<T_OUT>(x_i);
   }
 }
 
-// Returns normalization(X), which is the same as doing X * Y
+// Returns X * Y
 template <unsigned int N, typename T_IN0, typename T_IN1, typename T_OUT>
-void vector_normalize(const T_IN0 x[N], const T_IN1 y[N], T_OUT out[N]) {
+void vec_vec_mult_op(const T_IN0 x[N], const T_IN1 y[N], T_OUT out[N]) {
   static_assert(is_ap_fixed_type<T_IN0>::value, "T_IN0 type check failed");
   static_assert(is_ap_fixed_type<T_IN1>::value, "T_IN1 type check failed");
   static_assert(is_ap_fixed_type<T_OUT>::value, "T_OUT type check failed");
@@ -113,13 +119,23 @@ void vector_normalize(const T_IN0 x[N], const T_IN1 y[N], T_OUT out[N]) {
 
 #pragma HLS INLINE
 
-  LOOP_NORM: for (unsigned i = 0; i < N; i++) {
+  constexpr int W_MULT = T_OUT::width;
+  constexpr int I_MULT = T_OUT::iwidth;
+
+  ap_fixed<W_MULT,I_MULT> mult[N];
+
+//#pragma HLS ARRAY_PARTITION variable=mult complete dim=0
+
+#pragma HLS RESOURCE variable=mult core=DSP48 latency=1
+
+  LOOP_MULT: for (unsigned i = 0; i < N; i++) {
 
 #pragma HLS UNROLL
 
     const T_IN0 x_i = x[i];
     const T_IN1 y_i = y[i];
-    out[i] = x_i * y_i;
+    mult[i] = x_i * y_i;  // using DSP48
+    out[i] = mult[i];
   }
 }
 
@@ -127,7 +143,7 @@ void vector_normalize(const T_IN0 x[N], const T_IN1 y[N], T_OUT out[N]) {
 // X has rows = N, Y has rows = N, Z is a scalar
 // It follows the convention as used in a NN, not the convention in basic linear algebra.
 template <unsigned int N, typename T_IN0, typename T_IN1, typename T_IN2, typename T_OUT>
-void vector_vector_mult_biasadd(const T_IN0 x[N], const T_IN1 y[N], const T_IN2& z, T_OUT& out) {
+void vec_vec_mult_biasadd_op(const T_IN0 x[N], const T_IN1 y[N], const T_IN2& z, T_OUT& out) {
   static_assert(is_ap_fixed_type<T_IN0>::value, "T_IN0 type check failed");
   static_assert(is_ap_fixed_type<T_IN1>::value, "T_IN1 type check failed");
   static_assert(is_ap_fixed_type<T_IN2>::value, "T_IN2 type check failed");
@@ -139,18 +155,18 @@ void vector_vector_mult_biasadd(const T_IN0 x[N], const T_IN1 y[N], const T_IN2&
 
 #pragma HLS INLINE
 
-//#pragma HLS EXPRESSION_BALANCE off
-
-  constexpr int W_MULT = (T_IN0::width + T_IN1::width);
+  constexpr int W_MULT = AP_MIN(T_IN0::width + T_IN1::width, 24);  // capped at 24 bits (found empirically)
   constexpr int I_MULT = (T_IN0::iwidth + T_IN1::iwidth);
-  constexpr int W_ACCUM = W_MULT + 4;  // additional bits to prevent overflow (for 15<=x<31 accumulation terms)
+  constexpr int W_ACCUM = W_MULT + 4;  // additional 4 bits to prevent overflow (for 15<=x<31 accum terms)
   constexpr int I_ACCUM = I_MULT + 4;
   constexpr int W_OUT = T_OUT::width;
   constexpr int I_OUT = T_OUT::iwidth;
 
   ap_fixed<W_MULT,I_MULT> mult[N];
 
-#pragma HLS ARRAY_PARTITION variable=mult complete
+//#pragma HLS ARRAY_PARTITION variable=mult complete dim=0
+
+#pragma HLS RESOURCE variable=mult core=DSP48 latency=1
 
   // Multiply
   LOOP_MULT: for (unsigned i = 0; i < N; i++) {
@@ -159,14 +175,12 @@ void vector_vector_mult_biasadd(const T_IN0 x[N], const T_IN1 y[N], const T_IN2&
 
     const T_IN0 x_i = x[i];
     const T_IN1 y_i = y[i];
-    const auto m = x_i * y_i;
-
-#pragma HLS RESOURCE variable=m core=DSP48
-
-    mult[i] = m;
+    mult[i] = x_i * y_i;  // using DSP48
   }
 
   ap_fixed<W_ACCUM,I_ACCUM> accum = z;  // init with the bias term
+
+//#pragma HLS RESOURCE variable=accum core=AddSubnS latency=2
 
   // Accumulate
   LOOP_ACCUM: for (unsigned i = 0; i < N; i++) {
@@ -188,15 +202,15 @@ void vector_vector_mult_biasadd(const T_IN0 x[N], const T_IN1 y[N], const T_IN2&
     }
     emtf_assert(std::abs(f_accum) < static_cast<float>(1 << (I_ACCUM-1)));  // make sure no overflow
   }
-#endif
+#endif  // __SYNTHESIS__ not defined
 
 }
 
 // Returns matmul(X, Y) + Z
-// X has dim (rows, cols) = (M, N), Y has rows = M, Z has cols = N
+// X has rows = M, Y has (rows, cols) = (M, N) Z has cols = N
 // It follows the convention as used in a NN, not the convention in basic linear algebra.
 template <unsigned int M, unsigned int N, typename T_IN0, typename T_IN1, typename T_IN2, typename T_OUT>
-void matrix_vector_mult_biasadd(const T_IN0 x[M * N], const T_IN1 y[M], const T_IN2 z[N], T_OUT out[N]) {
+void mat_vec_mult_biasadd_op(const T_IN0 x[M], const T_IN1 y[M * N], const T_IN2 z[N], T_OUT out[N]) {
   static_assert(is_ap_fixed_type<T_IN0>::value, "T_IN0 type check failed");
   static_assert(is_ap_fixed_type<T_IN1>::value, "T_IN1 type check failed");
   static_assert(is_ap_fixed_type<T_IN2>::value, "T_IN2 type check failed");
@@ -208,51 +222,43 @@ void matrix_vector_mult_biasadd(const T_IN0 x[M * N], const T_IN1 y[M], const T_
 
 #pragma HLS INLINE
 
-//#pragma HLS EXPRESSION_BALANCE off
-
-  constexpr int W_MULT = (T_IN0::width + T_IN1::width);
+  constexpr int W_MULT = AP_MIN(T_IN0::width + T_IN1::width, 24);  // capped at 24 bits (found empirically)
   constexpr int I_MULT = (T_IN0::iwidth + T_IN1::iwidth);
-  constexpr int W_ACCUM = W_MULT + 4;  // additional bits to prevent overflow (for 15<=x<31 accumulation terms)
+  constexpr int W_ACCUM = W_MULT + 4;  // additional 4 bits to prevent overflow (for 15<=x<31 accum terms)
   constexpr int I_ACCUM = I_MULT + 4;
   constexpr int W_OUT = T_OUT::width;
   constexpr int I_OUT = T_OUT::iwidth;
 
-  ap_fixed<W_MULT,I_MULT> mult[M * N];
-
-#pragma HLS ARRAY_PARTITION variable=mult complete
-
-  // Multiply
-  LOOP_MULT_I: for (unsigned i = 0; i < M; i++) {
+  LOOP_MULT_J: for (unsigned j = 0; j < N; j++) {
 
 #pragma HLS UNROLL
 
-    const T_IN1 y_i = y[i];
+    ap_fixed<W_MULT,I_MULT> mult[M];
 
-    LOOP_MULT_J: for (unsigned j = 0; j < N; j++) {
+//#pragma HLS ARRAY_PARTITION variable=mult complete dim=0
+
+#pragma HLS RESOURCE variable=mult core=DSP48 latency=1
+
+    // Multiply
+    LOOP_MULT_I: for (unsigned i = 0; i < M; i++) {
 
 #pragma HLS UNROLL
 
-      const T_IN0 x_ij = x[(i * N) + j];
-      const auto m = x_ij * y_i;
-
-#pragma HLS RESOURCE variable=m core=DSP48
-
-      mult[(i * N) + j] = m;
+      const T_IN0 x_i = x[i];
+      const T_IN1 y_i = y[(i * N) + j];
+      mult[i] = x_i * y_i;  // using DSP48
     }
-  }
-
-  // Accumulate
-  LOOP_ACCUM_J: for (unsigned j = 0; j < N; j++) {
-
-#pragma HLS UNROLL
 
     ap_fixed<W_ACCUM,I_ACCUM> accum = z[j];  // init with the bias term
 
+//#pragma HLS RESOURCE variable=accum core=AddSubnS latency=2
+
+    // Accumulate
     LOOP_ACCUM_I: for (unsigned i = 0; i < M; i++) {
 
 #pragma HLS UNROLL
 
-      accum += mult[(i * N) + j];
+      accum += mult[i];
     }
 
     // Round and saturate
@@ -264,11 +270,11 @@ void matrix_vector_mult_biasadd(const T_IN0 x[M * N], const T_IN1 y[M], const T_
   for (unsigned j = 0; j < N; j++) {
     float f_accum = static_cast<float>(z[j]);
     for (unsigned i = 0; i < M; i++) {
-      f_accum += static_cast<float>(x[(i * N) + j]) * static_cast<float>(y[i]);
+      f_accum += static_cast<float>(x[i]) * static_cast<float>(y[(i * N) + j]);
     }
     emtf_assert(std::abs(f_accum) < static_cast<float>(1 << (I_ACCUM-1)));  // make sure no overflow
   }
-#endif
+#endif  // __SYNTHESIS__ not defined
 
 }
 
