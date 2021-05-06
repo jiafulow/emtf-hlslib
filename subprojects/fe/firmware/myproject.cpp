@@ -71,9 +71,6 @@ void myproject(
     seg_valid[iseg]   = in0[iseg].seg_valid;
   }  // end loop over in0
 
-  // Check assumptions
-  static_assert(TOP_N_IN1 == 4, "TOP_N_IN1 check failed");
-
   // Prepare input and output variables
   trk_feat_t  curr_trk_feat [num_emtf_features];
   trk_seg_t   curr_trk_seg  [num_emtf_sites];

@@ -33,13 +33,9 @@ int main(int argc, char **argv) {
     // Skip events that have known mismatches
     //
     // 55: trk_invpt[0] value off by one
-    // 64: both thetas have abs(delta-theta) = 1
-    // 66: both thetas have abs(delta-theta) = 1
-    // 72: both thetas have abs(delta-theta) = 1
-    // 74: both F/R chambers contain the nearly identical TP
     // 89: trk_invpt[0] value off by one
     auto should_skip = [](int ievt) -> bool {
-      static const std::set<int> s = {55, 64, 66, 72, 74, 89};
+      static const std::set<int> s = {55, 89};
       return s.find(ievt) != s.end();
     };
 

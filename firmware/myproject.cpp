@@ -73,22 +73,28 @@ void myproject(
 
   // Check assumptions
   constexpr int num_trk_cols_with_safety = (((80 * 64) / emtf_img_col_factor) + (max_emtf_img_col_pad * 2));
+  static_assert(is_same<seg_valid_t, bool_t>::value, "seg_valid_t type check failed");
   static_assert(trk_qual_t::width == max_emtf_pattern_activation_log2, "trk_qual_t type check failed");
   static_assert(trk_patt_t::width == details::ceil_log2<num_emtf_patterns>::value, "trk_patt_t type check failed");
   static_assert(trk_col_t::width == details::ceil_log2<num_trk_cols_with_safety>::value, "trk_col_t type check failed");
   static_assert(trk_zone_t::width == details::ceil_log2<num_emtf_zones>::value, "trk_zone_t type check failed");
   static_assert(trk_tzone_t::width == details::ceil_log2<num_emtf_timezones>::value, "trk_tzone_t type check failed");
+  static_assert(trk_gate_t::width == details::ceil_log2<num_emtf_img_gates>::value, "trk_gate_t type check failed");
   static_assert(trk_seg_t::width == details::ceil_log2<model_config::n_in>::value, "trk_seg_t type check failed");
   static_assert(trk_seg_v_t::width == num_emtf_sites, "trk_seg_v_t type check failed");
   static_assert(trk_feat_t::width == emtf_phi_t::width, "trk_feat_t type check failed");
-  static_assert(trk_valid_t::width == 1, "trk_valid_t type check failed");
+  static_assert(is_same<trk_valid_t, bool_t>::value, "trk_valid_t type check failed");
+  static_assert(
+      num_emtf_img_cols == (details::chamber_img_joined_col_stop - details::chamber_img_joined_col_start + 1),
+      "num_emtf_img_cols value check failed"
+  );
   static_assert(
       model_config::n_out_per_trk == (num_emtf_features + num_emtf_sites + 2),
-      "model_config::n_out_per_trk check failed"
+      "model_config::n_out_per_trk value check failed"
   );
   static_assert(
       model_config::n_out == (num_emtf_tracks * model_config::n_out_per_trk),
-      "model_config::n_out check failed"
+      "model_config::n_out value check failed"
   );
 
   // Intermediate arrays (for layers 0..4)
@@ -171,10 +177,10 @@ void myproject(
     const trkbuilding_in_t curr_trk_in = zonemerging_0_out[itrk];
 
     constexpr int bits_lo_0 = 0;
-    constexpr int bits_lo_1 = bits_lo_0 + trk_qual_t::width;
-    constexpr int bits_lo_2 = bits_lo_1 + trk_patt_t::width;
-    constexpr int bits_lo_3 = bits_lo_2 + trk_col_t::width;
-    constexpr int bits_lo_4 = bits_lo_3 + trk_zone_t::width;
+    constexpr int bits_lo_1 = trk_qual_t::width;
+    constexpr int bits_lo_2 = pooling_out_t::width;
+    constexpr int bits_lo_3 = zonesorting_out_t::width;
+    constexpr int bits_lo_4 = zonemerging_out_t::width;
 
     trk_qual[itrk]  = curr_trk_in.range(bits_lo_1 - 1, bits_lo_0);
     trk_patt[itrk]  = curr_trk_in.range(bits_lo_2 - 1, bits_lo_1);
