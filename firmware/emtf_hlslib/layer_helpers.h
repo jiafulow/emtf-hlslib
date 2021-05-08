@@ -29,13 +29,6 @@ template <> struct zone_traits<m_zone_1_tag> { static const int value = 1; };
 template <> struct zone_traits<m_zone_2_tag> { static const int value = 2; };
 
 template <typename Category>
-struct zone_num_rows_traits {};
-
-template <> struct zone_num_rows_traits<m_zone_0_tag> { static const int value = 1 + 1 + 1 + 1 + 1 + 1 + 1 + 2; };
-template <> struct zone_num_rows_traits<m_zone_1_tag> { static const int value = 1 + 1 + 2 + 1 + 1 + 1 + 1 + 2; };
-template <> struct zone_num_rows_traits<m_zone_2_tag> { static const int value = 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1; };
-
-template <typename Category>
 struct timezone_traits {};
 
 template <> struct timezone_traits<m_timezone_0_tag> { static const int value = 0; };
@@ -111,6 +104,25 @@ template <int I> struct pattern_col_pad_traits<m_zone_0_tag, I> { static const i
 template <int I> struct pattern_col_pad_traits<m_zone_1_tag, I> { static const int value = pattern_col_pad_zone_1[I]; };
 template <int I> struct pattern_col_pad_traits<m_zone_2_tag, I> { static const int value = pattern_col_pad_zone_2[I]; };
 
+template <typename Category>
+struct nnet_num_inbound_nodes_traits {};
+
+template <> struct nnet_num_inbound_nodes_traits<m_nnet_0_layer_0_tag> { static const int value = num_nodes_nnet_0_layer_0; };
+template <> struct nnet_num_inbound_nodes_traits<m_nnet_0_layer_1_tag> { static const int value = num_nodes_nnet_0_layer_0; };
+template <> struct nnet_num_inbound_nodes_traits<m_nnet_0_layer_2_tag> { static const int value = num_nodes_nnet_0_layer_1; };
+template <> struct nnet_num_inbound_nodes_traits<m_nnet_0_layer_3_tag> { static const int value = num_nodes_nnet_0_layer_2; };
+template <> struct nnet_num_inbound_nodes_traits<m_nnet_0_layer_4_tag> { static const int value = num_nodes_nnet_0_layer_3; };
+
+template <typename Category>
+struct nnet_num_outbound_nodes_traits {};
+
+template <> struct nnet_num_outbound_nodes_traits<m_nnet_0_layer_0_tag> { static const int value = num_nodes_nnet_0_layer_0; };
+template <> struct nnet_num_outbound_nodes_traits<m_nnet_0_layer_1_tag> { static const int value = num_nodes_nnet_0_layer_1; };
+template <> struct nnet_num_outbound_nodes_traits<m_nnet_0_layer_2_tag> { static const int value = num_nodes_nnet_0_layer_2; };
+template <> struct nnet_num_outbound_nodes_traits<m_nnet_0_layer_3_tag> { static const int value = num_nodes_nnet_0_layer_3; };
+template <> struct nnet_num_outbound_nodes_traits<m_nnet_0_layer_4_tag> { static const int value = num_nodes_nnet_0_layer_4; };
+
+// Select ops
 template <typename Category, int I>
 struct select_pattern_col_padding_type {
   static const int pad = pattern_col_pad_traits<Category, I>::value;
@@ -134,39 +146,6 @@ struct select_pattern_fused_col_patch_type {
   static const int pad = pattern_col_pad_traits<Category, I>::value;
   typedef ap_uint<pooling_config::fusion_factor + (pad * 2)> type;
 };
-
-template <typename Category>
-struct select_pattern_preactivation_type {
-  typedef dio_row_accum_t type;
-};
-
-template <typename Category>
-struct select_pattern_activation_type {
-  typedef trk_qual_t type;
-};
-
-template <typename Category>
-struct select_pattern_packed_activation_type {
-  typedef make_repeat<trk_qual_t, num_emtf_patterns>::type type;
-};
-
-template <typename Category>
-struct nnet_num_inbound_nodes_traits {};
-
-template <> struct nnet_num_inbound_nodes_traits<m_nnet_0_layer_0_tag> { static const int value = details::num_nodes_nnet_0_layer_0; };
-template <> struct nnet_num_inbound_nodes_traits<m_nnet_0_layer_1_tag> { static const int value = details::num_nodes_nnet_0_layer_0; };
-template <> struct nnet_num_inbound_nodes_traits<m_nnet_0_layer_2_tag> { static const int value = details::num_nodes_nnet_0_layer_1; };
-template <> struct nnet_num_inbound_nodes_traits<m_nnet_0_layer_3_tag> { static const int value = details::num_nodes_nnet_0_layer_2; };
-template <> struct nnet_num_inbound_nodes_traits<m_nnet_0_layer_4_tag> { static const int value = details::num_nodes_nnet_0_layer_3; };
-
-template <typename Category>
-struct nnet_num_outbound_nodes_traits {};
-
-template <> struct nnet_num_outbound_nodes_traits<m_nnet_0_layer_0_tag> { static const int value = details::num_nodes_nnet_0_layer_0; };
-template <> struct nnet_num_outbound_nodes_traits<m_nnet_0_layer_1_tag> { static const int value = details::num_nodes_nnet_0_layer_1; };
-template <> struct nnet_num_outbound_nodes_traits<m_nnet_0_layer_2_tag> { static const int value = details::num_nodes_nnet_0_layer_2; };
-template <> struct nnet_num_outbound_nodes_traits<m_nnet_0_layer_3_tag> { static const int value = details::num_nodes_nnet_0_layer_3; };
-template <> struct nnet_num_outbound_nodes_traits<m_nnet_0_layer_4_tag> { static const int value = details::num_nodes_nnet_0_layer_4; };
 
 template <typename Category>
 struct select_nnet_weight_type {};
@@ -288,7 +267,7 @@ struct get_segment_id_op {
   }
 };
 
-// Text replacement macro ("token pasting") used to define the getters for col_start, col_mid, col_stop.
+// Text replacement macro (token pasting) used to define the getters for col_start, col_mid, col_stop.
 // The template parameter takes zone. The operator () takes patt i row j. Note that padding is added.
 #define DEFINE_PATTERN_GETTER_OP(NAME) \
     template <typename Zone, typename Enable = void> \
@@ -352,7 +331,7 @@ template <> struct get_pattern_activation_op<m_zone_0_tag> { inline int operator
 template <> struct get_pattern_activation_op<m_zone_1_tag> { inline int operator ()(int i) const { return pattern_activation_zone_1[i]; } };
 template <> struct get_pattern_activation_op<m_zone_2_tag> { inline int operator ()(int i) const { return pattern_activation_zone_2[i]; } };
 
-// Text replacement macro ("token pasting") used to define the getters for col_start, col_mid, col_stop.
+// Text replacement macro (token pasting) used to define the getters for col_start, col_mid, col_stop.
 // The template parameter takes site. The operator () takes zone i patt j. Note that padding is added.
 #define DEFINE_SITE_PATTERN_GETTER_OP(NAME) \
     template <typename Site> \

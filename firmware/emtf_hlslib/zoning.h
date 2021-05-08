@@ -1,12 +1,68 @@
 #ifndef __EMTF_HLSLIB_ZONING_H__
 #define __EMTF_HLSLIB_ZONING_H__
 
+// Function hierarchy
+//
+// zoning_layer
+// +-- zoning_op (INLINE)
+//     +-- zoning_row_op (INLINE)
+//         |-- zoning_row_gather_op (INLINE)
+//         |   +-- zoning_row_fill_op
+//         |-- zoning_row_gather_mux_op (INLINE)
+//         +-- zoning_row_join_op (INLINE)
+
 namespace emtf {
 
-template <typename T_IN, typename T_OUT>
-void zoning_join_10deg_chamber_images_op(const T_IN in0[details::num_chambers_10deg], T_OUT& out) {
-  static_assert(is_same<T_IN, ap_uint<details::chamber_img_bw> >::value, "T_IN type check failed");
-  static_assert(is_same<T_OUT, ap_uint<details::chamber_img_joined_bw> >::value, "T_OUT type check failed");
+struct zoning_internal_config : zoning_config {
+  // This enumerates the 8 ph_init + 8 ph_cover values (in ascending order) for the
+  // 8 possible 10-deg chambers in a sector.
+  constexpr static const int col_start_0 = details::chamber_img_joined_col_start;
+  constexpr static const int col_start_1 = details::chamber_ph_init_10deg[6];
+  constexpr static const int col_start_3 = details::chamber_ph_init_10deg[0];  // = chamber_ph_init_20deg[0];
+  constexpr static const int col_start_5 = details::chamber_ph_init_10deg[1];
+  constexpr static const int col_start_7 = details::chamber_ph_init_10deg[2];  // = chamber_ph_init_20deg[1];
+  constexpr static const int col_start_9 = details::chamber_ph_init_10deg[3];
+  constexpr static const int col_start_b = details::chamber_ph_init_10deg[4];  // = chamber_ph_init_20deg[2];
+  constexpr static const int col_start_d = details::chamber_ph_init_10deg[5];
+
+  constexpr static const int col_start_2 = details::chamber_ph_cover_10deg[0] - details::chamber_ph_init_10deg[0];
+  constexpr static const int col_start_4 = details::chamber_ph_cover_10deg[6];  // = chamber_ph_cover_20deg[3];
+  constexpr static const int col_start_6 = details::chamber_ph_cover_10deg[0];
+  constexpr static const int col_start_8 = details::chamber_ph_cover_10deg[1];  // = chamber_ph_cover_20deg[0];
+  constexpr static const int col_start_a = details::chamber_ph_cover_10deg[2];
+  constexpr static const int col_start_c = details::chamber_ph_cover_10deg[3];  // = chamber_ph_cover_20deg[1];
+  constexpr static const int col_start_e = details::chamber_ph_cover_10deg[4];
+  constexpr static const int col_start_f = details::chamber_ph_cover_10deg[5];  // = chamber_ph_cover_20deg[2];
+
+  // This enumerates the bit widths of the 15 slices defined by the above 16 edges.
+  // The total bit width must be equal to num_emtf_img_cols.
+  constexpr static const int bw_slice_0 = col_start_1 - col_start_0;
+  constexpr static const int bw_slice_1 = col_start_2 - col_start_1;
+  constexpr static const int bw_slice_2 = col_start_3 - col_start_2;
+  constexpr static const int bw_slice_3 = col_start_4 - col_start_3;
+  constexpr static const int bw_slice_4 = col_start_5 - col_start_4;
+  constexpr static const int bw_slice_5 = col_start_6 - col_start_5;
+  constexpr static const int bw_slice_6 = col_start_7 - col_start_6;
+  constexpr static const int bw_slice_7 = col_start_8 - col_start_7;
+  constexpr static const int bw_slice_8 = col_start_9 - col_start_8;
+  constexpr static const int bw_slice_9 = col_start_a - col_start_9;
+  constexpr static const int bw_slice_a = col_start_b - col_start_a;
+  constexpr static const int bw_slice_b = col_start_c - col_start_b;
+  constexpr static const int bw_slice_c = col_start_d - col_start_c;
+  constexpr static const int bw_slice_d = col_start_e - col_start_d;
+  constexpr static const int bw_slice_e = col_start_f - col_start_e;
+
+  // Typedefs
+  typedef ap_uint<details::chamber_img_bw> chamber_img_t;
+  typedef ap_uint<details::chamber_img_joined_bw> chamber_img_joined_t;
+};
+
+// _____________________________________________________________________________
+template <unsigned int N, typename T_IN, typename T_OUT>
+void zoning_row_join_op(const T_IN in0[N], T_OUT& out, m_10deg_chamber_tag) {
+  static_assert(is_same<T_IN, zoning_internal_config::chamber_img_t>::value, "T_IN type check failed");
+  static_assert(is_same<T_OUT, zoning_out_t>::value, "T_OUT type check failed");
+  static_assert(N == details::num_chambers_traits<m_10deg_chamber_tag>::value, "N value check failed");
 
 #pragma HLS PIPELINE II=zoning_config::target_ii
 
@@ -14,46 +70,64 @@ void zoning_join_10deg_chamber_images_op(const T_IN in0[details::num_chambers_10
 
 #pragma HLS INLINE
 
-  // There are 14 edges that define 13 regions
-  constexpr int col_start_f = 0;
+  // Slices
+  using cfg = zoning_internal_config;
+  ap_uint<cfg::bw_slice_0> tmp_0_0 = 0;
+  ap_uint<cfg::bw_slice_1> tmp_1_0 = 0;
+  ap_uint<cfg::bw_slice_1> tmp_1_1 = in0[6].range(cfg::col_start_2 - cfg::col_start_1 - 1, cfg::col_start_1 - cfg::col_start_1);
+  ap_uint<cfg::bw_slice_2> tmp_2_0 = in0[6].range(cfg::col_start_3 - cfg::col_start_1 - 1, cfg::col_start_2 - cfg::col_start_1);
+  ap_uint<cfg::bw_slice_3> tmp_3_0 = in0[6].range(cfg::col_start_4 - cfg::col_start_1 - 1, cfg::col_start_3 - cfg::col_start_1);
+  ap_uint<cfg::bw_slice_3> tmp_3_1 = in0[0].range(cfg::col_start_4 - cfg::col_start_3 - 1, cfg::col_start_3 - cfg::col_start_3);
+  ap_uint<cfg::bw_slice_4> tmp_4_0 = in0[0].range(cfg::col_start_5 - cfg::col_start_3 - 1, cfg::col_start_4 - cfg::col_start_3);
+  ap_uint<cfg::bw_slice_5> tmp_5_0 = in0[0].range(cfg::col_start_6 - cfg::col_start_3 - 1, cfg::col_start_5 - cfg::col_start_3);
+  ap_uint<cfg::bw_slice_5> tmp_5_1 = in0[1].range(cfg::col_start_6 - cfg::col_start_5 - 1, cfg::col_start_5 - cfg::col_start_5);
+  ap_uint<cfg::bw_slice_6> tmp_6_0 = in0[1].range(cfg::col_start_7 - cfg::col_start_5 - 1, cfg::col_start_6 - cfg::col_start_5);
+  ap_uint<cfg::bw_slice_7> tmp_7_0 = in0[1].range(cfg::col_start_8 - cfg::col_start_5 - 1, cfg::col_start_7 - cfg::col_start_5);
+  ap_uint<cfg::bw_slice_7> tmp_7_1 = in0[2].range(cfg::col_start_8 - cfg::col_start_7 - 1, cfg::col_start_7 - cfg::col_start_7);
+  ap_uint<cfg::bw_slice_8> tmp_8_0 = in0[2].range(cfg::col_start_9 - cfg::col_start_7 - 1, cfg::col_start_8 - cfg::col_start_7);
+  ap_uint<cfg::bw_slice_9> tmp_9_0 = in0[2].range(cfg::col_start_a - cfg::col_start_7 - 1, cfg::col_start_9 - cfg::col_start_7);
+  ap_uint<cfg::bw_slice_9> tmp_9_1 = in0[3].range(cfg::col_start_a - cfg::col_start_9 - 1, cfg::col_start_9 - cfg::col_start_9);
+  ap_uint<cfg::bw_slice_a> tmp_a_0 = in0[3].range(cfg::col_start_b - cfg::col_start_9 - 1, cfg::col_start_a - cfg::col_start_9);
+  ap_uint<cfg::bw_slice_b> tmp_b_0 = in0[3].range(cfg::col_start_c - cfg::col_start_9 - 1, cfg::col_start_b - cfg::col_start_9);
+  ap_uint<cfg::bw_slice_b> tmp_b_1 = in0[4].range(cfg::col_start_c - cfg::col_start_b - 1, cfg::col_start_b - cfg::col_start_b);
+  ap_uint<cfg::bw_slice_c> tmp_c_0 = in0[4].range(cfg::col_start_d - cfg::col_start_b - 1, cfg::col_start_c - cfg::col_start_b);
+  ap_uint<cfg::bw_slice_d> tmp_d_0 = in0[4].range(cfg::col_start_e - cfg::col_start_b - 1, cfg::col_start_d - cfg::col_start_b);
+  ap_uint<cfg::bw_slice_d> tmp_d_1 = in0[5].range(cfg::col_start_e - cfg::col_start_d - 1, cfg::col_start_d - cfg::col_start_d);
+  ap_uint<cfg::bw_slice_e> tmp_e_0 = in0[5].range(cfg::col_start_f - cfg::col_start_d - 1, cfg::col_start_e - cfg::col_start_d);
 
-  constexpr int col_start_0 = details::chamber_ph_init_10deg[6];
-  constexpr int col_start_1 = details::chamber_ph_init_10deg[0];
-  constexpr int col_start_3 = details::chamber_ph_init_10deg[1];
-  constexpr int col_start_5 = details::chamber_ph_init_10deg[2];
-  constexpr int col_start_7 = details::chamber_ph_init_10deg[3];
-  constexpr int col_start_9 = details::chamber_ph_init_10deg[4];
-  constexpr int col_start_11 = details::chamber_ph_init_10deg[5];
+  // Logical OR
+  ap_uint<cfg::bw_slice_0> tmp_1_0_0 = tmp_0_0;
+  ap_uint<cfg::bw_slice_1> tmp_1_1_0 = (tmp_1_0 | tmp_1_1);
+  ap_uint<cfg::bw_slice_2> tmp_1_2_0 = tmp_2_0;
+  ap_uint<cfg::bw_slice_3> tmp_1_3_0 = (tmp_3_0 | tmp_3_1);
+  ap_uint<cfg::bw_slice_4> tmp_1_4_0 = tmp_4_0;
+  ap_uint<cfg::bw_slice_5> tmp_1_5_0 = (tmp_5_0 | tmp_5_1);
+  ap_uint<cfg::bw_slice_6> tmp_1_6_0 = tmp_6_0;
+  ap_uint<cfg::bw_slice_7> tmp_1_7_0 = (tmp_7_0 | tmp_7_1);
+  ap_uint<cfg::bw_slice_8> tmp_1_8_0 = tmp_8_0;
+  ap_uint<cfg::bw_slice_9> tmp_1_9_0 = (tmp_9_0 | tmp_9_1);
+  ap_uint<cfg::bw_slice_a> tmp_1_a_0 = tmp_a_0;
+  ap_uint<cfg::bw_slice_b> tmp_1_b_0 = (tmp_b_0 | tmp_b_1);
+  ap_uint<cfg::bw_slice_c> tmp_1_c_0 = tmp_c_0;
+  ap_uint<cfg::bw_slice_d> tmp_1_d_0 = (tmp_d_0 | tmp_d_1);
+  ap_uint<cfg::bw_slice_e> tmp_1_e_0 = tmp_e_0;
 
-  constexpr int col_start_2 = details::chamber_ph_cover_10deg[6];
-  constexpr int col_start_4 = details::chamber_ph_cover_10deg[0];
-  constexpr int col_start_6 = details::chamber_ph_cover_10deg[1];
-  constexpr int col_start_8 = details::chamber_ph_cover_10deg[2];
-  constexpr int col_start_10 = details::chamber_ph_cover_10deg[3];
-  constexpr int col_start_12 = details::chamber_ph_cover_10deg[4];
-  constexpr int col_start_13 = details::chamber_ph_cover_10deg[5];
+  // Bit concatenation
+  const auto tmp_2_0_0 = (
+      tmp_1_e_0, tmp_1_d_0, tmp_1_c_0, tmp_1_b_0, tmp_1_a_0, tmp_1_9_0, tmp_1_8_0, tmp_1_7_0,
+      tmp_1_6_0, tmp_1_5_0, tmp_1_4_0, tmp_1_3_0, tmp_1_2_0, tmp_1_1_0, tmp_1_0_0
+  );
+  emtf_assert(tmp_2_0_0.length() == zoning_out_t::width);
 
-  // There are 13 regions that alternate between non-overlapping and overlapping
-  out.range(col_start_0 - 1, col_start_f) = 0;
-  out.range(col_start_1 - 1, col_start_0) = (in0[6].range(col_start_1 - col_start_0 - 1, col_start_0 - col_start_0));
-  out.range(col_start_2 - 1, col_start_1) = (in0[6].range(col_start_2 - col_start_0 - 1, col_start_1 - col_start_0) | in0[0].range(col_start_2 - col_start_1 - 1, col_start_1 - col_start_1));
-  out.range(col_start_3 - 1, col_start_2) = (in0[0].range(col_start_3 - col_start_1 - 1, col_start_2 - col_start_1));
-  out.range(col_start_4 - 1, col_start_3) = (in0[0].range(col_start_4 - col_start_1 - 1, col_start_3 - col_start_1) | in0[1].range(col_start_4 - col_start_3 - 1, col_start_3 - col_start_3));
-  out.range(col_start_5 - 1, col_start_4) = (in0[1].range(col_start_5 - col_start_3 - 1, col_start_4 - col_start_3));
-  out.range(col_start_6 - 1, col_start_5) = (in0[1].range(col_start_6 - col_start_3 - 1, col_start_5 - col_start_3) | in0[2].range(col_start_6 - col_start_5 - 1, col_start_5 - col_start_5));
-  out.range(col_start_7 - 1, col_start_6) = (in0[2].range(col_start_7 - col_start_5 - 1, col_start_6 - col_start_5));
-  out.range(col_start_8 - 1, col_start_7) = (in0[2].range(col_start_8 - col_start_5 - 1, col_start_7 - col_start_5) | in0[3].range(col_start_8 - col_start_7 - 1, col_start_7 - col_start_7));
-  out.range(col_start_9 - 1, col_start_8) = (in0[3].range(col_start_9 - col_start_7 - 1, col_start_8 - col_start_7));
-  out.range(col_start_10 - 1, col_start_9) = (in0[3].range(col_start_10 - col_start_7 - 1, col_start_9 - col_start_7) | in0[4].range(col_start_10 - col_start_9 - 1, col_start_9 - col_start_9));
-  out.range(col_start_11 - 1, col_start_10) = (in0[4].range(col_start_11 - col_start_9 - 1, col_start_10 - col_start_9));
-  out.range(col_start_12 - 1, col_start_11) = (in0[4].range(col_start_12 - col_start_9 - 1, col_start_11 - col_start_9) | in0[5].range(col_start_12 - col_start_11 - 1, col_start_11 - col_start_11));
-  out.range(col_start_13 - 1, col_start_12) = (in0[5].range(col_start_13 - col_start_11 - 1, col_start_12 - col_start_11));
+  // Output
+  out = tmp_2_0_0;
 }
 
-template <typename T_IN, typename T_OUT>
-void zoning_join_20deg_chamber_images_op(const T_IN in0[details::num_chambers_20deg], T_OUT& out) {
-  static_assert(is_same<T_IN, ap_uint<details::chamber_img_bw> >::value, "T_IN type check failed");
-  static_assert(is_same<T_OUT, ap_uint<details::chamber_img_joined_bw> >::value, "T_OUT type check failed");
+template <unsigned int N, typename T_IN, typename T_OUT>
+void zoning_row_join_op(const T_IN in0[N], T_OUT& out, m_20deg_chamber_tag) {
+  static_assert(is_same<T_IN, zoning_internal_config::chamber_img_t>::value, "T_IN type check failed");
+  static_assert(is_same<T_OUT, zoning_out_t>::value, "T_OUT type check failed");
+  static_assert(N == details::num_chambers_traits<m_20deg_chamber_tag>::value, "N value check failed");
 
 #pragma HLS PIPELINE II=zoning_config::target_ii
 
@@ -61,34 +135,60 @@ void zoning_join_20deg_chamber_images_op(const T_IN in0[details::num_chambers_20
 
 #pragma HLS INLINE
 
-  // There are 8 edges that define 7 regions
-  constexpr int col_start_f = 0;
+  // Slices
+  using cfg = zoning_internal_config;
+  ap_uint<cfg::bw_slice_0> tmp_0_0 = in0[3].range(cfg::col_start_1 - 1, cfg::col_start_0);
+  ap_uint<cfg::bw_slice_1> tmp_1_0 = in0[3].range(cfg::col_start_2 - 1, cfg::col_start_1);
+  ap_uint<cfg::bw_slice_2> tmp_2_0 = in0[3].range(cfg::col_start_3 - 1, cfg::col_start_2);
+  ap_uint<cfg::bw_slice_3> tmp_3_0 = in0[3].range(cfg::col_start_4 - 1, cfg::col_start_3);
+  ap_uint<cfg::bw_slice_3> tmp_3_1 = in0[0].range(cfg::col_start_4 - cfg::col_start_3 - 1, cfg::col_start_3 - cfg::col_start_3);
+  ap_uint<cfg::bw_slice_4> tmp_4_0 = in0[0].range(cfg::col_start_5 - cfg::col_start_3 - 1, cfg::col_start_4 - cfg::col_start_3);
+  ap_uint<cfg::bw_slice_5> tmp_5_0 = in0[0].range(cfg::col_start_6 - cfg::col_start_3 - 1, cfg::col_start_5 - cfg::col_start_3);
+  ap_uint<cfg::bw_slice_6> tmp_6_0 = in0[0].range(cfg::col_start_7 - cfg::col_start_3 - 1, cfg::col_start_6 - cfg::col_start_3);
+  ap_uint<cfg::bw_slice_7> tmp_7_0 = in0[0].range(cfg::col_start_8 - cfg::col_start_3 - 1, cfg::col_start_7 - cfg::col_start_3);
+  ap_uint<cfg::bw_slice_7> tmp_7_1 = in0[1].range(cfg::col_start_8 - cfg::col_start_7 - 1, cfg::col_start_7 - cfg::col_start_7);
+  ap_uint<cfg::bw_slice_8> tmp_8_0 = in0[1].range(cfg::col_start_9 - cfg::col_start_7 - 1, cfg::col_start_8 - cfg::col_start_7);
+  ap_uint<cfg::bw_slice_9> tmp_9_0 = in0[1].range(cfg::col_start_a - cfg::col_start_7 - 1, cfg::col_start_9 - cfg::col_start_7);
+  ap_uint<cfg::bw_slice_a> tmp_a_0 = in0[1].range(cfg::col_start_b - cfg::col_start_7 - 1, cfg::col_start_a - cfg::col_start_7);
+  ap_uint<cfg::bw_slice_b> tmp_b_0 = in0[1].range(cfg::col_start_c - cfg::col_start_7 - 1, cfg::col_start_b - cfg::col_start_7);
+  ap_uint<cfg::bw_slice_b> tmp_b_1 = in0[2].range(cfg::col_start_c - cfg::col_start_b - 1, cfg::col_start_b - cfg::col_start_b);
+  ap_uint<cfg::bw_slice_c> tmp_c_0 = in0[2].range(cfg::col_start_d - cfg::col_start_b - 1, cfg::col_start_c - cfg::col_start_b);
+  ap_uint<cfg::bw_slice_d> tmp_d_0 = in0[2].range(cfg::col_start_e - cfg::col_start_b - 1, cfg::col_start_d - cfg::col_start_b);
+  ap_uint<cfg::bw_slice_e> tmp_e_0 = in0[2].range(cfg::col_start_f - cfg::col_start_b - 1, cfg::col_start_e - cfg::col_start_b);
 
-  constexpr int col_start_0 = details::chamber_ph_init_20deg[3];
-  constexpr int col_start_1 = details::chamber_ph_init_20deg[0];
-  constexpr int col_start_3 = details::chamber_ph_init_20deg[1];
-  constexpr int col_start_5 = details::chamber_ph_init_20deg[2];
+  // Logical OR
+  ap_uint<cfg::bw_slice_0> tmp_1_0_0 = tmp_0_0;
+  ap_uint<cfg::bw_slice_1> tmp_1_1_0 = tmp_1_0;
+  ap_uint<cfg::bw_slice_2> tmp_1_2_0 = tmp_2_0;
+  ap_uint<cfg::bw_slice_3> tmp_1_3_0 = (tmp_3_0 | tmp_3_1);
+  ap_uint<cfg::bw_slice_4> tmp_1_4_0 = tmp_4_0;
+  ap_uint<cfg::bw_slice_5> tmp_1_5_0 = tmp_5_0;
+  ap_uint<cfg::bw_slice_6> tmp_1_6_0 = tmp_6_0;
+  ap_uint<cfg::bw_slice_7> tmp_1_7_0 = (tmp_7_0 | tmp_7_1);
+  ap_uint<cfg::bw_slice_8> tmp_1_8_0 = tmp_8_0;
+  ap_uint<cfg::bw_slice_9> tmp_1_9_0 = tmp_9_0;
+  ap_uint<cfg::bw_slice_a> tmp_1_a_0 = tmp_a_0;
+  ap_uint<cfg::bw_slice_b> tmp_1_b_0 = (tmp_b_0 | tmp_b_1);
+  ap_uint<cfg::bw_slice_c> tmp_1_c_0 = tmp_c_0;
+  ap_uint<cfg::bw_slice_d> tmp_1_d_0 = tmp_d_0;
+  ap_uint<cfg::bw_slice_e> tmp_1_e_0 = tmp_e_0;
 
-  constexpr int col_start_2 = details::chamber_ph_cover_20deg[3];
-  constexpr int col_start_4 = details::chamber_ph_cover_20deg[0];
-  constexpr int col_start_6 = details::chamber_ph_cover_20deg[1];
-  constexpr int col_start_7 = details::chamber_ph_cover_20deg[2];
+  // Bit concatenation
+  const auto tmp_2_0_0 = (
+      tmp_1_e_0, tmp_1_d_0, tmp_1_c_0, tmp_1_b_0, tmp_1_a_0, tmp_1_9_0, tmp_1_8_0, tmp_1_7_0,
+      tmp_1_6_0, tmp_1_5_0, tmp_1_4_0, tmp_1_3_0, tmp_1_2_0, tmp_1_1_0, tmp_1_0_0
+  );
+  emtf_assert(tmp_2_0_0.length() == zoning_out_t::width);
 
-  // There are 7 regions that alternate between non-overlapping and overlapping
-  emtf_assert(col_start_0 == col_start_f);
-  out.range(col_start_1 - 1, col_start_0) = (in0[3].range(col_start_1 - col_start_0 - 1, col_start_0 - col_start_0));
-  out.range(col_start_2 - 1, col_start_1) = (in0[3].range(col_start_2 - col_start_0 - 1, col_start_1 - col_start_0) | in0[0].range(col_start_2 - col_start_1 - 1, col_start_1 - col_start_1));
-  out.range(col_start_3 - 1, col_start_2) = (in0[0].range(col_start_3 - col_start_1 - 1, col_start_2 - col_start_1));
-  out.range(col_start_4 - 1, col_start_3) = (in0[0].range(col_start_4 - col_start_1 - 1, col_start_3 - col_start_1) | in0[1].range(col_start_4 - col_start_3 - 1, col_start_3 - col_start_3));
-  out.range(col_start_5 - 1, col_start_4) = (in0[1].range(col_start_5 - col_start_3 - 1, col_start_4 - col_start_3));
-  out.range(col_start_6 - 1, col_start_5) = (in0[1].range(col_start_6 - col_start_3 - 1, col_start_5 - col_start_3) | in0[2].range(col_start_6 - col_start_5 - 1, col_start_5 - col_start_5));
-  out.range(col_start_7 - 1, col_start_6) = (in0[2].range(col_start_7 - col_start_5 - 1, col_start_6 - col_start_5));
+  // Output
+  out = tmp_2_0_0;
 }
 
-template <typename T_IN, typename T_OUT>
-void zoning_join_20deg_ext_chamber_images_op(const T_IN in0[details::num_chambers_20deg_ext], T_OUT& out) {
-  static_assert(is_same<T_IN, ap_uint<details::chamber_img_bw> >::value, "T_IN type check failed");
-  static_assert(is_same<T_OUT, ap_uint<details::chamber_img_joined_bw> >::value, "T_OUT type check failed");
+template <unsigned int N, typename T_IN, typename T_OUT>
+void zoning_row_join_op(const T_IN in0[N], T_OUT& out, m_20deg_ext_chamber_tag) {
+  static_assert(is_same<T_IN, zoning_internal_config::chamber_img_t>::value, "T_IN type check failed");
+  static_assert(is_same<T_OUT, zoning_out_t>::value, "T_OUT type check failed");
+  static_assert(N == details::num_chambers_traits<m_20deg_ext_chamber_tag>::value, "N value check failed");
 
 #pragma HLS PIPELINE II=zoning_config::target_ii
 
@@ -96,54 +196,232 @@ void zoning_join_20deg_ext_chamber_images_op(const T_IN in0[details::num_chamber
 
 #pragma HLS INLINE
 
-  // There are 14 edges that define 13 regions
-  constexpr int col_start_f = 0;
+  // Slices
+  using cfg = zoning_internal_config;
+  ap_uint<cfg::bw_slice_0> tmp_0_0 = in0[3].range(cfg::col_start_1 - 1, cfg::col_start_0);
+  ap_uint<cfg::bw_slice_1> tmp_1_0 = in0[3].range(cfg::col_start_2 - 1, cfg::col_start_1);
+  ap_uint<cfg::bw_slice_2> tmp_2_0 = in0[3].range(cfg::col_start_3 - 1, cfg::col_start_2);
+  ap_uint<cfg::bw_slice_3> tmp_3_0 = in0[3].range(cfg::col_start_4 - 1, cfg::col_start_3);
+  ap_uint<cfg::bw_slice_3> tmp_3_1 = in0[0].range(cfg::col_start_4 - cfg::col_start_3 - 1, cfg::col_start_3 - cfg::col_start_3);
+  ap_uint<cfg::bw_slice_4> tmp_4_0 = in0[0].range(cfg::col_start_5 - cfg::col_start_3 - 1, cfg::col_start_4 - cfg::col_start_3);
+  ap_uint<cfg::bw_slice_5> tmp_5_0 = in0[0].range(cfg::col_start_6 - cfg::col_start_3 - 1, cfg::col_start_5 - cfg::col_start_3);
+  ap_uint<cfg::bw_slice_6> tmp_6_0 = in0[0].range(cfg::col_start_7 - cfg::col_start_3 - 1, cfg::col_start_6 - cfg::col_start_3);
+  ap_uint<cfg::bw_slice_7> tmp_7_0 = in0[0].range(cfg::col_start_8 - cfg::col_start_3 - 1, cfg::col_start_7 - cfg::col_start_3);
+  ap_uint<cfg::bw_slice_7> tmp_7_1 = in0[1].range(cfg::col_start_8 - cfg::col_start_7 - 1, cfg::col_start_7 - cfg::col_start_7);
+  ap_uint<cfg::bw_slice_8> tmp_8_0 = in0[1].range(cfg::col_start_9 - cfg::col_start_7 - 1, cfg::col_start_8 - cfg::col_start_7);
+  ap_uint<cfg::bw_slice_9> tmp_9_0 = in0[1].range(cfg::col_start_a - cfg::col_start_7 - 1, cfg::col_start_9 - cfg::col_start_7);
+  ap_uint<cfg::bw_slice_a> tmp_a_0 = in0[1].range(cfg::col_start_b - cfg::col_start_7 - 1, cfg::col_start_a - cfg::col_start_7);
+  ap_uint<cfg::bw_slice_b> tmp_b_0 = in0[1].range(cfg::col_start_c - cfg::col_start_7 - 1, cfg::col_start_b - cfg::col_start_7);
+  ap_uint<cfg::bw_slice_b> tmp_b_1 = in0[2].range(cfg::col_start_c - cfg::col_start_b - 1, cfg::col_start_b - cfg::col_start_b);
+  ap_uint<cfg::bw_slice_c> tmp_c_0 = in0[2].range(cfg::col_start_d - cfg::col_start_b - 1, cfg::col_start_c - cfg::col_start_b);
+  ap_uint<cfg::bw_slice_d> tmp_d_0 = in0[2].range(cfg::col_start_e - cfg::col_start_b - 1, cfg::col_start_d - cfg::col_start_b);
+  ap_uint<cfg::bw_slice_e> tmp_e_0 = in0[2].range(cfg::col_start_f - cfg::col_start_b - 1, cfg::col_start_e - cfg::col_start_b);
 
-  constexpr int col_start_0 = details::chamber_ph_init_10deg[6];
-  constexpr int col_start_1 = details::chamber_ph_init_10deg[0];
-  constexpr int col_start_3 = details::chamber_ph_init_10deg[1];
-  constexpr int col_start_5 = details::chamber_ph_init_10deg[2];
-  constexpr int col_start_7 = details::chamber_ph_init_10deg[3];
-  constexpr int col_start_9 = details::chamber_ph_init_10deg[4];
-  constexpr int col_start_11 = details::chamber_ph_init_10deg[5];
+  ap_uint<cfg::bw_slice_1> tmp_1_1 = in0[4+6].range(cfg::col_start_2 - cfg::col_start_1 - 1, cfg::col_start_1 - cfg::col_start_1);
+  ap_uint<cfg::bw_slice_2> tmp_2_1 = in0[4+6].range(cfg::col_start_3 - cfg::col_start_1 - 1, cfg::col_start_2 - cfg::col_start_1);
+  ap_uint<cfg::bw_slice_3> tmp_3_2 = in0[4+6].range(cfg::col_start_4 - cfg::col_start_1 - 1, cfg::col_start_3 - cfg::col_start_1);
+  ap_uint<cfg::bw_slice_3> tmp_3_3 = in0[4+0].range(cfg::col_start_4 - cfg::col_start_3 - 1, cfg::col_start_3 - cfg::col_start_3);
+  ap_uint<cfg::bw_slice_4> tmp_4_1 = in0[4+0].range(cfg::col_start_5 - cfg::col_start_3 - 1, cfg::col_start_4 - cfg::col_start_3);
+  ap_uint<cfg::bw_slice_5> tmp_5_1 = in0[4+0].range(cfg::col_start_6 - cfg::col_start_3 - 1, cfg::col_start_5 - cfg::col_start_3);
+  ap_uint<cfg::bw_slice_5> tmp_5_2 = in0[4+1].range(cfg::col_start_6 - cfg::col_start_5 - 1, cfg::col_start_5 - cfg::col_start_5);
+  ap_uint<cfg::bw_slice_6> tmp_6_1 = in0[4+1].range(cfg::col_start_7 - cfg::col_start_5 - 1, cfg::col_start_6 - cfg::col_start_5);
+  ap_uint<cfg::bw_slice_7> tmp_7_2 = in0[4+1].range(cfg::col_start_8 - cfg::col_start_5 - 1, cfg::col_start_7 - cfg::col_start_5);
+  ap_uint<cfg::bw_slice_7> tmp_7_3 = in0[4+2].range(cfg::col_start_8 - cfg::col_start_7 - 1, cfg::col_start_7 - cfg::col_start_7);
+  ap_uint<cfg::bw_slice_8> tmp_8_1 = in0[4+2].range(cfg::col_start_9 - cfg::col_start_7 - 1, cfg::col_start_8 - cfg::col_start_7);
+  ap_uint<cfg::bw_slice_9> tmp_9_1 = in0[4+2].range(cfg::col_start_a - cfg::col_start_7 - 1, cfg::col_start_9 - cfg::col_start_7);
+  ap_uint<cfg::bw_slice_9> tmp_9_2 = in0[4+3].range(cfg::col_start_a - cfg::col_start_9 - 1, cfg::col_start_9 - cfg::col_start_9);
+  ap_uint<cfg::bw_slice_a> tmp_a_1 = in0[4+3].range(cfg::col_start_b - cfg::col_start_9 - 1, cfg::col_start_a - cfg::col_start_9);
+  ap_uint<cfg::bw_slice_b> tmp_b_2 = in0[4+3].range(cfg::col_start_c - cfg::col_start_9 - 1, cfg::col_start_b - cfg::col_start_9);
+  ap_uint<cfg::bw_slice_b> tmp_b_3 = in0[4+4].range(cfg::col_start_c - cfg::col_start_b - 1, cfg::col_start_b - cfg::col_start_b);
+  ap_uint<cfg::bw_slice_c> tmp_c_1 = in0[4+4].range(cfg::col_start_d - cfg::col_start_b - 1, cfg::col_start_c - cfg::col_start_b);
+  ap_uint<cfg::bw_slice_d> tmp_d_1 = in0[4+4].range(cfg::col_start_e - cfg::col_start_b - 1, cfg::col_start_d - cfg::col_start_b);
+  ap_uint<cfg::bw_slice_d> tmp_d_2 = in0[4+5].range(cfg::col_start_e - cfg::col_start_d - 1, cfg::col_start_d - cfg::col_start_d);
+  ap_uint<cfg::bw_slice_e> tmp_e_1 = in0[4+5].range(cfg::col_start_f - cfg::col_start_d - 1, cfg::col_start_e - cfg::col_start_d);
 
-  constexpr int col_start_2 = details::chamber_ph_cover_10deg[6];
-  constexpr int col_start_4 = details::chamber_ph_cover_10deg[0];
-  constexpr int col_start_6 = details::chamber_ph_cover_10deg[1];
-  constexpr int col_start_8 = details::chamber_ph_cover_10deg[2];
-  constexpr int col_start_10 = details::chamber_ph_cover_10deg[3];
-  constexpr int col_start_12 = details::chamber_ph_cover_10deg[4];
-  constexpr int col_start_13 = details::chamber_ph_cover_10deg[5];
+  // Logical OR
+  ap_uint<cfg::bw_slice_0> tmp_1_0_0 = tmp_0_0;
+  ap_uint<cfg::bw_slice_1> tmp_1_1_0 = (tmp_1_0 | tmp_1_1);
+  ap_uint<cfg::bw_slice_2> tmp_1_2_0 = (tmp_2_0 | tmp_2_1);
+  ap_uint<cfg::bw_slice_3> tmp_1_3_0 = ((tmp_3_0 | tmp_3_1) | (tmp_3_2 | tmp_3_3));
+  ap_uint<cfg::bw_slice_4> tmp_1_4_0 = (tmp_4_0 | tmp_4_1);
+  ap_uint<cfg::bw_slice_5> tmp_1_5_0 = (tmp_5_0 | (tmp_5_1 | tmp_5_2));
+  ap_uint<cfg::bw_slice_6> tmp_1_6_0 = (tmp_6_0 | tmp_6_1);
+  ap_uint<cfg::bw_slice_7> tmp_1_7_0 = ((tmp_7_0 | tmp_7_1) | (tmp_7_2 | tmp_7_3));
+  ap_uint<cfg::bw_slice_8> tmp_1_8_0 = (tmp_8_0 | tmp_8_1);
+  ap_uint<cfg::bw_slice_9> tmp_1_9_0 = (tmp_9_0 | (tmp_9_1 | tmp_9_2));
+  ap_uint<cfg::bw_slice_a> tmp_1_a_0 = (tmp_a_0 | tmp_a_1);
+  ap_uint<cfg::bw_slice_b> tmp_1_b_0 = ((tmp_b_0 | tmp_b_1) | (tmp_b_2 | tmp_b_3));
+  ap_uint<cfg::bw_slice_c> tmp_1_c_0 = (tmp_c_0 | tmp_c_1);
+  ap_uint<cfg::bw_slice_d> tmp_1_d_0 = (tmp_d_0 | (tmp_d_1 | tmp_d_2));
+  ap_uint<cfg::bw_slice_e> tmp_1_e_0 = (tmp_e_0 | tmp_e_1);
 
-  // There are 13 regions that alternate between non-overlapping and overlapping
-  // Note that col_start_0 is different for 10deg vs 20 deg chambers
-  out.range(col_start_0 - 1, col_start_f) = (in0[0+3].range(col_start_0 - 1, col_start_f));
-  out.range(col_start_1 - 1, col_start_0) = (in0[0+3].range(col_start_1 - col_start_f - 1, col_start_0 - col_start_f) |
-                                             in0[4+6].range(col_start_1 - col_start_0 - 1, col_start_0 - col_start_0));
-  out.range(col_start_2 - 1, col_start_1) = (in0[0+3].range(col_start_2 - col_start_f - 1, col_start_1 - col_start_f) | in0[0+0].range(col_start_2 - col_start_1 - 1, col_start_1 - col_start_1) |
-                                             in0[4+6].range(col_start_2 - col_start_0 - 1, col_start_1 - col_start_0) | in0[4+0].range(col_start_2 - col_start_1 - 1, col_start_1 - col_start_1));
-  out.range(col_start_3 - 1, col_start_2) = (in0[0+0].range(col_start_3 - col_start_1 - 1, col_start_2 - col_start_1) |
-                                             in0[4+0].range(col_start_3 - col_start_1 - 1, col_start_2 - col_start_1));
-  out.range(col_start_4 - 1, col_start_3) = (in0[0+0].range(col_start_4 - col_start_1 - 1, col_start_3 - col_start_1) |
-                                             in0[4+0].range(col_start_4 - col_start_1 - 1, col_start_3 - col_start_1) | in0[4+1].range(col_start_4 - col_start_3 - 1, col_start_3 - col_start_3));
-  out.range(col_start_5 - 1, col_start_4) = (in0[0+0].range(col_start_5 - col_start_1 - 1, col_start_4 - col_start_1) |
-                                             in0[4+1].range(col_start_5 - col_start_3 - 1, col_start_4 - col_start_3));
-  out.range(col_start_6 - 1, col_start_5) = (in0[0+0].range(col_start_6 - col_start_1 - 1, col_start_5 - col_start_1) | in0[0+1].range(col_start_6 - col_start_5 - 1, col_start_5 - col_start_5) |
-                                             in0[4+1].range(col_start_6 - col_start_3 - 1, col_start_5 - col_start_3) | in0[4+2].range(col_start_6 - col_start_5 - 1, col_start_5 - col_start_5));
-  out.range(col_start_7 - 1, col_start_6) = (in0[0+1].range(col_start_7 - col_start_5 - 1, col_start_6 - col_start_5) |
-                                             in0[4+2].range(col_start_7 - col_start_5 - 1, col_start_6 - col_start_5));
-  out.range(col_start_8 - 1, col_start_7) = (in0[0+1].range(col_start_8 - col_start_5 - 1, col_start_7 - col_start_5) |
-                                             in0[4+2].range(col_start_8 - col_start_5 - 1, col_start_7 - col_start_5) | in0[4+3].range(col_start_8 - col_start_7 - 1, col_start_7 - col_start_7));
-  out.range(col_start_9 - 1, col_start_8) = (in0[0+1].range(col_start_9 - col_start_5 - 1, col_start_8 - col_start_5) |
-                                             in0[4+3].range(col_start_9 - col_start_7 - 1, col_start_8 - col_start_7));
-  out.range(col_start_10 - 1, col_start_9) = (in0[0+1].range(col_start_10 - col_start_5 - 1, col_start_9 - col_start_5) | in0[0+2].range(col_start_10 - col_start_9 - 1, col_start_9 - col_start_9) |
-                                              in0[4+3].range(col_start_10 - col_start_7 - 1, col_start_9 - col_start_7) | in0[4+4].range(col_start_10 - col_start_9 - 1, col_start_9 - col_start_9));
-  out.range(col_start_11 - 1, col_start_10) = (in0[0+2].range(col_start_11 - col_start_9 - 1, col_start_10 - col_start_9) |
-                                               in0[4+4].range(col_start_11 - col_start_9 - 1, col_start_10 - col_start_9));
-  out.range(col_start_12 - 1, col_start_11) = (in0[0+2].range(col_start_12 - col_start_9 - 1, col_start_11 - col_start_9) |
-                                               in0[4+4].range(col_start_12 - col_start_9 - 1, col_start_11 - col_start_9) | in0[4+5].range(col_start_12 - col_start_11 - 1, col_start_11 - col_start_11));
-  out.range(col_start_13 - 1, col_start_12) = (in0[0+2].range(col_start_13 - col_start_9 - 1, col_start_12 - col_start_9) |
-                                               in0[4+5].range(col_start_13 - col_start_11 - 1, col_start_12 - col_start_11));
+  // Bit concatenation
+  const auto tmp_2_0_0 = (
+      tmp_1_e_0, tmp_1_d_0, tmp_1_c_0, tmp_1_b_0, tmp_1_a_0, tmp_1_9_0, tmp_1_8_0, tmp_1_7_0,
+      tmp_1_6_0, tmp_1_5_0, tmp_1_4_0, tmp_1_3_0, tmp_1_2_0, tmp_1_1_0, tmp_1_0_0
+  );
+  emtf_assert(tmp_2_0_0.length() == zoning_out_t::width);
+
+  // Output
+  out = tmp_2_0_0;
+}
+
+// _____________________________________________________________________________
+template <typename T_IN, typename T_OUT>
+void zoning_row_fill_op(
+    const T_IN   in0 [num_emtf_segments],
+    const bool_t in1 [num_emtf_segments],
+    T_OUT&       out
+) {
+  static_assert(is_same<T_IN, trk_col_t>::value, "T_IN type check failed");
+  static_assert(is_same<T_OUT, zoning_internal_config::chamber_img_t>::value, "T_OUT type check failed");
+
+#pragma HLS PIPELINE II=zoning_config::target_ii
+
+#pragma HLS INTERFACE ap_ctrl_none port=return
+
+//#pragma HLS INLINE
+
+  T_OUT chamber_img = 0;  // init as zero
+
+  // Loop over segments
+  LOOP_SEG_2: for (unsigned j = 0; j < num_emtf_segments; j++) {
+
+#pragma HLS UNROLL
+
+    const T_IN col = in0[j];
+    const bool valid = in1[j];
+
+    // Fill the chamber image: set bit to 1 at a particular col if segment is found.
+    // Note: it might need expression balancing if num_emtf_segments > 2.
+    if (valid) {
+      chamber_img[col] = 1;  // set bit to 1
+    }
+  }  // end loop over segments
+
+  // Output
+  out = chamber_img;
+}
+
+// _____________________________________________________________________________
+template <typename Zone, typename Timezone, typename Row, unsigned int N, typename T_OUT>
+void zoning_row_gather_op(
+    const emtf_phi_t   emtf_phi       [model_config::n_in],
+    const seg_zones_t  seg_zones      [model_config::n_in],
+    const seg_tzones_t seg_tzones     [model_config::n_in],
+    const seg_valid_t  seg_valid      [model_config::n_in],
+    T_OUT              chamber_images [N]
+) {
+  static_assert(is_same<T_OUT, zoning_internal_config::chamber_img_t>::value, "T_OUT type check failed");
+
+#pragma HLS PIPELINE II=zoning_config::target_ii
+
+#pragma HLS INTERFACE ap_ctrl_none port=return
+
+#pragma HLS INLINE
+
+  typedef typename details::chamber_category_traits<Row>::chamber_category chamber_category;
+  static_assert(N == details::num_chambers_traits<chamber_category>::value, "N value check failed");
+
+#ifndef __SYNTHESIS__
+  static bool initialized = false;
+  static int chamber_id_table[N];
+  static int chamber_ph_init_table[N];
+  static int chamber_ph_cover_table[N];
+#else
+  bool initialized = false;
+  int chamber_id_table[N];
+  int chamber_ph_init_table[N];
+  int chamber_ph_cover_table[N];
+#endif
+
+  if (!initialized) {
+    initialized = true;
+    details::init_table_op<N>(chamber_id_table, details::get_chamber_id_op<Row>{});
+    details::init_table_op<N>(chamber_ph_init_table, details::get_chamber_ph_init_op<chamber_category>{});
+    details::init_table_op<N>(chamber_ph_cover_table, details::get_chamber_ph_cover_op<chamber_category>{});
+  }
+
+  // Translate zone, timezone into bit selection
+  const trk_zone_t the_zone = details::zone_traits<Zone>::value;
+  const trk_tzone_t the_tzone = details::timezone_traits<Timezone>::value;
+  const trk_zone_t bit_sel_zone = static_cast<trk_zone_t>(num_emtf_zones - 1) - the_zone;
+  const trk_tzone_t bit_sel_tzone = static_cast<trk_tzone_t>(num_emtf_timezones - 1) - the_tzone;
+
+  // Loop over chambers
+  LOOP_CHM_1: for (unsigned i = 0; i < N; i++) {
+
+#pragma HLS UNROLL
+
+    // Intermediate arrays
+    trk_col_t columns   [num_emtf_segments];
+    bool_t    columns_v [num_emtf_segments];
+
+#pragma HLS ARRAY_RESHAPE variable=columns complete dim=0
+#pragma HLS ARRAY_RESHAPE variable=columns_v complete dim=0
+
+    //std::cout << "[DEBUG] zone " << details::zone_traits<Zone>::value
+    //          << " chamber: " << chamber_id_table[i]
+    //          << " ph_init: " << chamber_ph_init_table[i]
+    //          << " ph_cover: " << chamber_ph_cover_table[i] << std::endl;
+
+    // Loop over segments
+    LOOP_SEG_1: for (unsigned j = 0; j < num_emtf_segments; j++) {
+
+#pragma HLS UNROLL
+
+      const unsigned iseg = static_cast<unsigned>(chamber_id_table[i] * num_emtf_segments) + j;
+      const trk_col_t ph_init = chamber_ph_init_table[i];
+      emtf_assert(chamber_id_table[i] < num_emtf_chambers);
+      emtf_assert(iseg < (num_emtf_chambers * num_emtf_segments));
+
+      // Translate emtf_phi to col: truncate the last 4 bits, then subtract ph_init
+      constexpr int bits_to_shift = emtf_img_col_factor_log2;
+      const emtf_phi_t ph0 = emtf_phi[iseg];
+      const trk_col_t col = static_cast<trk_col_t>(ph0 >> bits_to_shift) - ph_init;  // unsafe math
+
+      // Condition: is_valid_seg && is_same_zone && is_same_timezone
+      const bool valid = (
+          (seg_valid[iseg] == 1) and \
+          (seg_zones[iseg][bit_sel_zone] == 1) and \
+          (seg_tzones[iseg][bit_sel_tzone] == 1)
+      );
+
+      if (valid) {
+        emtf_assert((ph0 >> bits_to_shift) >= ph_init);
+        emtf_assert(col < details::chamber_img_bw);
+        //std::cout << "[DEBUG] .. segment: " << j << " emtf_phi: " << emtf_phi[iseg]
+        //          << " col: " << col << std::endl;
+      }
+
+      columns[j] = col;
+      columns_v[j] = valid;
+    }  // end loop over segments
+
+    // Fill the chamber image
+    zoning_row_fill_op(columns, columns_v, chamber_images[i]);
+  }  // end loop over chambers
+}
+
+template <unsigned int N, typename T_IN, typename T_OUT>
+void zoning_row_gather_mux_op(const T_IN in0[N], const T_IN in1[N], T_OUT out[N]) {
+  static_assert(is_same<T_IN, zoning_internal_config::chamber_img_t>::value, "T_IN type check failed");
+  static_assert(is_same<T_OUT, zoning_internal_config::chamber_img_t>::value, "T_OUT type check failed");
+
+#pragma HLS PIPELINE II=zoning_config::target_ii
+
+#pragma HLS INTERFACE ap_ctrl_none port=return
+
+#pragma HLS INLINE
+
+  // Loop over chambers
+  LOOP_CHM_2: for (unsigned i = 0; i < N; i++) {
+
+#pragma HLS UNROLL
+
+    // Logical OR
+    out[i] = (in0[i] | in1[i]);
+  }  // end loop over chambers
 }
 
 // _____________________________________________________________________________
@@ -152,11 +430,11 @@ void zoning_join_20deg_ext_chamber_images_op(const T_IN in0[details::num_chamber
 
 template <typename Zone, typename Timezone, typename Row, typename SecondRow=Row>
 void zoning_row_op(
-    const emtf_phi_t emtf_phi[model_config::n_in],
-    const seg_zones_t seg_zones[model_config::n_in],
-    const seg_tzones_t seg_tzones[model_config::n_in],
-    const seg_valid_t seg_valid[model_config::n_in],
-    zoning_out_t& zoning_out_row_i
+    const emtf_phi_t   emtf_phi         [model_config::n_in],
+    const seg_zones_t  seg_zones        [model_config::n_in],
+    const seg_tzones_t seg_tzones       [model_config::n_in],
+    const seg_valid_t  seg_valid        [model_config::n_in],
+    zoning_out_t&      zoning_out_row_k
 ) {
 
 #pragma HLS PIPELINE II=zoning_config::target_ii
@@ -167,135 +445,38 @@ void zoning_row_op(
 
   typedef typename details::chamber_category_traits<Row>::chamber_category chamber_category;
   const unsigned int N = details::num_chambers_traits<chamber_category>::value;
-  const int the_zone = details::zone_traits<Zone>::value;
-  const int the_tzone = details::timezone_traits<Timezone>::value;
-  emtf_assert(N == 4 or N == 7 or N == 11);
 
-  // Make lookup tables
-  int chamber_id_table[N];
-  details::init_table_op<N>(chamber_id_table, details::get_chamber_id_op<Row>());
+  typedef zoning_internal_config::chamber_img_t chamber_img_t;
 
-  int chamber_id_table_2nd[N];
-  details::init_table_op<N>(chamber_id_table_2nd, details::get_chamber_id_op<SecondRow>());
-
-  int chamber_ph_init_table[N];
-  details::init_table_op<N>(chamber_ph_init_table, details::get_chamber_ph_init_op<chamber_category>());
-
-  //int chamber_ph_cover_table[N];
-  //details::init_table_op<N>(chamber_ph_cover_table, details::get_chamber_ph_cover_op<chamber_category>());
-
-  // single-chamber image and N-chamber image
-  typedef ap_uint<details::chamber_img_bw> chamber_img_t;
-  typedef ap_uint<details::chamber_img_joined_bw> chamber_img_joined_t;
-
+  // Intermediate arrays
+  chamber_img_t chamber_images_tmp_0[N];
+  chamber_img_t chamber_images_tmp_1[N];
   chamber_img_t chamber_images[N];
-  chamber_img_t chamber_images_2nd[N];
 
+#pragma HLS ARRAY_PARTITION variable=chamber_images_tmp_0 complete dim=0
+#pragma HLS ARRAY_PARTITION variable=chamber_images_tmp_1 complete dim=0
 #pragma HLS ARRAY_PARTITION variable=chamber_images complete dim=0
-#pragma HLS ARRAY_PARTITION variable=chamber_images_2nd complete dim=0
 
-  // Loop over chambers
-  LOOP_I_1: for (unsigned i = 0; i < N; i++) {
-
-#pragma HLS UNROLL
-
-    //std::cout << "[DEBUG] z " << details::zone_traits<Zone>::value << " chamber: " << chamber_id_table[i] << " ph_init: " << chamber_ph_init_table[i] << " ph_cover: " << chamber_ph_cover_table[i] << std::endl;
-
-    chamber_images[i] = 0;  // init as zero
-
-    // Loop over segments
-    LOOP_J_1: for (unsigned j = 0; j < num_emtf_segments; j++) {
-
-#pragma HLS UNROLL
-
-      const trk_seg_t iseg = (chamber_id_table[i] * num_emtf_segments) + j;
-      emtf_assert(chamber_id_table[i] < num_emtf_chambers);
-      emtf_assert(iseg < (num_emtf_chambers * num_emtf_segments));
-
-      // Fill the chamber image. A pixel at (row, col) is set to 1 if a segment is present.
-      // Use condition: (valid && is_same_zone && is_same_timezone)
-      if (
-          (seg_valid[iseg] == 1) and \
-          (seg_zones[iseg][(num_emtf_zones - 1) - the_zone] == 1) and \
-          (seg_tzones[iseg][(num_emtf_timezones - 1) - the_tzone] == 1)
-      ) {
-        // Truncate last 4 bits (i.e. divide by 16), subtract offset
-        constexpr int bits_to_shift = emtf_img_col_factor_log2;
-        const trk_col_t offset = chamber_ph_init_table[i];
-        const trk_col_t col = (emtf_phi[iseg] >> bits_to_shift) - offset;
-        emtf_assert((emtf_phi[iseg] >> bits_to_shift) >= offset);
-        emtf_assert(col < chamber_img_t::width);
-        //std::cout << "[DEBUG] chamber: " << chamber_id_table[i] << " segment: " << j << " emtf_phi: " << emtf_phi[iseg] << " col: " << col << " offset: " << offset << std::endl;
-
-        chamber_images[i][col] = 1;  // set bit to 1
-      }
-    }  // end loop over segments
-
-    if (!is_same<Row, SecondRow>::value) {  // enable if Row and SecondRow are different
-
-      chamber_images_2nd[i] = 0;  // init as zero
-
-      // Loop over segments
-      LOOP_J_2: for (unsigned j = 0; j < num_emtf_segments; j++) {
-
-#pragma HLS UNROLL
-
-        const trk_seg_t iseg = (chamber_id_table_2nd[i] * num_emtf_segments) + j;
-        emtf_assert(chamber_id_table_2nd[i] < num_emtf_chambers);
-        emtf_assert(iseg < (num_emtf_chambers * num_emtf_segments));
-
-        // Fill the chamber image. A pixel at (row, col) is set to 1 if a segment is present.
-        // Use condition: (valid && is_same_zone && is_same_timezone)
-        if (
-            (seg_valid[iseg] == 1) and \
-            (seg_zones[iseg][(num_emtf_zones - 1) - the_zone] == 1) and \
-            (seg_tzones[iseg][(num_emtf_timezones - 1) - the_tzone] == 1)
-        ) {
-          // Truncate last 4 bits (i.e. divide by 16), subtract offset
-          constexpr int bits_to_shift = emtf_img_col_factor_log2;
-          const trk_col_t offset = chamber_ph_init_table[i];
-          const trk_col_t col = (emtf_phi[iseg] >> bits_to_shift) - offset;
-          emtf_assert((emtf_phi[iseg] >> bits_to_shift) >= offset);
-          emtf_assert(col < chamber_img_t::width);
-          //std::cout << "[DEBUG] chamber: " << chamber_id_table_2nd[i] << " segment: " << j << " emtf_phi: " << emtf_phi[iseg] << " col: " << col << " offset: " << offset << std::endl;
-
-          chamber_images_2nd[i][col] = 1;  // set bit to 1
-        }
-      }  // end loop over segments
-    }  // end if
-  }  // end loop over chambers
-
-  // Join chamber images. Adjust the image size before output.
-  constexpr int col_start_joined = details::chamber_img_joined_col_start;
-  constexpr int col_stop_joined = details::chamber_img_joined_col_stop;
-
-  chamber_img_joined_t chamber_img_joined;
-  chamber_img_joined_t chamber_img_joined_2nd;
-
+  // Fill the chamber images
   if (!is_same<Row, SecondRow>::value) {  // enable if Row and SecondRow are different
-    if (is_same<chamber_category, m_10deg_chamber_tag>::value) {
-      zoning_join_10deg_chamber_images_op(chamber_images, chamber_img_joined);
-      zoning_join_10deg_chamber_images_op(chamber_images_2nd, chamber_img_joined_2nd);
-    } else if (is_same<chamber_category, m_20deg_chamber_tag>::value) {
-      zoning_join_20deg_chamber_images_op(chamber_images, chamber_img_joined);
-      zoning_join_20deg_chamber_images_op(chamber_images_2nd, chamber_img_joined_2nd);
-    } else if (is_same<chamber_category, m_20deg_ext_chamber_tag>::value) {
-      zoning_join_20deg_ext_chamber_images_op(chamber_images, chamber_img_joined);
-      zoning_join_20deg_ext_chamber_images_op(chamber_images_2nd, chamber_img_joined_2nd);
-    }
-    zoning_out_row_i = (chamber_img_joined.range(col_stop_joined, col_start_joined) |
-                        chamber_img_joined_2nd.range(col_stop_joined, col_start_joined));
+    zoning_row_gather_op<Zone, Timezone, Row, N>(
+        emtf_phi, seg_zones, seg_tzones, seg_valid, chamber_images_tmp_0
+    );
+    zoning_row_gather_op<Zone, Timezone, SecondRow, N>(
+        emtf_phi, seg_zones, seg_tzones, seg_valid, chamber_images_tmp_1
+    );
+    zoning_row_gather_mux_op<N>(
+        chamber_images_tmp_0, chamber_images_tmp_1, chamber_images
+    );
 
   } else {  // enable if Row and Second are identical
-    if (is_same<chamber_category, m_10deg_chamber_tag>::value) {
-      zoning_join_10deg_chamber_images_op(chamber_images, chamber_img_joined);
-    } else if (is_same<chamber_category, m_20deg_chamber_tag>::value) {
-      zoning_join_20deg_chamber_images_op(chamber_images, chamber_img_joined);
-    } else if (is_same<chamber_category, m_20deg_ext_chamber_tag>::value) {
-      zoning_join_20deg_ext_chamber_images_op(chamber_images, chamber_img_joined);
-    }
-    zoning_out_row_i = chamber_img_joined.range(col_stop_joined, col_start_joined);
-  }  // end if-else
+    zoning_row_gather_op<Zone, Timezone, Row, N>(
+        emtf_phi, seg_zones, seg_tzones, seg_valid, chamber_images
+    );
+  }
+
+  // Join the chamber images
+  zoning_row_join_op<N>(chamber_images, zoning_out_row_k, chamber_category{});
 }
 
 // _____________________________________________________________________________
@@ -303,11 +484,11 @@ void zoning_row_op(
 
 template <typename Zone, typename Timezone>
 void zoning_op(
-    const emtf_phi_t emtf_phi[model_config::n_in],
-    const seg_zones_t seg_zones[model_config::n_in],
-    const seg_tzones_t seg_tzones[model_config::n_in],
-    const seg_valid_t seg_valid[model_config::n_in],
-    zoning_out_t zoning_out[zoning_config::n_out]
+    const emtf_phi_t   emtf_phi   [model_config::n_in],
+    const seg_zones_t  seg_zones  [model_config::n_in],
+    const seg_tzones_t seg_tzones [model_config::n_in],
+    const seg_valid_t  seg_valid  [model_config::n_in],
+    zoning_out_t       zoning_out [zoning_config::n_out]
 ) {
 
 #pragma HLS PIPELINE II=zoning_config::target_ii
@@ -354,18 +535,18 @@ void zoning_op(
 
 template <typename Zone>
 void zoning_layer(
-    const emtf_phi_t emtf_phi[model_config::n_in],
-    const seg_zones_t seg_zones[model_config::n_in],
-    const seg_tzones_t seg_tzones[model_config::n_in],
-    const seg_valid_t seg_valid[model_config::n_in],
-    zoning_out_t zoning_out[zoning_config::n_out]
+    const emtf_phi_t   emtf_phi     [model_config::n_in],
+    const seg_zones_t  seg_zones    [model_config::n_in],
+    const seg_tzones_t seg_tzones   [model_config::n_in],
+    const seg_valid_t  seg_valid    [model_config::n_in],
+    zoning_out_t       zoning_0_out [zoning_config::n_out],
+    zoning_out_t       zoning_1_out [zoning_config::n_out],
+    zoning_out_t       zoning_2_out [zoning_config::n_out]
 ) {
 
-#pragma HLS PIPELINE II=zoning_config::target_ii
+#pragma HLS PIPELINE II=zoning_config::layer_target_ii
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
-
-#pragma HLS LATENCY max=zoning_config::target_lat
 
   // Check assumptions
   static_assert(zoning_config::n_out == num_emtf_img_rows, "zoning_config::n_out check failed");
@@ -374,7 +555,10 @@ void zoning_layer(
 
   typedef m_timezone_0_tag Timezone;  // default timezone
 
-  zoning_op<Zone, Timezone>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out);
+  // Loop over the zones manually
+  zoning_op<m_zone_0_tag, Timezone>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_0_out);
+  zoning_op<m_zone_1_tag, Timezone>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_1_out);
+  zoning_op<m_zone_2_tag, Timezone>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_2_out);
 }
 
 }  // namespace emtf
