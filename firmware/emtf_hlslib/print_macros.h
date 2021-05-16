@@ -1,8 +1,9 @@
-#ifndef __EMTF_HLSLIB_HELPER_H__
-#define __EMTF_HLSLIB_HELPER_H__
+#ifndef __EMTF_HLSLIB_PRINT_MACROS_H__
+#define __EMTF_HLSLIB_PRINT_MACROS_H__
 
 #if !defined(__SYNTHESIS__) && !defined(NDEBUG)
 #include <iostream>
+#include <sstream>
 #endif
 
 #if !defined(__SYNTHESIS__) && !defined(NDEBUG)
@@ -174,4 +175,4 @@
 #define PRINT_TOP_FN_ARRAYS_OTHER
 #endif
 
-#endif  // __EMTF_HLSLIB_HELPER_H__ not defined
+#endif  // __EMTF_HLSLIB_PRINT_MACROS_H__ not defined

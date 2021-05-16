@@ -1,13 +1,13 @@
-#ifndef __EMTF_HLSLIB_LAYERS_H__
-#define __EMTF_HLSLIB_LAYERS_H__
+#ifndef __EMTF_HLSLIB_LAYER_HELPERS_H__
+#define __EMTF_HLSLIB_LAYER_HELPERS_H__
 
 // EMTF HLS
 #include "common.h"
 #include "traits.h"
+#include "model_configs.h"
 #include "layer_constants.h"
 #include "pattern_bank.h"
 #include "nnet_weights.h"
-#include "model.h"
 
 namespace emtf {
 
@@ -636,4 +636,4 @@ void init_2d_table_op(T* arr, U op) {
 
 }  // namespace emtf
 
-#endif  // __EMTF_HLSLIB_LAYERS_H__ not defined
+#endif  // __EMTF_HLSLIB_LAYER_HELPERS_H__ not defined

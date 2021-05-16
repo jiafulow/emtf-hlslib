@@ -1,5 +1,5 @@
-#ifndef __EMTF_HLSLIB_MODEL_H__
-#define __EMTF_HLSLIB_MODEL_H__
+#ifndef __EMTF_HLSLIB_MODEL_CONFIGS_H__
+#define __EMTF_HLSLIB_MODEL_CONFIGS_H__
 
 // EMTF HLS
 #include "common.h"
@@ -185,4 +185,4 @@ struct m_inline_directive {};
 
 }  // namespace emtf
 
-#endif  // __EMTF_HLSLIB_MODEL_H__ not defined
+#endif  // __EMTF_HLSLIB_MODEL_CONFIGS_H__ not defined

@@ -68,7 +68,7 @@ void myproject(
     seg_valid[iseg]   = in0[iseg].seg_valid;
   }  // end loop over in0
 
-  // This macro is defined in emtf_hlslib/helper.h
+  // This macro is defined in emtf_hlslib/print_macros.h
   PRINT_TOP_FN_ARRAYS_IN0
 
   // Check assumptions
@@ -260,6 +260,6 @@ void myproject(
     }
   }  // end loop over out
 
-  // This macro is defined in emtf_hlslib/helper.h
+  // This macro is defined in emtf_hlslib/print_macros.h
   PRINT_TOP_FN_ARRAYS_OTHER
 }
