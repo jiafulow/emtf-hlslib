@@ -1,10 +1,25 @@
 #ifndef __EMTF_HLSLIB_ZONEMERGING_H__
 #define __EMTF_HLSLIB_ZONEMERGING_H__
 
+// Function hierarchy
+//
+// zonemerging_layer
+// +-- zonemerging_op (INLINE)
+//     |-- zonemerging_preprocess_op
+//     +-- zonemerging_argmax_op
+
+// EMTF HLS
+#include "sort_kernels.h"
+
 namespace emtf {
 
 template <typename T_IN, typename T_OUT>
-void zonemerging_preprocess_twelve_op(const T_IN in0[4], const T_IN in1[4], const T_IN in2[4], T_OUT out[12]) {
+void zonemerging_preprocess_op(
+    const T_IN in0[zonemerging_config::n_in],
+    const T_IN in1[zonemerging_config::n_in],
+    const T_IN in2[zonemerging_config::n_in],
+    T_OUT out[zonemerging_config::n_stage_0]
+) {
   static_assert(is_same<T_IN, zonemerging_in_t>::value, "T_IN type check failed");
   static_assert(is_same<T_OUT, zonemerging_out_t>::value, "T_OUT type check failed");
 
@@ -12,152 +27,144 @@ void zonemerging_preprocess_twelve_op(const T_IN in0[4], const T_IN in1[4], cons
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
-#pragma HLS INLINE
+//#pragma HLS INLINE
 
-  // Output (incl zone number)
-  out[0] = (trk_zone_t(0), in0[0]);
-  out[1] = (trk_zone_t(0), in0[1]);
-  out[2] = (trk_zone_t(0), in0[2]);
-  out[3] = (trk_zone_t(0), in0[3]);
-  out[4] = (trk_zone_t(1), in1[0]);
-  out[5] = (trk_zone_t(1), in1[1]);
-  out[6] = (trk_zone_t(1), in1[2]);
-  out[7] = (trk_zone_t(1), in1[3]);
-  out[8] = (trk_zone_t(2), in2[0]);
-  out[9] = (trk_zone_t(2), in2[1]);
-  out[10] = (trk_zone_t(2), in2[2]);
-  out[11] = (trk_zone_t(2), in2[3]);
+  const unsigned int n_in = zonemerging_config::n_in;
+  const unsigned int n_stage_0 = zonemerging_config::n_stage_0;
+
+  // Loop over input
+  LOOP_PREPROC: for (unsigned i = 0; i < n_stage_0; i++) {
+
+#pragma HLS UNROLL
+
+    T_IN x_i = 0;
+
+    if ((i / n_in) == 0) {
+      x_i = in0[(i % n_in)];
+    } else if ((i / n_in) == 1) {
+      x_i = in1[(i % n_in)];
+    } else if ((i / n_in) == 2) {
+      x_i = in2[(i % n_in)];
+    }
+
+    // Output (incl zone number)
+    const trk_zone_t zone_i = (i / n_in);
+    out[i] = (zone_i, x_i);
+  }  // end loop over input
 }
 
+// _____________________________________________________________________________
 template <typename T_IN, typename T_OUT>
-void zonemerging_merge_twelve_op(const T_IN in0[12], T_OUT out[4]) {
-  static_assert(is_same<T_IN, T_OUT>::value, "T_OUT type check failed");
+void zonemerging_argmax_op(
+    const T_IN in0[zonemerging_config::n_stage_0],
+    T_OUT out[zonemerging_config::n_out]
+) {
+  static_assert(is_same<T_IN, zonemerging_out_t>::value, "T_IN type check failed");
+  static_assert(is_same<T_OUT, zonemerging_out_t>::value, "T_OUT type check failed");
 
 #pragma HLS PIPELINE II=zonemerging_config::target_ii
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
-#pragma HLS INLINE
+//#pragma HLS INLINE
 
-  typedef ap_uint<details::ceil_log2<11>::value> idx_t;  // encodes 0..11
+  const unsigned int N = zonemerging_config::n_stage_0;
   typedef trk_qual_t data_t;
-  typedef details::argsort_pair<idx_t, data_t> pair_t;
+  typedef ap_uint<T_IN::width - data_t::width> arg_t;
+  typedef details::argsort_pair<arg_t, data_t> pair_t;
 
-  constexpr int bits_lo = 0;
-  constexpr int bits_hi = (data_t::width - 1);
+  constexpr int bits_lo_0 = 0;
+  constexpr int bits_lo_1 = data_t::width;
+  constexpr int bits_lo_2 = T_IN::width;
 
-  // See zonesorting_merge_eight_op() for explanations. To merge 3 blocks of 4, it merges the
-  // first two blocks, then merges the result with the last block.
+  // Octal tree structure (N must be an even number)
+  const unsigned int num_nodes = (N * 2) - 4;
 
-  // Stage 0: concatenate index and data.
-  const pair_t tmp_0_0(idx_t(0), in0[0].range(bits_hi, bits_lo));
-  const pair_t tmp_0_1(idx_t(1), in0[1].range(bits_hi, bits_lo));
-  const pair_t tmp_0_2(idx_t(2), in0[2].range(bits_hi, bits_lo));
-  const pair_t tmp_0_3(idx_t(3), in0[3].range(bits_hi, bits_lo));
-  const pair_t tmp_0_4(idx_t(4), in0[4].range(bits_hi, bits_lo));
-  const pair_t tmp_0_5(idx_t(5), in0[5].range(bits_hi, bits_lo));
-  const pair_t tmp_0_6(idx_t(6), in0[6].range(bits_hi, bits_lo));
-  const pair_t tmp_0_7(idx_t(7), in0[7].range(bits_hi, bits_lo));
-  const pair_t tmp_0_8(idx_t(8), in0[8].range(bits_hi, bits_lo));
-  const pair_t tmp_0_9(idx_t(9), in0[9].range(bits_hi, bits_lo));
-  const pair_t tmp_0_10(idx_t(10), in0[10].range(bits_hi, bits_lo));
-  const pair_t tmp_0_11(idx_t(11), in0[11].range(bits_hi, bits_lo));
+  pair_t octal_tree[num_nodes];
 
-  // Stage 1: compare-swap if (wire[i] < wire[j]) swap(wire[j], wire[i])
-  const pair_t tmp_1_0 = (tmp_0_0 < tmp_0_4) ? tmp_0_4 : tmp_0_0;
-  const pair_t tmp_1_1 = (tmp_0_1 < tmp_0_5) ? tmp_0_5 : tmp_0_1;
-  const pair_t tmp_1_2 = (tmp_0_2 < tmp_0_6) ? tmp_0_6 : tmp_0_2;
-  const pair_t tmp_1_3 = (tmp_0_3 < tmp_0_7) ? tmp_0_7 : tmp_0_3;
-  const pair_t tmp_1_4 = (tmp_0_0 < tmp_0_4) ? tmp_0_0 : tmp_0_4;
-  const pair_t tmp_1_5 = (tmp_0_1 < tmp_0_5) ? tmp_0_1 : tmp_0_5;
-  //const pair_t tmp_1_6 = (tmp_0_2 < tmp_0_6) ? tmp_0_2 : tmp_0_6;  // unused
-  //const pair_t tmp_1_7 = (tmp_0_3 < tmp_0_7) ? tmp_0_3 : tmp_0_7;  // unused
+#pragma HLS ARRAY_PARTITION variable=octal_tree complete dim=0
 
-  // Stage 2
-  const pair_t tmp_2_2 = (tmp_1_2 < tmp_1_4) ? tmp_1_4 : tmp_1_2;
-  const pair_t tmp_2_3 = (tmp_1_3 < tmp_1_5) ? tmp_1_5 : tmp_1_3;
-  const pair_t tmp_2_4 = (tmp_1_2 < tmp_1_4) ? tmp_1_2 : tmp_1_4;
-  //const pair_t tmp_2_5 = (tmp_1_3 < tmp_1_5) ? tmp_1_3 : tmp_1_5;  // unused
+#pragma HLS DATA_PACK variable=octal_tree
 
-  // Stage 3
-  const pair_t tmp_3_1 = (tmp_1_1 < tmp_2_2) ? tmp_2_2 : tmp_1_1;
-  const pair_t tmp_3_2 = (tmp_1_1 < tmp_2_2) ? tmp_1_1 : tmp_2_2;
-  const pair_t tmp_3_3 = (tmp_2_3 < tmp_2_4) ? tmp_2_4 : tmp_2_3;
-  //const pair_t tmp_3_4 = (tmp_2_3 < tmp_2_4) ? tmp_2_3 : tmp_2_4;  // unused
-  //const pair_t tmp_3_5 = (tmp_2_5 < tmp_1_6) ? tmp_1_6 : tmp_2_5;  // unused
-  //const pair_t tmp_3_6 = (tmp_2_5 < tmp_1_6) ? tmp_2_5 : tmp_1_6;  // unused
+  // For N = 12, the octal tree is not balanced (as N is not a power of 8), we need to alter
+  // the ordering of the nodes. By default:
+  //     0 1 2 3 -> 4 5 6 7 8 9 10 11 -> 12 13 14 15 16 17 18 19 X X X X X X X X
+  // In order to preserve order:
+  //     0 1 2 3 -> 4 5 6 7 16 17 18 19 -> 8 9 10 11 12 13 14 15 X X X X X X X X
+  // Need to rotate by 8 - (12 - 8) = 4
 
-  // Stage 4 (similar to Stage 1)
-  const pair_t tmp_4_0 = (tmp_1_0 < tmp_0_8) ? tmp_0_8 : tmp_1_0;
-  const pair_t tmp_4_1 = (tmp_3_1 < tmp_0_9) ? tmp_0_9 : tmp_3_1;
-  const pair_t tmp_4_2 = (tmp_3_2 < tmp_0_10) ? tmp_0_10 : tmp_3_2;
-  const pair_t tmp_4_3 = (tmp_3_3 < tmp_0_11) ? tmp_0_11 : tmp_3_3;
-  const pair_t tmp_4_4 = (tmp_1_0 < tmp_0_8) ? tmp_1_0 : tmp_0_8;
-  const pair_t tmp_4_5 = (tmp_3_1 < tmp_0_9) ? tmp_3_1 : tmp_0_9;
-  //const pair_t tmp_4_6 = (tmp_3_2 < tmp_0_10) ? tmp_3_2 : tmp_0_10;  // unused
-  //const pair_t tmp_4_7 = (tmp_3_3 < tmp_0_11) ? tmp_3_3 : tmp_0_11;  // unused
+  // Fetch input
+  LOOP_ARGMAX_1: for (unsigned i = 0; i < N; i++) {
 
-  // Stage 5 (similar to Stage 2)
-  const pair_t tmp_5_2 = (tmp_4_2 < tmp_4_4) ? tmp_4_4 : tmp_4_2;
-  const pair_t tmp_5_3 = (tmp_4_3 < tmp_4_5) ? tmp_4_5 : tmp_4_3;
-  const pair_t tmp_5_4 = (tmp_4_2 < tmp_4_4) ? tmp_4_2 : tmp_4_4;
-  //const pair_t tmp_5_5 = (tmp_4_3 < tmp_4_5) ? tmp_4_3 : tmp_4_5;  // unused
+#pragma HLS UNROLL
 
-  // Stage 6 (similar to Stage 3)
-  const pair_t tmp_6_1 = (tmp_4_1 < tmp_5_2) ? tmp_5_2 : tmp_4_1;
-  const pair_t tmp_6_2 = (tmp_4_1 < tmp_5_2) ? tmp_4_1 : tmp_5_2;
-  const pair_t tmp_6_3 = (tmp_5_3 < tmp_5_4) ? tmp_5_4 : tmp_5_3;
-  //const pair_t tmp_6_4 = (tmp_5_3 < tmp_5_4) ? tmp_5_3 : tmp_5_4;  // unused
-  //const pair_t tmp_6_5 = (tmp_5_5 < tmp_4_6) ? tmp_4_6 : tmp_5_5;  // unused
-  //const pair_t tmp_6_6 = (tmp_5_5 < tmp_4_6) ? tmp_5_5 : tmp_4_6;  // unused
+    const unsigned int node_index = (N - 4) + ((i + 4) % N);  // N-4 .. (N*2)-5 with rotation
+    emtf_assert(node_index < num_nodes);
 
-#pragma HLS DATA_PACK variable=tmp_0_0
-#pragma HLS DATA_PACK variable=tmp_0_1
-#pragma HLS DATA_PACK variable=tmp_0_2
-#pragma HLS DATA_PACK variable=tmp_0_3
-#pragma HLS DATA_PACK variable=tmp_0_4
-#pragma HLS DATA_PACK variable=tmp_0_5
-#pragma HLS DATA_PACK variable=tmp_0_6
-#pragma HLS DATA_PACK variable=tmp_0_7
-#pragma HLS DATA_PACK variable=tmp_0_8
-#pragma HLS DATA_PACK variable=tmp_0_9
-#pragma HLS DATA_PACK variable=tmp_0_10
-#pragma HLS DATA_PACK variable=tmp_0_11
-#pragma HLS DATA_PACK variable=tmp_1_0
-#pragma HLS DATA_PACK variable=tmp_1_1
-#pragma HLS DATA_PACK variable=tmp_1_2
-#pragma HLS DATA_PACK variable=tmp_1_3
-#pragma HLS DATA_PACK variable=tmp_1_4
-#pragma HLS DATA_PACK variable=tmp_1_5
-#pragma HLS DATA_PACK variable=tmp_2_2
-#pragma HLS DATA_PACK variable=tmp_2_3
-#pragma HLS DATA_PACK variable=tmp_2_4
-#pragma HLS DATA_PACK variable=tmp_3_1
-#pragma HLS DATA_PACK variable=tmp_3_2
-#pragma HLS DATA_PACK variable=tmp_3_3
-#pragma HLS DATA_PACK variable=tmp_4_0
-#pragma HLS DATA_PACK variable=tmp_4_1
-#pragma HLS DATA_PACK variable=tmp_4_2
-#pragma HLS DATA_PACK variable=tmp_4_3
-#pragma HLS DATA_PACK variable=tmp_4_4
-#pragma HLS DATA_PACK variable=tmp_4_5
-#pragma HLS DATA_PACK variable=tmp_5_2
-#pragma HLS DATA_PACK variable=tmp_5_3
-#pragma HLS DATA_PACK variable=tmp_5_4
-#pragma HLS DATA_PACK variable=tmp_6_1
-#pragma HLS DATA_PACK variable=tmp_6_2
-#pragma HLS DATA_PACK variable=tmp_6_3
+    // Make pairs
+    const data_t data = in0[i].range(bits_lo_1 - 1, bits_lo_0);
+    const arg_t arg = in0[i].range(bits_lo_2 - 1, bits_lo_1);
+    octal_tree[node_index] = pair_t(arg, data);
+  }  // end fetch input loop
+
+  // Tree reduce
+  LOOP_ARGMAX_2: for (int i = (N - 4) - 1; i >= 0; i -= 4) {
+
+#pragma HLS UNROLL
+
+    const unsigned int node_index = i - 3;  // 0 .. N-4 with step size 4 in reverse order
+    const unsigned int child_index = (2 * node_index) + 4;  // step size 4
+    emtf_assert(node_index < num_nodes);
+    emtf_assert(((child_index + 0) < num_nodes) and ((child_index + 7) < num_nodes));
+
+    // Merge 8 -> 4
+    details::merge_eight_op(
+        octal_tree[child_index + 0], octal_tree[child_index + 1], octal_tree[child_index + 2], octal_tree[child_index + 3],
+        octal_tree[child_index + 4], octal_tree[child_index + 5], octal_tree[child_index + 6], octal_tree[child_index + 7],
+        octal_tree[node_index + 0], octal_tree[node_index + 1], octal_tree[node_index + 2], octal_tree[node_index + 3]
+    );
+
+    // Sanity check
+#ifndef __SYNTHESIS__
+    const pair_t& r0 = octal_tree[node_index + 0];
+    const pair_t& r1 = octal_tree[node_index + 1];
+    const pair_t& r2 = octal_tree[node_index + 2];
+    const pair_t& r3 = octal_tree[node_index + 3];
+    pair_t r4, r5, r6, r7;
+    details::cpp_merge_eight_op(
+        octal_tree[child_index + 0], octal_tree[child_index + 1], octal_tree[child_index + 2], octal_tree[child_index + 3],
+        octal_tree[child_index + 4], octal_tree[child_index + 5], octal_tree[child_index + 6], octal_tree[child_index + 7],
+        r4, r5, r6, r7
+    );
+    auto cmp = [](const pair_t& lhs, const pair_t& rhs) -> bool {
+      return lhs.second == rhs.second;
+    };
+    //auto str = [](std::stringstream& ss, const pair_t& a) -> std::stringstream& {
+    //  ss << "(" << a.first << "," << a.second << ") ";
+    //  return ss;
+    //};
+    //std::stringstream ss;
+    //str(ss, r0);
+    //str(ss, r1);
+    //str(ss, r2);
+    //str(ss, r3);
+    //std::cout << "Got:\n" << ss.str() << std::endl;
+    //ss.str("");
+    //str(ss, r4);
+    //str(ss, r5);
+    //str(ss, r6);
+    //str(ss, r7);
+    //std::cout << "Expected:\n" << ss.str() << std::endl;
+    emtf_assert(cmp(r0, r4) and cmp(r1, r5) and cmp(r2, r6) and cmp(r3, r7));
+#endif  // __SYNTHESIS__ not defined
+
+  }  // end tree reduce loop
 
   // Output
-  const idx_t idx0 = tmp_4_0.first;
-  const idx_t idx1 = tmp_6_1.first;
-  const idx_t idx2 = tmp_6_2.first;
-  const idx_t idx3 = tmp_6_3.first;
-
-  out[0] = in0[idx0];
-  out[1] = in0[idx1];
-  out[2] = in0[idx2];
-  out[3] = in0[idx3];
+  out[0] = (octal_tree[0].first, octal_tree[0].second);
+  out[1] = (octal_tree[1].first, octal_tree[1].second);
+  out[2] = (octal_tree[2].first, octal_tree[2].second);
+  out[3] = (octal_tree[3].first, octal_tree[3].second);
 }
 
 // _____________________________________________________________________________
@@ -177,15 +184,16 @@ void zonemerging_op(
 
 #pragma HLS INLINE
 
-  zonemerging_out_t stage_0_out[zonemerging_config::n_stage_0];
+  const unsigned int n_stage_0 = zonemerging_config::n_stage_0;
+
+  // Intermediate arrays
+  zonemerging_out_t stage_0_out[n_stage_0];
 
 #pragma HLS ARRAY_PARTITION variable=stage_0_out complete dim=0
 
-  // Preprocessing and concatenate them.
-  zonemerging_preprocess_twelve_op(zonemerging_in_0, zonemerging_in_1, zonemerging_in_2, stage_0_out);
+  zonemerging_preprocess_op(zonemerging_in_0, zonemerging_in_1, zonemerging_in_2, stage_0_out);
 
-  // Merge 3 blocks of 4.
-  zonemerging_merge_twelve_op(stage_0_out, zonemerging_out);
+  zonemerging_argmax_op(stage_0_out, zonemerging_out);
 }
 
 // _____________________________________________________________________________
@@ -206,7 +214,6 @@ void zonemerging_layer(
   // Check assumptions
   static_assert(zonemerging_config::n_in == num_emtf_tracks, "zonemerging_config::n_in check failed");
   static_assert(zonemerging_config::n_out == num_emtf_tracks, "zonemerging_config::n_out check failed");
-  static_assert((zonemerging_config::n_stage_0 % 4) == 0, "n_stage_0 must be divisible by 4");
 
   zonemerging_op<Zone>(zonemerging_in_0, zonemerging_in_1, zonemerging_in_2, zonemerging_out);
 }
