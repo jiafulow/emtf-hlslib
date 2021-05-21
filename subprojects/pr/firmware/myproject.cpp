@@ -94,16 +94,13 @@ void myproject(
       "model_config::n_out value check failed"
   );
 
-  // Intermediate arrays (for layers 0..4)
+  // Intermediate arrays (for layers 0..3)
   zoning_out_t      zoning_0_out      [zoning_config::n_out];
   zoning_out_t      zoning_1_out      [zoning_config::n_out];
   zoning_out_t      zoning_2_out      [zoning_config::n_out];
   pooling_out_t     pooling_0_out     [pooling_config::n_out];
   pooling_out_t     pooling_1_out     [pooling_config::n_out];
   pooling_out_t     pooling_2_out     [pooling_config::n_out];
-  suppression_out_t suppression_0_out [suppression_config::n_out];
-  suppression_out_t suppression_1_out [suppression_config::n_out];
-  suppression_out_t suppression_2_out [suppression_config::n_out];
   zonesorting_out_t zonesorting_0_out [zonesorting_config::n_out];
   zonesorting_out_t zonesorting_1_out [zonesorting_config::n_out];
   zonesorting_out_t zonesorting_2_out [zonesorting_config::n_out];
@@ -115,9 +112,6 @@ void myproject(
 #pragma HLS ARRAY_PARTITION variable=pooling_0_out complete dim=0
 #pragma HLS ARRAY_PARTITION variable=pooling_1_out complete dim=0
 #pragma HLS ARRAY_PARTITION variable=pooling_2_out complete dim=0
-#pragma HLS ARRAY_PARTITION variable=suppression_0_out complete dim=0
-#pragma HLS ARRAY_PARTITION variable=suppression_1_out complete dim=0
-#pragma HLS ARRAY_PARTITION variable=suppression_2_out complete dim=0
 #pragma HLS ARRAY_PARTITION variable=zonesorting_0_out complete dim=0
 #pragma HLS ARRAY_PARTITION variable=zonesorting_1_out complete dim=0
 #pragma HLS ARRAY_PARTITION variable=zonesorting_2_out complete dim=0
@@ -125,9 +119,9 @@ void myproject(
 
   // Layer 0 - Zoning
 
-  zoning_layer<m_zone_0_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_0_out);
-  zoning_layer<m_zone_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_1_out);
-  zoning_layer<m_zone_2_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_2_out);
+  zoning_layer<m_zone_any_tag>(
+      emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_0_out, zoning_1_out, zoning_2_out
+  );
 
   // Layer 1 - Pooling
 
@@ -135,19 +129,13 @@ void myproject(
   pooling_layer<m_zone_1_tag>(zoning_1_out, pooling_1_out);
   pooling_layer<m_zone_2_tag>(zoning_2_out, pooling_2_out);
 
-  // Layer 2 - Non-max suppression
+  // Layer 2 - Zone sorting
 
-  suppression_layer<m_zone_any_tag>(pooling_0_out, suppression_0_out);
-  suppression_layer<m_zone_any_tag>(pooling_1_out, suppression_1_out);
-  suppression_layer<m_zone_any_tag>(pooling_2_out, suppression_2_out);
+  zonesorting_layer<m_zone_any_tag>(pooling_0_out, zonesorting_0_out);
+  zonesorting_layer<m_zone_any_tag>(pooling_1_out, zonesorting_1_out);
+  zonesorting_layer<m_zone_any_tag>(pooling_2_out, zonesorting_2_out);
 
-  // Layer 3 - Zone sorting
-
-  zonesorting_layer<m_zone_any_tag>(suppression_0_out, zonesorting_0_out);
-  zonesorting_layer<m_zone_any_tag>(suppression_1_out, zonesorting_1_out);
-  zonesorting_layer<m_zone_any_tag>(suppression_2_out, zonesorting_2_out);
-
-  // Layer 4 - Zone merging
+  // Layer 3 - Zone merging
 
   zonemerging_layer<m_zone_any_tag>(
       zonesorting_0_out, zonesorting_1_out, zonesorting_2_out, zonemerging_0_out
@@ -172,6 +160,7 @@ void myproject(
 #pragma HLS UNROLL
 
     const trkbuilding_in_t curr_trk_in = zonemerging_0_out[itrk];
+    const trk_tzone_t curr_trk_tzone = details::timezone_traits<m_timezone_0_tag>::value;  // default timezone
 
     constexpr int bits_lo_0 = 0;
     constexpr int bits_lo_1 = trk_qual_t::width;
@@ -183,7 +172,7 @@ void myproject(
     trk_patt[itrk]  = curr_trk_in.range(bits_lo_2 - 1, bits_lo_1);
     trk_col[itrk]   = curr_trk_in.range(bits_lo_3 - 1, bits_lo_2);
     trk_zone[itrk]  = curr_trk_in.range(bits_lo_4 - 1, bits_lo_3);
-    trk_tzone[itrk] = details::timezone_traits<m_timezone_0_tag>::value;  // default timezone
+    trk_tzone[itrk] = curr_trk_tzone;
   }  // end loop over in1
 
   // Copy to output: trk_qual, trk_patt, trk_col, trk_zone
