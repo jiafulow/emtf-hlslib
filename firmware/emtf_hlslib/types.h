@@ -206,9 +206,7 @@ typedef dio_trk_accum_t            dio_survivor_t;     // used in duperemoval_fi
 typedef dio_col_accum_t                                 zoning_out_t;
 typedef zoning_out_t                                    pooling_in_t;
 typedef make_concat<trk_patt_t, trk_qual_t>::type       pooling_out_t;
-typedef pooling_out_t                                   suppression_in_t;
-typedef suppression_in_t                                suppression_out_t;
-typedef suppression_out_t                               zonesorting_in_t;
+typedef pooling_out_t                                   zonesorting_in_t;
 typedef make_concat<trk_col_t, zonesorting_in_t>::type  zonesorting_out_t;
 typedef zonesorting_out_t                               zonemerging_in_t;
 typedef make_concat<trk_zone_t, zonemerging_in_t>::type zonemerging_out_t;

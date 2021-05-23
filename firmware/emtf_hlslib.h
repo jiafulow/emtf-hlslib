@@ -9,7 +9,6 @@
 
 #include "emtf_hlslib/zoning.h"
 #include "emtf_hlslib/pooling.h"
-#include "emtf_hlslib/suppression.h"
 #include "emtf_hlslib/zonesorting.h"
 #include "emtf_hlslib/zonemerging.h"
 #include "emtf_hlslib/trkbuilding.h"
