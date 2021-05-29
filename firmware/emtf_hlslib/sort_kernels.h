@@ -274,6 +274,49 @@ void max_of_seven_op(
   out = tmp_3_0;
 }
 
+template <typename T>
+void median_of_three_op(
+    const T& a0, const T& a1, const T& a2, T& out
+) {
+
+#pragma HLS PIPELINE II=trkbuilding_config::target_ii
+
+#pragma HLS INTERFACE ap_ctrl_none port=return
+
+#pragma HLS INLINE
+
+  // The following implements the reduce median of 3 inputs. However, if at least one
+  // input is invalid, it returns the reduce min of 3 inputs. After stage 3, the
+  // first node is the min, and the second node is the median.
+  //
+  // 0         1         2         3
+  // ----------o-------------------o---------
+  //           |                   |
+  // ----------o---------o---------o---------
+  //                     |
+  // --------------------o-------------------
+
+  // Stage 0: prepare 3 input wires
+  const T tmp_0_0 = a0;
+  const T tmp_0_1 = a1;
+  const T tmp_0_2 = a2;
+
+  // Stage 1: compare-swap if (wire[i] > wire[j]) swap(wire[j], wire[i])
+  const T tmp_1_0 = (tmp_0_0.second > tmp_0_1.second) ? tmp_0_1 : tmp_0_0;
+  const T tmp_1_1 = (tmp_0_0.second > tmp_0_1.second) ? tmp_0_0 : tmp_0_1;
+
+  // Stage 2
+  const T tmp_2_1 = (tmp_1_1.second > tmp_0_2.second) ? tmp_0_2 : tmp_1_1;
+  //const T tmp_2_2 = (tmp_1_1.second > tmp_0_2.second) ? tmp_1_1 : tmp_0_2;  // unused
+
+  // Stage 3
+  const T tmp_3_0 = (tmp_1_0.second > tmp_2_1.second) ? tmp_2_1 : tmp_1_0;
+  const T tmp_3_1 = (tmp_1_0.second > tmp_2_1.second) ? tmp_1_0 : tmp_2_1;
+
+  // Output
+  out = (tmp_0_0.first & tmp_0_1.first & tmp_0_2.first) ? tmp_3_1 : tmp_3_0;
+}
+
 }  // namespace details
 
 }  // namespace emtf
