@@ -5,6 +5,7 @@ set SOLN "solution1"
 set XPART xc7vx690tffg1927-2
 #set XPART xcvu9p-flga2104-2l-e
 #set XPART xcvu13p-fsga2577-1-e
+#set XPART xcku15p-ffva1760-2-e
 set CLKP 160MHz
 #set CLKP 240MHz
 set CFLAGS "-std=c++11"
@@ -31,7 +32,8 @@ set_top myproject
 open_solution -reset $SOLN
 # Define technology and clock rate
 set_part $XPART
-create_clock -period $CLKP
+create_clock -period $CLKP -name default
+set_clock_uncertainty 20.0%
 
 # Set any optimization directives
 #config_array_partition -maximum_size 2048
