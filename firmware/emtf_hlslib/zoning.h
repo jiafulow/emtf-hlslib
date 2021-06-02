@@ -11,6 +11,9 @@
 //         |-- zoning_row_gather_mux_op (INLINE)
 //         +-- zoning_row_join_op (INLINE)
 
+// EMTF HLS
+#include "layer_helpers.h"
+
 namespace emtf {
 
 struct zoning_internal_config : zoning_config {

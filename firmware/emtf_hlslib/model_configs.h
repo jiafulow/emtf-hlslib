@@ -14,8 +14,9 @@ struct model_config {
   static const unsigned int n_out_per_trk = (num_emtf_features + num_emtf_sites + 2);
   static const unsigned int n_out = num_emtf_tracks * n_out_per_trk;
 
-  // Set target clock freq to 4 times the input freq (= 4 x 40MHz)
-  // Consume 1 input every input clock cycle, or every 4 target clock cycle
+  // Set target clock freq to 4 times the input clock freq (= 4 x 40MHz).
+  // Set target II to match the clock freq so that it still consumes 1 input
+  // every input clock at 40 MHz.
   static const int target_clock = num_emtf_tracks;  // in unit of 40MHz
   static const int target_ii = target_clock;
 };
@@ -43,7 +44,7 @@ struct pooling_config {
 struct zonesorting_config {
   static const unsigned int n_in = pooling_config::n_out;
   static const unsigned int n_out = num_emtf_tracks;
-  static const int layer_target_ii = model_config::target_ii;
+  static const int layer_target_ii = 1;
   static const int target_ii = 1;
 
   // Used for preprocessing
@@ -53,7 +54,7 @@ struct zonesorting_config {
 struct zonemerging_config {
   static const unsigned int n_in = zonesorting_config::n_out;
   static const unsigned int n_out = n_in;
-  static const int layer_target_ii = model_config::target_ii;
+  static const int layer_target_ii = 1;
   static const int target_ii = 1;
 
   // Used for preprocessing
@@ -63,21 +64,21 @@ struct zonemerging_config {
 struct trkbuilding_config {
   static const unsigned int n_in = zonemerging_config::n_out;
   static const unsigned int n_out = n_in;
-  static const int layer_target_ii = model_config::target_ii;
+  static const int layer_target_ii = 1;
   static const int target_ii = 1;
 };
 
 struct duperemoval_config {
   static const unsigned int n_in = trkbuilding_config::n_out;
   static const unsigned int n_out = n_in;
-  static const int layer_target_ii = model_config::target_ii;
+  static const int layer_target_ii = 1;
   static const int target_ii = 1;
 };
 
 struct fullyconnect_config {
   static const unsigned int n_in = duperemoval_config::n_out;
   static const unsigned int n_out = n_in;
-  static const int layer_target_ii = model_config::target_ii;
+  static const int layer_target_ii = 1;
   static const int target_ii = 1;
 };
 

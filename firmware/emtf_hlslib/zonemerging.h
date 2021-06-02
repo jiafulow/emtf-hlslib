@@ -9,6 +9,7 @@
 //     +-- zonemerging_argmax_op
 
 // EMTF HLS
+#include "layer_helpers.h"
 #include "sort_kernels.h"
 
 namespace emtf {
@@ -207,7 +208,7 @@ void zonemerging_layer(
     zonemerging_out_t zonemerging_out[zonemerging_config::n_out]
 ) {
 
-#pragma HLS PIPELINE II=zonemerging_config::target_ii
+#pragma HLS PIPELINE II=zonemerging_config::layer_target_ii
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 

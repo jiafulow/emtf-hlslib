@@ -9,6 +9,9 @@
 //     |-- duperemoval_find_dupes_op (INLINE)
 //     +-- duperemoval_remove_dupes_op (INLINE)
 
+// EMTF HLS
+#include "layer_helpers.h"
+
 namespace emtf {
 
 template <typename T=void>
@@ -181,13 +184,13 @@ void duperemoval_find_dupes_op(
 
 #pragma HLS UNROLL
 
-    const auto survivors_i = (
+    const auto x_i = (
         survivors_tmp[(i * N) + 3],
         survivors_tmp[(i * N) + 2],
         survivors_tmp[(i * N) + 1],
         survivors_tmp[(i * N) + 0]
     );
-    survivors[i] = survivors_i;
+    survivors[i] = x_i;
   }  // end i loop
 
   //std::cout << "[DEBUG] trk_seg_reduced_v: " << std::endl;
@@ -316,7 +319,8 @@ void duperemoval_op(
   duperemoval_find_dupes_op(trk_seg_reduced, trk_seg_reduced_v, survivors);
 
   duperemoval_remove_dupes_op(
-      trk_seg, trk_seg_v, trk_feat, trk_valid, survivors, trk_seg_rm, trk_seg_rm_v, trk_feat_rm, trk_valid_rm
+      trk_seg, trk_seg_v, trk_feat, trk_valid, survivors, trk_seg_rm,
+      trk_seg_rm_v, trk_feat_rm, trk_valid_rm
   );
 }
 
@@ -335,7 +339,7 @@ void duperemoval_layer(
     trk_valid_t       trk_valid_rm [duperemoval_config::n_out]
 ) {
 
-#pragma HLS PIPELINE II=duperemoval_config::target_ii
+#pragma HLS PIPELINE II=duperemoval_config::layer_target_ii
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
@@ -347,7 +351,8 @@ void duperemoval_layer(
   static_assert(dio_survivor_t::width == duperemoval_config::n_in, "dio_survivor_t type check failed");
 
   duperemoval_op<Zone>(
-      trk_seg, trk_seg_v, trk_feat, trk_valid, trk_seg_rm, trk_seg_rm_v, trk_feat_rm, trk_valid_rm
+      trk_seg, trk_seg_v, trk_feat, trk_valid, trk_seg_rm, trk_seg_rm_v,
+      trk_feat_rm, trk_valid_rm
   );
 }
 

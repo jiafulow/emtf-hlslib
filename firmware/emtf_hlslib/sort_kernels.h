@@ -4,6 +4,9 @@
 #include <algorithm>  // provides std::stable_sort
 #include <array>  // provides std::array
 
+// EMTF HLS
+#include "layer_helpers.h"
+
 namespace emtf {
 
 namespace details {

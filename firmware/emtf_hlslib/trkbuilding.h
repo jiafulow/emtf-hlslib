@@ -18,6 +18,7 @@
 //     +-- trkbuilding_extract_features_op (INLINE)
 
 // EMTF HLS
+#include "layer_helpers.h"
 #include "sort_kernels.h"
 
 namespace emtf {
@@ -1189,15 +1190,15 @@ void trkbuilding_layer(
     const seg_dl_t      seg_dl         [model_config::n_in],
     const seg_bx_t      seg_bx         [model_config::n_in],
     const seg_valid_t   seg_valid      [model_config::n_in],
-    const trk_qual_t    trk_qual       [trkbuilding_config::n_in],
-    const trk_patt_t    trk_patt       [trkbuilding_config::n_in],
-    const trk_col_t     trk_col        [trkbuilding_config::n_in],
-    const trk_zone_t    trk_zone       [trkbuilding_config::n_in],
-    const trk_tzone_t   trk_tzone      [trkbuilding_config::n_in],
-    trk_seg_t           trk_seg        [trkbuilding_config::n_out * num_emtf_sites],
-    trk_seg_v_t         trk_seg_v      [trkbuilding_config::n_out],
-    trk_feat_t          trk_feat       [trkbuilding_config::n_out * num_emtf_features],
-    trk_valid_t         trk_valid      [trkbuilding_config::n_out]
+    const trk_qual_t&   curr_trk_qual  ,
+    const trk_patt_t&   curr_trk_patt  ,
+    const trk_col_t&    curr_trk_col   ,
+    const trk_zone_t&   curr_trk_zone  ,
+    const trk_tzone_t&  curr_trk_tzone ,
+    trk_seg_t           curr_trk_seg   [num_emtf_sites],
+    trk_seg_v_t&        curr_trk_seg_v ,
+    trk_feat_t          curr_trk_feat  [num_emtf_features],
+    trk_valid_t&        curr_trk_valid
 ) {
 
 #pragma HLS PIPELINE II=trkbuilding_config::layer_target_ii
@@ -1215,34 +1216,12 @@ void trkbuilding_layer(
       "dio_ph_diff_idx_t type check failed"
   );
 
-  // Loop over tracks
-  LOOP_TRK: for (unsigned itrk = 0; itrk < trkbuilding_config::n_in; itrk++) {
-
-#pragma HLS UNROLL
-
-    // Intermediate arrays
-    trk_seg_t  curr_trk_seg  [num_emtf_sites];
-    trk_feat_t curr_trk_feat [num_emtf_features];
-
-#pragma HLS ARRAY_PARTITION variable=curr_trk_seg complete dim=0
-#pragma HLS ARRAY_PARTITION variable=curr_trk_feat complete dim=0
-
-    trkbuilding_op<Zone>(
-        emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_qual2,
-        emtf_time, seg_zones, seg_tzones, seg_fr, seg_dl, seg_bx,
-        seg_valid, trk_qual[itrk], trk_patt[itrk], trk_col[itrk], trk_zone[itrk], trk_tzone[itrk],
-        curr_trk_seg, trk_seg_v[itrk], curr_trk_feat, trk_valid[itrk]
-    );
-
-    // Copy to arrays
-    details::copy_n_values<num_emtf_sites>(
-        curr_trk_seg, &(trk_seg[itrk * num_emtf_sites])
-    );
-    details::copy_n_values<num_emtf_features>(
-        curr_trk_feat, &(trk_feat[itrk * num_emtf_features])
-    );
-
-  }  // end loop over tracks
+  trkbuilding_op<Zone>(
+      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_qual2,
+      emtf_time, seg_zones, seg_tzones, seg_fr, seg_dl, seg_bx,
+      seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone,
+      curr_trk_seg, curr_trk_seg_v, curr_trk_feat, curr_trk_valid
+  );
 }
 
 }  // namespace emtf

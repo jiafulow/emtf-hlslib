@@ -10,6 +10,9 @@
 //             |-- pooling_col_pool_op (INLINE)
 //             +-- pooling_col_argmax_op
 
+// EMTF HLS
+#include "layer_helpers.h"
+
 namespace emtf {
 
 namespace details {

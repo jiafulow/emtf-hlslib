@@ -15,6 +15,7 @@
 //     +-- fullyconnect_dense_final_op
 
 // EMTF HLS
+#include "layer_helpers.h"
 #include "nnet_kernels.h"
 
 namespace emtf {
@@ -159,12 +160,12 @@ void fullyconnect_dense_final_op(
 
 template <typename Zone>
 void fullyconnect_op(
-    const trk_feat_t curr_trk_feat  [num_emtf_features],
-    trk_invpt_t&     curr_trk_invpt ,
-    trk_phi_t&       curr_trk_phi   ,
-    trk_eta_t&       curr_trk_eta   ,
-    trk_d0_t&        curr_trk_d0    ,
-    trk_z0_t&        curr_trk_z0    ,
+    const trk_feat_t curr_trk_feat_rm [num_emtf_features],
+    trk_invpt_t&     curr_trk_invpt   ,
+    trk_phi_t&       curr_trk_phi     ,
+    trk_eta_t&       curr_trk_eta     ,
+    trk_d0_t&        curr_trk_d0      ,
+    trk_z0_t&        curr_trk_z0      ,
     trk_beta_t&      curr_trk_beta
 ) {
 
@@ -212,7 +213,7 @@ void fullyconnect_op(
 #pragma HLS ARRAY_PARTITION variable=layer_4_out complete dim=0
 
   // Layer 0 - preprocessing
-  fullyconnect_preprocessing_op<m_nnet_0_layer_0_tag>(curr_trk_feat, layer_0_out);
+  fullyconnect_preprocessing_op<m_nnet_0_layer_0_tag>(curr_trk_feat_rm, layer_0_out);
 
   // Layer 1 - dense + activation
   fullyconnect_dense_op<m_nnet_0_layer_1_tag>(layer_0_out, layer_1_preact);
@@ -271,13 +272,13 @@ void fullyconnect_op(
 
 template <typename Zone>
 void fullyconnect_layer(
-    const trk_feat_t trk_feat  [fullyconnect_config::n_in * num_emtf_features],
-    trk_invpt_t      trk_invpt [fullyconnect_config::n_out],
-    trk_phi_t        trk_phi   [fullyconnect_config::n_out],
-    trk_eta_t        trk_eta   [fullyconnect_config::n_out],
-    trk_d0_t         trk_d0    [fullyconnect_config::n_out],
-    trk_z0_t         trk_z0    [fullyconnect_config::n_out],
-    trk_beta_t       trk_beta  [fullyconnect_config::n_out]
+    const trk_feat_t curr_trk_feat_rm [num_emtf_features],
+    trk_invpt_t&     curr_trk_invpt   ,
+    trk_phi_t&       curr_trk_phi     ,
+    trk_eta_t&       curr_trk_eta     ,
+    trk_d0_t&        curr_trk_d0      ,
+    trk_z0_t&        curr_trk_z0      ,
+    trk_beta_t&      curr_trk_beta
 ) {
 
 #pragma HLS PIPELINE II=fullyconnect_config::layer_target_ii
@@ -289,26 +290,10 @@ void fullyconnect_layer(
   static_assert(fullyconnect_config::n_out == num_emtf_tracks, "fullyconnect_config::n_out check failed");
   static_assert(num_emtf_features == 40, "num_emtf_features must be 40");
 
-  // Loop over tracks
-  LOOP_TRK: for (unsigned itrk = 0; itrk < fullyconnect_config::n_in; itrk++) {
-
-#pragma HLS UNROLL
-
-    // Intermediate arrays
-    trk_feat_t curr_trk_feat[num_emtf_features];
-
-#pragma HLS ARRAY_PARTITION variable=curr_trk_feat complete dim=0
-
-    // Copy from array
-    details::copy_n_values<num_emtf_features>(
-        &(trk_feat[itrk * num_emtf_features]), curr_trk_feat
-    );
-
-    fullyconnect_op<Zone>(
-        curr_trk_feat, trk_invpt[itrk], trk_phi[itrk], trk_eta[itrk],
-        trk_d0[itrk], trk_z0[itrk], trk_beta[itrk]
-    );
-  }  // end loop over tracks
+  fullyconnect_op<Zone>(
+      curr_trk_feat_rm, curr_trk_invpt, curr_trk_phi, curr_trk_eta, curr_trk_d0, curr_trk_z0,
+      curr_trk_beta
+  );
 }
 
 }  // namespace emtf

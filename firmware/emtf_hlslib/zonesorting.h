@@ -12,6 +12,7 @@
 //     +-- zonesorting_argmax_op
 
 // EMTF HLS
+#include "layer_helpers.h"
 #include "sort_kernels.h"
 
 namespace emtf {
@@ -396,7 +397,7 @@ void zonesorting_layer(
     zonesorting_out_t zonesorting_out[zonesorting_config::n_out]
 ) {
 
-#pragma HLS PIPELINE II=zonesorting_config::target_ii
+#pragma HLS PIPELINE II=zonesorting_config::layer_target_ii
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
