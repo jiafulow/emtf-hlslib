@@ -145,11 +145,11 @@ void myproject(
   );
 
   // Unpack from in1 (a.k.a. zonemerging_0_out)
-  trk_qual_t  trk_qual     [trkbuilding_config::n_in];
-  trk_patt_t  trk_patt     [trkbuilding_config::n_in];
-  trk_col_t   trk_col      [trkbuilding_config::n_in];
-  trk_zone_t  trk_zone     [trkbuilding_config::n_in];
-  trk_tzone_t trk_tzone    [trkbuilding_config::n_in];
+  trk_qual_t  trk_qual  [trkbuilding_config::n_in];
+  trk_patt_t  trk_patt  [trkbuilding_config::n_in];
+  trk_col_t   trk_col   [trkbuilding_config::n_in];
+  trk_zone_t  trk_zone  [trkbuilding_config::n_in];
+  trk_tzone_t trk_tzone [trkbuilding_config::n_in];
 
 #pragma HLS ARRAY_PARTITION variable=trk_qual complete dim=0
 #pragma HLS ARRAY_PARTITION variable=trk_patt complete dim=0
@@ -211,37 +211,74 @@ void myproject(
 
   // Layer 4 - Track building
 
-  trkbuilding_layer<m_zone_any_tag>(
-      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_qual2,
-      emtf_time, seg_zones, seg_tzones, seg_fr, seg_dl, seg_bx,
-      seg_valid, trk_qual, trk_patt, trk_col, trk_zone, trk_tzone,
-      trk_seg, trk_seg_v, trk_feat, trk_valid
-  );
+  LOOP_TRK_1: for (unsigned itrk = 0; itrk < trkbuilding_config::n_in; itrk++) {
+
+#pragma HLS UNROLL
+
+    // Intermediate arrays
+    trk_seg_t  curr_trk_seg  [num_emtf_sites];
+    trk_feat_t curr_trk_feat [num_emtf_features];
+
+#pragma HLS ARRAY_PARTITION variable=curr_trk_seg complete dim=0
+#pragma HLS ARRAY_PARTITION variable=curr_trk_feat complete dim=0
+
+    trkbuilding_layer<m_zone_any_tag>(
+        emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_qual2,
+        emtf_time, seg_zones, seg_tzones, seg_fr, seg_dl, seg_bx,
+        seg_valid, trk_qual[itrk], trk_patt[itrk], trk_col[itrk], trk_zone[itrk], trk_tzone[itrk],
+        curr_trk_seg, trk_seg_v[itrk], curr_trk_feat, trk_valid[itrk]
+    );
+
+    // Copy to arrays
+    details::copy_n_values<num_emtf_sites>(
+        curr_trk_seg, &(trk_seg[itrk * num_emtf_sites])
+    );
+    details::copy_n_values<num_emtf_features>(
+        curr_trk_feat, &(trk_feat[itrk * num_emtf_features])
+    );
+  }  // end loop over tracks
 
   // Layer 5 - Duplicate removal
 
   duperemoval_layer<m_zone_any_tag>(
-      trk_seg, trk_seg_v, trk_feat, trk_valid, trk_seg_rm, trk_seg_rm_v, trk_feat_rm, trk_valid_rm
+      trk_seg, trk_seg_v, trk_feat, trk_valid, trk_seg_rm, trk_seg_rm_v,
+      trk_feat_rm, trk_valid_rm
   );
 
   // Layer 6 - Fully connected
 
-  fullyconnect_layer<m_zone_any_tag>(
-      trk_feat_rm, trk_invpt, trk_phi, trk_eta, trk_d0, trk_z0, trk_beta
-  );
+  LOOP_TRK_2: for (unsigned itrk = 0; itrk < fullyconnect_config::n_in; itrk++) {
+
+#pragma HLS UNROLL
+
+    // Intermediate arrays
+    trk_feat_t curr_trk_feat_rm [num_emtf_features];
+
+#pragma HLS ARRAY_PARTITION variable=curr_trk_feat complete dim=0
+
+    // Copy from array
+    details::copy_n_values<num_emtf_features>(
+        &(trk_feat_rm[itrk * num_emtf_features]), curr_trk_feat_rm
+    );
+
+    fullyconnect_layer<m_zone_any_tag>(
+        curr_trk_feat_rm, trk_invpt[itrk], trk_phi[itrk], trk_eta[itrk], trk_d0[itrk], trk_z0[itrk],
+        trk_beta[itrk]
+    );
+  }  // end loop over tracks
 
   // Copy to output: trk_feat_rm, trk_seg_rm, trk_valid_rm, trk_invpt
   LOOP_OUT: for (unsigned i = 0; i < model_config::n_out; i++) {
 
 #pragma HLS UNROLL
 
-    const unsigned itrk = i / model_config::n_out_per_trk;
-    const unsigned ivar = i % model_config::n_out_per_trk;
+    const unsigned itrk = (i / model_config::n_out_per_trk);
+    const unsigned ivar = (i % model_config::n_out_per_trk);
+
+    const trk_seg_t invalid_marker_ph_seg = model_config::n_in;
 
     const auto curr_trk_seg_rm = &(trk_seg_rm[itrk * num_emtf_sites]);
     const auto curr_trk_feat_rm = &(trk_feat_rm[itrk * num_emtf_features]);
-
-    const trk_seg_t invalid_marker_ph_seg = model_config::n_in;
 
     if (ivar < num_emtf_features) {
       out[i] = curr_trk_feat_rm[ivar];

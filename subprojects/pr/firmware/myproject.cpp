@@ -142,11 +142,11 @@ void myproject(
   );
 
   // Unpack from in1 (a.k.a. zonemerging_0_out)
-  trk_qual_t  trk_qual     [trkbuilding_config::n_in];
-  trk_patt_t  trk_patt     [trkbuilding_config::n_in];
-  trk_col_t   trk_col      [trkbuilding_config::n_in];
-  trk_zone_t  trk_zone     [trkbuilding_config::n_in];
-  trk_tzone_t trk_tzone    [trkbuilding_config::n_in];
+  trk_qual_t  trk_qual  [trkbuilding_config::n_in];
+  trk_patt_t  trk_patt  [trkbuilding_config::n_in];
+  trk_col_t   trk_col   [trkbuilding_config::n_in];
+  trk_zone_t  trk_zone  [trkbuilding_config::n_in];
+  trk_tzone_t trk_tzone [trkbuilding_config::n_in];
 
 #pragma HLS ARRAY_PARTITION variable=trk_qual complete dim=0
 #pragma HLS ARRAY_PARTITION variable=trk_patt complete dim=0

@@ -8,7 +8,7 @@ void myproject(
     top_out_t out[TOP_N_OUT]
 ) {
 
-#pragma HLS PIPELINE II=duperemoval_config::target_ii
+#pragma HLS PIPELINE II=duperemoval_config::layer_target_ii
 
 #pragma HLS INTERFACE ap_vld port=in0
 #pragma HLS INTERFACE ap_vld port=out
@@ -45,10 +45,10 @@ void myproject(
     const unsigned itrk = i / n_in_per_trk;
     const unsigned ivar = i % n_in_per_trk;
 
+    const trk_seg_t invalid_marker_ph_seg = model_config::n_in;
+
     auto curr_trk_seg = &(trk_seg[itrk * num_emtf_sites]);
     auto curr_trk_feat = &(trk_feat[itrk * num_emtf_features]);
-
-    const trk_seg_t invalid_marker_ph_seg = model_config::n_in;
 
     if (ivar == 0) {
       trk_valid[itrk] = 0;
@@ -56,7 +56,7 @@ void myproject(
 
     if (ivar < num_emtf_features) {
       curr_trk_feat[ivar] = in0[i];
-      if (in0[i] > 0) {
+      if (in0[i] != 0) {
         trk_valid[itrk] = 1;
       }
     } else if (ivar < (num_emtf_features + num_emtf_sites)) {
@@ -71,7 +71,8 @@ void myproject(
 
   // Call
   duperemoval_layer<m_zone_any_tag>(
-      trk_seg, trk_seg_v, trk_feat, trk_valid, trk_seg_rm, trk_seg_rm_v, trk_feat_rm, trk_valid_rm
+      trk_seg, trk_seg_v, trk_feat, trk_valid, trk_seg_rm, trk_seg_rm_v,
+      trk_feat_rm, trk_valid_rm
   );
 
   // Copy to output: trk_feat_rm, trk_seg_rm
@@ -83,10 +84,10 @@ void myproject(
     const unsigned itrk = i / n_out_per_trk;
     const unsigned ivar = i % n_out_per_trk;
 
+    const trk_seg_t invalid_marker_ph_seg = model_config::n_in;
+
     const auto curr_trk_seg_rm = &(trk_seg_rm[itrk * num_emtf_sites]);
     const auto curr_trk_feat_rm = &(trk_feat_rm[itrk * num_emtf_features]);
-
-    const trk_seg_t invalid_marker_ph_seg = model_config::n_in;
 
     if (ivar < num_emtf_features) {
       out[i] = curr_trk_feat_rm[ivar];

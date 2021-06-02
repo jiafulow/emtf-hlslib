@@ -8,7 +8,7 @@ void myproject(
     top_out_t out[TOP_N_OUT]
 ) {
 
-#pragma HLS PIPELINE II=zonemerging_config::target_ii
+#pragma HLS PIPELINE II=zonemerging_config::layer_target_ii
 
 #pragma HLS INTERFACE ap_vld port=in0
 #pragma HLS INTERFACE ap_vld port=out

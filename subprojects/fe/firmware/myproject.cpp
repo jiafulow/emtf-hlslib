@@ -9,7 +9,7 @@ void myproject(
     top_out_t out[TOP_N_OUT]
 ) {
 
-#pragma HLS PIPELINE II=trkbuilding_config::target_ii
+#pragma HLS PIPELINE II=trkbuilding_config::layer_target_ii
 
 #pragma HLS INTERFACE ap_vld port=in0
 #pragma HLS INTERFACE ap_vld port=in1
@@ -72,11 +72,11 @@ void myproject(
   }  // end loop over in0
 
   // Prepare input and output variables
-  trk_feat_t  curr_trk_feat [num_emtf_features];
   trk_seg_t   curr_trk_seg  [num_emtf_sites];
+  trk_feat_t  curr_trk_feat [num_emtf_features];
 
-#pragma HLS ARRAY_PARTITION variable=curr_trk_feat complete dim=0
 #pragma HLS ARRAY_PARTITION variable=curr_trk_seg complete dim=0
+#pragma HLS ARRAY_PARTITION variable=curr_trk_feat complete dim=0
 
   trk_qual_t  curr_trk_qual  = in1[0];
   trk_patt_t  curr_trk_patt  = in1[1];
@@ -87,7 +87,7 @@ void myproject(
   trk_valid_t curr_trk_valid = 0;
 
   // Call
-  trkbuilding_op<m_zone_any_tag>(
+  trkbuilding_layer<m_zone_any_tag>(
       emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_qual2,
       emtf_time, seg_zones, seg_tzones, seg_fr, seg_dl, seg_bx,
       seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone,
