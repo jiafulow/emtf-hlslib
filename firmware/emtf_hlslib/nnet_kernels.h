@@ -3,6 +3,9 @@
 
 #include <cmath>  // provides std::tanh, std::pow, std::round
 
+// EMTF HLS
+#include "layer_helpers.h"
+
 namespace emtf {
 
 namespace details {
@@ -68,7 +71,7 @@ void vector_tanh_activate_op(const T_IN x[N], T_OUT out[N]) {
 
   if (!initialized) {
     initialized = true;
-    details::init_tanh_table_op<N_TABLE, T_IN>(tanh_table);
+    init_tanh_table_op<N_TABLE, T_IN>(tanh_table);
   }
 
   LOOP_ACT: for (unsigned i = 0; i < N; i++) {
@@ -141,7 +144,6 @@ void vec_vec_mult_op(const T_IN0 x[N], const T_IN1 y[N], T_OUT out[N]) {
 
 // Returns dot(X, Y) + Z
 // X has rows = N, Y has rows = N, Z is a scalar
-// It follows the convention as used in a NN, not the convention in basic linear algebra.
 template <unsigned int N, typename T_IN0, typename T_IN1, typename T_IN2, typename T_OUT>
 void vec_vec_mult_biasadd_op(const T_IN0 x[N], const T_IN1 y[N], const T_IN2& z, T_OUT& out) {
   static_assert(is_ap_fixed_type<T_IN0>::value, "T_IN0 type check failed");
@@ -208,7 +210,6 @@ void vec_vec_mult_biasadd_op(const T_IN0 x[N], const T_IN1 y[N], const T_IN2& z,
 
 // Returns matmul(X, Y) + Z
 // X has rows = M, Y has (rows, cols) = (M, N) Z has cols = N
-// It follows the convention as used in a NN, not the convention in basic linear algebra.
 template <unsigned int M, unsigned int N, typename T_IN0, typename T_IN1, typename T_IN2, typename T_OUT>
 void mat_vec_mult_biasadd_op(const T_IN0 x[M], const T_IN1 y[M * N], const T_IN2 z[N], T_OUT out[N]) {
   static_assert(is_ap_fixed_type<T_IN0>::value, "T_IN0 type check failed");
@@ -245,7 +246,7 @@ void mat_vec_mult_biasadd_op(const T_IN0 x[M], const T_IN1 y[M * N], const T_IN2
 #pragma HLS UNROLL
 
       const T_IN0 x_i = x[i];
-      const T_IN1 y_i = y[(i * N) + j];
+      const T_IN1 y_i = y[(j * M) + i];
       mult[i] = x_i * y_i;  // using DSP48
     }
 
