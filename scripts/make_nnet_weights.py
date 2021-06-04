@@ -72,7 +72,7 @@ def write_fn(x):
   # Join header, body, and footer.
   # x has been flattened.
   body = [
-      format_fn(i, my_array2string(x_i.flatten()), multiline=True)
+      format_fn(i, my_array2string(x_i.transpose().flatten()), multiline=True)
       for i, x_i in enumerate(x)
   ]
   fulltext = header + body + footer
@@ -91,5 +91,5 @@ if __name__ == '__main__':
     assert len(obj) == len(opening)
 
     nnet_weights = [np.array(o).astype(np.int32) for o in obj]  # handle floats
-    #print([w.flatten() for w in nnet_weights])
+    #print([w.transpose().flatten() for w in nnet_weights])
     write_fn(nnet_weights)
