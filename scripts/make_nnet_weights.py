@@ -18,7 +18,9 @@ header = [
   '',
   'namespace emtf {',
   '',
-  'namespace details {',
+  'namespace phase2 {',
+  '',
+  'namespace detail {',
   '',
   'constexpr static const int num_nodes_nnet_0_layer_0 = {};'.format(nodes_in),
   'constexpr static const int num_nodes_nnet_0_layer_1 = {};'.format(nodes0),
@@ -29,7 +31,9 @@ header = [
 ]
 
 footer = [
-  '}  // namespace details',
+  '}  // namespace detail',
+  '',
+  '}  // namespace phase2',
   '',
   '}  // namespace emtf',
   '',

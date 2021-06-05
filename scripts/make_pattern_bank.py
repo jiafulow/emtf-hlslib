@@ -14,6 +14,7 @@ num_emtf_zones = 3
 num_emtf_patterns = 7
 num_img_rows = 8
 reference = 55
+max_pad = 36
 
 header = [
   '#ifndef __EMTF_HLSLIB_PATTERN_BANK_H__',
@@ -21,14 +22,19 @@ header = [
   '',
   'namespace emtf {',
   '',
-  'namespace details {',
+  'namespace phase2 {',
+  '',
+  'namespace detail {',
   '',
   'constexpr static const int pattern_col_reference = {};'.format(reference),
+  'constexpr static const int pattern_col_max_pad = {};'.format(max_pad),
   '',
 ]
 
 footer = [
-  '}  // namespace details',
+  '}  // namespace detail',
+  '',
+  '}  // namespace phase2',
   '',
   '}  // namespace emtf',
   '',
