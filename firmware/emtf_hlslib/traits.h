@@ -7,6 +7,8 @@
 
 namespace emtf {
 
+namespace phase2 {
+
 // _____________________________________________________________________________
 // Mock implementation of C++ type_traits for use in the HLS project
 
@@ -107,6 +109,8 @@ struct find_ap_int_max_allowed {};
 
 template <int W> struct find_ap_int_max_allowed<ap_int<W> > { static const int value = ((1 << W) / 2) - 1; };
 template <int W> struct find_ap_int_max_allowed<ap_uint<W> > { static const int value = (1 << W) - 1; };
+
+}  // namespace phase2
 
 }  // namespace emtf
 

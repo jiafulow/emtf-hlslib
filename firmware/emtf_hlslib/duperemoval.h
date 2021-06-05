@@ -15,6 +15,8 @@
 
 namespace emtf {
 
+namespace phase2 {
+
 template <typename T=void>
 void duperemoval_preprocess_op(
     const trk_seg_t   trk_seg           [duperemoval_config::n_in * num_emtf_sites],
@@ -137,7 +139,7 @@ void duperemoval_find_dupes_op(
   }  // end i loop
 
   // Survivor count
-  typedef ap_uint<details::ceil_log2<N - 1>::value> idx_t;
+  typedef ap_uint<detail::ceil_log2<N - 1>::value> idx_t;
   idx_t cnt = 0;
 
   // trk 0 is not a duplicate by construction
@@ -241,10 +243,10 @@ void duperemoval_remove_dupes_op(
     // Fill with default values
     trk_valid_rm[i] = 0;
     trk_seg_rm_v[i] = 0;
-    details::fill_n_values<num_emtf_sites>(
+    detail::fill_n_values<num_emtf_sites>(
         &(trk_seg_rm[i * num_emtf_sites]), invalid_marker_ph_seg
     );
-    details::fill_n_values<num_emtf_features>(
+    detail::fill_n_values<num_emtf_features>(
         &(trk_feat_rm[i * num_emtf_features]), invalid_marker_trk_feat
     );
 
@@ -264,10 +266,10 @@ void duperemoval_remove_dupes_op(
         trk_valid_rm[i] = trk_valid[j];
         trk_seg_rm_v[i] = trk_seg_v[j];
         // Copy to arrays
-        details::copy_n_values<num_emtf_sites>(
+        detail::copy_n_values<num_emtf_sites>(
             &(trk_seg[j * num_emtf_sites]), &(trk_seg_rm[i * num_emtf_sites])
         );
-        details::copy_n_values<num_emtf_features>(
+        detail::copy_n_values<num_emtf_features>(
             &(trk_feat[j * num_emtf_features]), &(trk_feat_rm[i * num_emtf_features])
         );
       }
@@ -356,6 +358,8 @@ void duperemoval_layer(
       trk_feat_rm, trk_valid_rm
   );
 }
+
+}  // namespace phase2
 
 }  // namespace emtf
 

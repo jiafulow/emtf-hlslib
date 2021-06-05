@@ -3,7 +3,7 @@
 
 // EMTF HLS
 #include "common.h"
-#include "traits.h"
+#include "types.h"
 #include "model_configs.h"
 #include "layer_constants.h"
 #include "pattern_bank.h"
@@ -11,7 +11,9 @@
 
 namespace emtf {
 
-namespace details {
+namespace phase2 {
+
+namespace detail {
 
 // Traits
 template <typename Category>
@@ -489,7 +491,9 @@ T force_reg(const T& x) {
   return x;
 }
 
-}  // namespace details
+}  // namespace detail
+
+}  // namespace phase2
 
 }  // namespace emtf
 

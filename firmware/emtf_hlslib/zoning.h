@@ -16,26 +16,28 @@
 
 namespace emtf {
 
+namespace phase2 {
+
 struct zoning_internal_config : zoning_config {
   // This enumerates the 8 ph_init + 8 ph_cover values (in ascending order) for the
   // 8 possible 10-deg chambers in a sector.
-  constexpr static const int col_start_0 = details::chamber_img_joined_col_start;
-  constexpr static const int col_start_1 = details::chamber_ph_init_10deg[6];
-  constexpr static const int col_start_3 = details::chamber_ph_init_10deg[0];  // = chamber_ph_init_20deg[0];
-  constexpr static const int col_start_5 = details::chamber_ph_init_10deg[1];
-  constexpr static const int col_start_7 = details::chamber_ph_init_10deg[2];  // = chamber_ph_init_20deg[1];
-  constexpr static const int col_start_9 = details::chamber_ph_init_10deg[3];
-  constexpr static const int col_start_b = details::chamber_ph_init_10deg[4];  // = chamber_ph_init_20deg[2];
-  constexpr static const int col_start_d = details::chamber_ph_init_10deg[5];
+  constexpr static const int col_start_0 = detail::chamber_img_joined_col_start;
+  constexpr static const int col_start_1 = detail::chamber_ph_init_10deg[6];
+  constexpr static const int col_start_3 = detail::chamber_ph_init_10deg[0];  // = chamber_ph_init_20deg[0];
+  constexpr static const int col_start_5 = detail::chamber_ph_init_10deg[1];
+  constexpr static const int col_start_7 = detail::chamber_ph_init_10deg[2];  // = chamber_ph_init_20deg[1];
+  constexpr static const int col_start_9 = detail::chamber_ph_init_10deg[3];
+  constexpr static const int col_start_b = detail::chamber_ph_init_10deg[4];  // = chamber_ph_init_20deg[2];
+  constexpr static const int col_start_d = detail::chamber_ph_init_10deg[5];
 
-  constexpr static const int col_start_2 = details::chamber_ph_cover_10deg[0] - details::chamber_ph_init_10deg[0];
-  constexpr static const int col_start_4 = details::chamber_ph_cover_10deg[6];  // = chamber_ph_cover_20deg[3];
-  constexpr static const int col_start_6 = details::chamber_ph_cover_10deg[0];
-  constexpr static const int col_start_8 = details::chamber_ph_cover_10deg[1];  // = chamber_ph_cover_20deg[0];
-  constexpr static const int col_start_a = details::chamber_ph_cover_10deg[2];
-  constexpr static const int col_start_c = details::chamber_ph_cover_10deg[3];  // = chamber_ph_cover_20deg[1];
-  constexpr static const int col_start_e = details::chamber_ph_cover_10deg[4];
-  constexpr static const int col_start_f = details::chamber_ph_cover_10deg[5];  // = chamber_ph_cover_20deg[2];
+  constexpr static const int col_start_2 = detail::chamber_ph_cover_10deg[0] - detail::chamber_ph_init_10deg[0];
+  constexpr static const int col_start_4 = detail::chamber_ph_cover_10deg[6];  // = chamber_ph_cover_20deg[3];
+  constexpr static const int col_start_6 = detail::chamber_ph_cover_10deg[0];
+  constexpr static const int col_start_8 = detail::chamber_ph_cover_10deg[1];  // = chamber_ph_cover_20deg[0];
+  constexpr static const int col_start_a = detail::chamber_ph_cover_10deg[2];
+  constexpr static const int col_start_c = detail::chamber_ph_cover_10deg[3];  // = chamber_ph_cover_20deg[1];
+  constexpr static const int col_start_e = detail::chamber_ph_cover_10deg[4];
+  constexpr static const int col_start_f = detail::chamber_ph_cover_10deg[5];  // = chamber_ph_cover_20deg[2];
 
   // This enumerates the bit widths of the 15 slices defined by the above 16 edges.
   // The total bit width must be equal to num_emtf_img_cols.
@@ -56,8 +58,8 @@ struct zoning_internal_config : zoning_config {
   constexpr static const int bw_slice_e = col_start_f - col_start_e;
 
   // Typedefs
-  typedef ap_uint<details::chamber_img_bw> chamber_img_t;
-  typedef ap_uint<details::chamber_img_joined_bw> chamber_img_joined_t;
+  typedef ap_uint<detail::chamber_img_bw> chamber_img_t;
+  typedef ap_uint<detail::chamber_img_joined_bw> chamber_img_joined_t;
 };
 
 // _____________________________________________________________________________
@@ -65,7 +67,7 @@ template <unsigned int N, typename T_IN, typename T_OUT>
 void zoning_row_join_op(const T_IN in0[N], T_OUT& out, m_10deg_chamber_tag) {
   static_assert(is_same<T_IN, zoning_internal_config::chamber_img_t>::value, "T_IN type check failed");
   static_assert(is_same<T_OUT, zoning_out_t>::value, "T_OUT type check failed");
-  static_assert(N == details::num_chambers_traits<m_10deg_chamber_tag>::value, "N value check failed");
+  static_assert(N == detail::num_chambers_traits<m_10deg_chamber_tag>::value, "N value check failed");
 
 #pragma HLS PIPELINE II=zoning_config::target_ii
 
@@ -130,7 +132,7 @@ template <unsigned int N, typename T_IN, typename T_OUT>
 void zoning_row_join_op(const T_IN in0[N], T_OUT& out, m_20deg_chamber_tag) {
   static_assert(is_same<T_IN, zoning_internal_config::chamber_img_t>::value, "T_IN type check failed");
   static_assert(is_same<T_OUT, zoning_out_t>::value, "T_OUT type check failed");
-  static_assert(N == details::num_chambers_traits<m_20deg_chamber_tag>::value, "N value check failed");
+  static_assert(N == detail::num_chambers_traits<m_20deg_chamber_tag>::value, "N value check failed");
 
 #pragma HLS PIPELINE II=zoning_config::target_ii
 
@@ -191,7 +193,7 @@ template <unsigned int N, typename T_IN, typename T_OUT>
 void zoning_row_join_op(const T_IN in0[N], T_OUT& out, m_20deg_ext_chamber_tag) {
   static_assert(is_same<T_IN, zoning_internal_config::chamber_img_t>::value, "T_IN type check failed");
   static_assert(is_same<T_OUT, zoning_out_t>::value, "T_OUT type check failed");
-  static_assert(N == details::num_chambers_traits<m_20deg_ext_chamber_tag>::value, "N value check failed");
+  static_assert(N == detail::num_chambers_traits<m_20deg_ext_chamber_tag>::value, "N value check failed");
 
 #pragma HLS PIPELINE II=zoning_config::target_ii
 
@@ -323,8 +325,8 @@ void zoning_row_gather_op(
 
 #pragma HLS INLINE
 
-  typedef typename details::chamber_category_traits<Row>::chamber_category chamber_category;
-  static_assert(N == details::num_chambers_traits<chamber_category>::value, "N value check failed");
+  typedef typename detail::chamber_category_traits<Row>::chamber_category chamber_category;
+  static_assert(N == detail::num_chambers_traits<chamber_category>::value, "N value check failed");
 
 #ifndef __SYNTHESIS__
   static bool initialized = false;
@@ -336,18 +338,18 @@ void zoning_row_gather_op(
   int chamber_id_table[N];
   int chamber_ph_init_table[N];
   int chamber_ph_cover_table[N];
-#endif
+#endif  // __SYNTHESIS__ not defined
 
   if (!initialized) {
     initialized = true;
-    details::init_table_op<N>(chamber_id_table, details::get_chamber_id_op<Row>{});
-    details::init_table_op<N>(chamber_ph_init_table, details::get_chamber_ph_init_op<chamber_category>{});
-    details::init_table_op<N>(chamber_ph_cover_table, details::get_chamber_ph_cover_op<chamber_category>{});
+    detail::init_table_op<N>(chamber_id_table, detail::get_chamber_id_op<Row>{});
+    detail::init_table_op<N>(chamber_ph_init_table, detail::get_chamber_ph_init_op<chamber_category>{});
+    detail::init_table_op<N>(chamber_ph_cover_table, detail::get_chamber_ph_cover_op<chamber_category>{});
   }
 
   // Translate zone, timezone into bit selection
-  const trk_zone_t the_zone = details::zone_traits<Zone>::value;
-  const trk_tzone_t the_tzone = details::timezone_traits<Timezone>::value;
+  const trk_zone_t the_zone = detail::zone_traits<Zone>::value;
+  const trk_tzone_t the_tzone = detail::timezone_traits<Timezone>::value;
   const trk_zone_t bit_sel_zone = static_cast<trk_zone_t>(num_emtf_zones - 1) - the_zone;
   const trk_tzone_t bit_sel_tzone = static_cast<trk_tzone_t>(num_emtf_timezones - 1) - the_tzone;
 
@@ -363,7 +365,7 @@ void zoning_row_gather_op(
 #pragma HLS ARRAY_RESHAPE variable=columns complete dim=0
 #pragma HLS ARRAY_RESHAPE variable=columns_v complete dim=0
 
-    //std::cout << "[DEBUG] zone " << details::zone_traits<Zone>::value
+    //std::cout << "[DEBUG] zone " << detail::zone_traits<Zone>::value
     //          << " chamber: " << chamber_id_table[i]
     //          << " ph_init: " << chamber_ph_init_table[i]
     //          << " ph_cover: " << chamber_ph_cover_table[i] << std::endl;
@@ -392,7 +394,7 @@ void zoning_row_gather_op(
 
       if (valid) {
         emtf_assert((ph0 >> bits_to_shift) >= ph_init);
-        emtf_assert(col < details::chamber_img_bw);
+        emtf_assert(col < detail::chamber_img_bw);
         //std::cout << "[DEBUG] .. segment: " << j << " emtf_phi: " << emtf_phi[iseg]
         //          << " col: " << col << std::endl;
       }
@@ -446,8 +448,8 @@ void zoning_row_op(
 
 #pragma HLS INLINE
 
-  typedef typename details::chamber_category_traits<Row>::chamber_category chamber_category;
-  const unsigned int N = details::num_chambers_traits<chamber_category>::value;
+  typedef typename detail::chamber_category_traits<Row>::chamber_category chamber_category;
+  const unsigned int N = detail::num_chambers_traits<chamber_category>::value;
 
   typedef zoning_internal_config::chamber_img_t chamber_img_t;
 
@@ -563,6 +565,8 @@ void zoning_layer(
   zoning_op<m_zone_1_tag, Timezone>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_1_out);
   zoning_op<m_zone_2_tag, Timezone>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_2_out);
 }
+
+}  // namespace phase2
 
 }  // namespace emtf
 

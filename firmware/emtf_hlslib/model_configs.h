@@ -6,6 +6,8 @@
 
 namespace emtf {
 
+namespace phase2 {
+
 // _____________________________________________________________________________
 // Model configs
 
@@ -163,6 +165,8 @@ struct m_nnet_0_layer_4_tag {};
 
 // HLS directives
 struct m_inline_directive {};
+
+}  // namespace phase2
 
 }  // namespace emtf
 

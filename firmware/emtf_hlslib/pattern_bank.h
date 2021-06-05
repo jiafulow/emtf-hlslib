@@ -3,9 +3,12 @@
 
 namespace emtf {
 
-namespace details {
+namespace phase2 {
+
+namespace detail {
 
 constexpr static const int pattern_col_reference = 55;
+constexpr static const int pattern_col_max_pad = 36;
 
 constexpr static const int pattern_col_start_zone_0_patt_0[8] = {51, 51, 52, 54, 54, 54, 54, 54};
 constexpr static const int pattern_col_start_zone_0_patt_1[8] = {43, 43, 46, 53, 54, 55, 55, 55};
@@ -121,7 +124,9 @@ constexpr static const int pattern_activation_zone_2[1u << 8] = {
   8, 21, 34, 53, 21, 50, 48, 62, 38, 55, 52, 62, 58, 63, 61, 63
 };
 
-}  // namespace details
+}  // namespace detail
+
+}  // namespace phase2
 
 }  // namespace emtf
 

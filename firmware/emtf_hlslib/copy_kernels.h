@@ -8,7 +8,9 @@
 
 namespace emtf {
 
-namespace details {
+namespace phase2 {
+
+namespace detail {
 
 template <unsigned int N, typename T>
 void copy_n_values(const T in0[N], T out[N]) {
@@ -54,7 +56,9 @@ void fill_n_values(T out[N], const T& value) {
 
 }
 
-}  // namespace details
+}  // namespace detail
+
+}  // namespace phase2
 
 }  // namespace emtf
 

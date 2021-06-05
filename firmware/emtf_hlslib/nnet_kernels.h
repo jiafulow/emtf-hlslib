@@ -8,7 +8,9 @@
 
 namespace emtf {
 
-namespace details {
+namespace phase2 {
+
+namespace detail {
 
 template <unsigned int N, typename T, typename U>
 void init_nnet_weights_op(T* arr, U op) {
@@ -67,7 +69,7 @@ void vector_tanh_activate_op(const T_IN x[N], T_OUT out[N]) {
 #else
   bool initialized = false;
   T_OUT tanh_table[N_TABLE];
-#endif
+#endif  // __SYNTHESIS__ not defined
 
   if (!initialized) {
     initialized = true;
@@ -131,6 +133,7 @@ void vec_vec_mult_op(const T_IN0 x[N], const T_IN1 y[N], T_OUT out[N]) {
 
 #pragma HLS RESOURCE variable=mult core=DSP48 latency=1
 
+  // Multiply
   LOOP_MULT: for (unsigned i = 0; i < N; i++) {
 
 #pragma HLS UNROLL
@@ -279,7 +282,9 @@ void mat_vec_mult_biasadd_op(const T_IN0 x[M], const T_IN1 y[M * N], const T_IN2
 
 }
 
-}  // namespace details
+}  // namespace detail
+
+}  // namespace phase2
 
 }  // namespace emtf
 

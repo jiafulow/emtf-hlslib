@@ -17,6 +17,8 @@
 
 namespace emtf {
 
+namespace phase2 {
+
 template <typename T_IN, typename T_OUT>
 void zonesorting_preprocess_suppress_op(
     const T_IN in0[zonesorting_config::n_in],
@@ -117,11 +119,11 @@ void zonesorting_preprocess_sort_op(
   // trk_col_t is broken up as 2 pieces: trk_col_trunc_t and trk_col_short_t.
   // trk_col_short_t includes 2 bits to encode 0..3 in a batch + 1 bit inherited from
   // zonesorting_preprocess_mux_op().
-  typedef ap_uint<details::ceil_log2<(batch_size * 2) - 1>::value> trk_col_short_t;  // encodes 0..7
+  typedef ap_uint<detail::ceil_log2<(batch_size * 2) - 1>::value> trk_col_short_t;  // encodes 0..7
   typedef ap_uint<trk_col_t::width - trk_col_short_t::width> trk_col_trunc_t;
   typedef trk_qual_t data_t;
   typedef ap_uint<T_IN::width - data_t::width + trk_col_short_t::width> arg_t;
-  typedef details::argsort_pair<arg_t, data_t> pair_t;
+  typedef detail::argsort_pair<arg_t, data_t> pair_t;
 
   constexpr int bits_lo_0 = 0;
   constexpr int bits_lo_1 = data_t::width;
@@ -164,7 +166,7 @@ void zonesorting_preprocess_sort_op(
 
     // Sort a batch of 4 columns
     // nodes[0]..nodes[3] are the input nodes, nodes[4]..nodes[7] are the output nodes
-    details::sort_four_op(
+    detail::sort_four_op(
         nodes[0], nodes[1], nodes[2], nodes[3],
         nodes[4], nodes[5], nodes[6], nodes[7]
     );
@@ -176,7 +178,7 @@ void zonesorting_preprocess_sort_op(
     const pair_t& r2 = nodes[6];
     const pair_t& r3 = nodes[7];
     pair_t r4, r5, r6, r7;
-    details::cpp_sort_four_op(
+    detail::cpp_sort_four_op(
         nodes[0], nodes[1], nodes[2], nodes[3],
         r4, r5, r6, r7
     );
@@ -265,7 +267,7 @@ void zonesorting_argmax_op(
   const unsigned int N = zonesorting_config::n_stage_0;
   typedef trk_qual_t data_t;
   typedef ap_uint<T_IN::width - data_t::width> arg_t;
-  typedef details::argsort_pair<arg_t, data_t> pair_t;
+  typedef detail::argsort_pair<arg_t, data_t> pair_t;
 
   constexpr int bits_lo_0 = 0;
   constexpr int bits_lo_1 = data_t::width;
@@ -312,7 +314,7 @@ void zonesorting_argmax_op(
     emtf_assert(((child_index + 0) < num_nodes) and ((child_index + 7) < num_nodes));
 
     // Merge 8 -> 4
-    details::merge_eight_op(
+    detail::merge_eight_op(
         octal_tree[child_index + 0], octal_tree[child_index + 1], octal_tree[child_index + 2], octal_tree[child_index + 3],
         octal_tree[child_index + 4], octal_tree[child_index + 5], octal_tree[child_index + 6], octal_tree[child_index + 7],
         octal_tree[node_index + 0], octal_tree[node_index + 1], octal_tree[node_index + 2], octal_tree[node_index + 3]
@@ -325,7 +327,7 @@ void zonesorting_argmax_op(
     const pair_t& r2 = octal_tree[node_index + 2];
     const pair_t& r3 = octal_tree[node_index + 3];
     pair_t r4, r5, r6, r7;
-    details::cpp_merge_eight_op(
+    detail::cpp_merge_eight_op(
         octal_tree[child_index + 0], octal_tree[child_index + 1], octal_tree[child_index + 2], octal_tree[child_index + 3],
         octal_tree[child_index + 4], octal_tree[child_index + 5], octal_tree[child_index + 6], octal_tree[child_index + 7],
         r4, r5, r6, r7
@@ -407,6 +409,8 @@ void zonesorting_layer(
 
   zonesorting_op<Zone>(zonesorting_in, zonesorting_out);
 }
+
+}  // namespace phase2
 
 }  // namespace emtf
 

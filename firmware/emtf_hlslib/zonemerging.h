@@ -14,6 +14,8 @@
 
 namespace emtf {
 
+namespace phase2 {
+
 template <typename T_IN, typename T_OUT>
 void zonemerging_preprocess_op(
     const T_IN in0[zonemerging_config::n_in],
@@ -72,7 +74,7 @@ void zonemerging_argmax_op(
   const unsigned int N = zonemerging_config::n_stage_0;
   typedef trk_qual_t data_t;
   typedef ap_uint<T_IN::width - data_t::width> arg_t;
-  typedef details::argsort_pair<arg_t, data_t> pair_t;
+  typedef detail::argsort_pair<arg_t, data_t> pair_t;
 
   constexpr int bits_lo_0 = 0;
   constexpr int bits_lo_1 = data_t::width;
@@ -119,7 +121,7 @@ void zonemerging_argmax_op(
     emtf_assert(((child_index + 0) < num_nodes) and ((child_index + 7) < num_nodes));
 
     // Merge 8 -> 4
-    details::merge_eight_op(
+    detail::merge_eight_op(
         octal_tree[child_index + 0], octal_tree[child_index + 1], octal_tree[child_index + 2], octal_tree[child_index + 3],
         octal_tree[child_index + 4], octal_tree[child_index + 5], octal_tree[child_index + 6], octal_tree[child_index + 7],
         octal_tree[node_index + 0], octal_tree[node_index + 1], octal_tree[node_index + 2], octal_tree[node_index + 3]
@@ -132,7 +134,7 @@ void zonemerging_argmax_op(
     const pair_t& r2 = octal_tree[node_index + 2];
     const pair_t& r3 = octal_tree[node_index + 3];
     pair_t r4, r5, r6, r7;
-    details::cpp_merge_eight_op(
+    detail::cpp_merge_eight_op(
         octal_tree[child_index + 0], octal_tree[child_index + 1], octal_tree[child_index + 2], octal_tree[child_index + 3],
         octal_tree[child_index + 4], octal_tree[child_index + 5], octal_tree[child_index + 6], octal_tree[child_index + 7],
         r4, r5, r6, r7
@@ -218,6 +220,8 @@ void zonemerging_layer(
 
   zonemerging_op<Zone>(zonemerging_in_0, zonemerging_in_1, zonemerging_in_2, zonemerging_out);
 }
+
+}  // namespace phase2
 
 }  // namespace emtf
 

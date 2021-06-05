@@ -24,7 +24,9 @@
 
 namespace emtf {
 
-namespace details {
+namespace phase2 {
+
+namespace detail {
 
 template <typename Site, typename T_IN, typename T_OUT>
 void find_pattern_windows_op(const T_IN& in0, T_OUT& par0, T_OUT& par1, T_OUT& par2, T_OUT& par3) {
@@ -53,14 +55,14 @@ void find_pattern_windows_op(const T_IN& in0, T_OUT& par0, T_OUT& par1, T_OUT& p
   int pattern_col_mid_table[M_TABLE * N_TABLE];
   int pattern_col_stop_table[M_TABLE * N_TABLE];
   int pattern_col_pad_table[M_TABLE * N_TABLE];
-#endif
+#endif  // __SYNTHESIS__ not defined
 
   if (!initialized) {
     initialized = true;
-    details::init_2d_table_op<M_TABLE, N_TABLE>(pattern_col_start_table, details::get_site_pattern_col_start_op<Site>());
-    details::init_2d_table_op<M_TABLE, N_TABLE>(pattern_col_mid_table, details::get_site_pattern_col_mid_op<Site>());
-    details::init_2d_table_op<M_TABLE, N_TABLE>(pattern_col_stop_table, details::get_site_pattern_col_stop_op<Site>());
-    details::init_2d_table_op<M_TABLE, N_TABLE>(pattern_col_pad_table, details::get_site_pattern_col_pad_op<Site>());
+    detail::init_2d_table_op<M_TABLE, N_TABLE>(pattern_col_start_table, detail::get_site_pattern_col_start_op<Site>());
+    detail::init_2d_table_op<M_TABLE, N_TABLE>(pattern_col_mid_table, detail::get_site_pattern_col_mid_op<Site>());
+    detail::init_2d_table_op<M_TABLE, N_TABLE>(pattern_col_stop_table, detail::get_site_pattern_col_stop_op<Site>());
+    detail::init_2d_table_op<M_TABLE, N_TABLE>(pattern_col_pad_table, detail::get_site_pattern_col_pad_op<Site>());
   }
 
   // Intermediate arrays
@@ -151,11 +153,11 @@ T take_value_if(B cond, const T& a) {
   return cond ? a : static_cast<T>(0);
 }
 
-}  // namespace details
+}  // namespace detail
 
 // _____________________________________________________________________________
 struct trkbuilding_internal_config {
-  static const unsigned int num_site_segments = details::num_chambers_max_allowed * num_emtf_segments;
+  static const unsigned int num_site_segments = detail::num_chambers_max_allowed * num_emtf_segments;
   static const unsigned int num_gate_segments = num_site_segments / ((num_emtf_img_gates + 1) / 2);
   static const unsigned int num_th_median_entries = 9;
 
@@ -189,7 +191,7 @@ void trkbuilding_find_ph_median_op(
   constexpr int bits_to_shift = emtf_img_col_factor_log2;
 
   // Find curr_trk_col_corr
-  const trk_col_t col_start_img = details::chamber_img_joined_col_start;
+  const trk_col_t col_start_img = detail::chamber_img_joined_col_start;
   const trk_col_t curr_trk_col_corr = curr_trk_col + col_start_img;  // add offset
 
   // Find ph_median, ph_sector
@@ -267,7 +269,7 @@ void trkbuilding_match_ph_compute_op(
     );
 
     // Calculate abs(delta-phi)
-    const diff_t ph_diff_tmp = details::calc_abs_diff(ph0, ph_patt);
+    const diff_t ph_diff_tmp = detail::calc_abs_diff(ph0, ph_patt);
     emtf_assert((ph_patt >> bits_to_shift) == col_patt);
     if (valid) {
       emtf_assert((curr_trk_col_corr + col_mid_param - col_pad_param) >= 0);
@@ -305,7 +307,7 @@ void trkbuilding_match_ph_pack_op(
   const unsigned int num_site_segments = trkbuilding_internal_config::num_site_segments;
   const unsigned int num_gate_segments = trkbuilding_internal_config::num_gate_segments;
   const unsigned int half_num_gate_segments = num_gate_segments / 2;
-  const emtf_theta_t invalid_marker_th = details::th_invalid;
+  const emtf_theta_t invalid_marker_th = detail::th_invalid;
 
   // Intermediate arrays
   typedef trkbuilding_internal_config::stage_0_out_t stage_0_out_t;
@@ -341,9 +343,9 @@ void trkbuilding_match_ph_pack_op(
   // gate 1: 75 - 240
   // gate 2: 150 - 315
   // use edges (0, 120, 195, 315)
-  const int col_pad_gate = (details::chamber_img_bw / 2);  // 45
-  const trk_col_t col_stop_gate_0 = details::chamber_ph_init_20deg_ext[0] + col_pad_gate;  // 120
-  const trk_col_t col_stop_gate_1 = details::chamber_ph_init_20deg_ext[1] + col_pad_gate;  // 195
+  const int col_pad_gate = (detail::chamber_img_bw / 2);  // 45
+  const trk_col_t col_stop_gate_0 = detail::chamber_ph_init_20deg_ext[0] + col_pad_gate;  // 120
+  const trk_col_t col_stop_gate_1 = detail::chamber_ph_init_20deg_ext[1] + col_pad_gate;  // 195
 
   // Output
   trk_gate_t curr_trk_gate = 0;
@@ -352,19 +354,19 @@ void trkbuilding_match_ph_pack_op(
   if (curr_trk_col_corr < col_stop_gate_0) {
     curr_trk_gate = 0;
     gate_begin_index = static_cast<unsigned>(curr_trk_gate) * half_num_gate_segments;
-    details::copy_n_values<num_gate_segments>(
+    detail::copy_n_values<num_gate_segments>(
         &(stage_0_out_tmp[gate_begin_index]), stage_0_out
     );
   } else if (curr_trk_col_corr < col_stop_gate_1) {
     curr_trk_gate = 1;
     gate_begin_index = static_cast<unsigned>(curr_trk_gate) * half_num_gate_segments;
-    details::copy_n_values<num_gate_segments>(
+    detail::copy_n_values<num_gate_segments>(
         &(stage_0_out_tmp[gate_begin_index]), stage_0_out
     );
   } else {
     curr_trk_gate = 2;
     gate_begin_index = static_cast<unsigned>(curr_trk_gate) * half_num_gate_segments;
-    details::copy_n_values<num_gate_segments>(
+    detail::copy_n_values<num_gate_segments>(
         &(stage_0_out_tmp[gate_begin_index]), stage_0_out
     );
   }
@@ -486,11 +488,11 @@ void trkbuilding_match_ph_site_op(
 #else
   bool initialized = false;
   int segment_id_table[num_site_segments];
-#endif
+#endif  // __SYNTHESIS__ not defined
 
   if (!initialized) {
     initialized = true;
-    details::init_table_op<num_site_segments>(segment_id_table, details::get_segment_id_op<Site>());
+    detail::init_table_op<num_site_segments>(segment_id_table, detail::get_segment_id_op<Site>());
   }
 
   // Intermediate arrays
@@ -559,8 +561,8 @@ void trkbuilding_match_ph_site_op(
   }  // end loop over segments
 
   // Find curr_trk_col_corr
-  const trk_col_t col_start_img = details::chamber_img_joined_col_start;
-  const trk_col_t col_stop_img = details::chamber_img_joined_col_stop;
+  const trk_col_t col_start_img = detail::chamber_img_joined_col_start;
+  const trk_col_t col_stop_img = detail::chamber_img_joined_col_stop;
   const trk_col_t curr_trk_col_corr = curr_trk_col + col_start_img;  // add offset
   emtf_assert((col_start_img <= curr_trk_col_corr) and (curr_trk_col_corr <= col_stop_img));
 
@@ -575,7 +577,7 @@ void trkbuilding_match_ph_site_op(
   dio_patt_param_t col_mid_param = 0;
   dio_patt_param_t col_stop_param = 0;
   dio_patt_param_t col_pad_param = 0;
-  details::find_pattern_windows_op<Site>(
+  detail::find_pattern_windows_op<Site>(
       table_index, col_start_param, col_mid_param, col_stop_param, col_pad_param
   );
 
@@ -750,11 +752,11 @@ void trkbuilding_find_th_median_of_nine_op(
   const unsigned int N = trkbuilding_internal_config::num_th_median_entries;
   typedef T_IN data_t;
   typedef bool_t arg_t;
-  typedef details::argsort_pair<arg_t, data_t> pair_t;
+  typedef detail::argsort_pair<arg_t, data_t> pair_t;
 
   // Use a different invalid_marker_th_1, because the usual invalid_marker_th, which is 0,
   // doesn't work in the following median sort.
-  const data_t invalid_marker_th = details::th_invalid;
+  const data_t invalid_marker_th = detail::th_invalid;
   const data_t invalid_marker_th_1 = find_ap_int_max_allowed<data_t>::value;
 
   // Ternary tree structure (N must be power of 3)
@@ -791,7 +793,7 @@ void trkbuilding_find_th_median_of_nine_op(
     emtf_assert(node_index < num_nodes);
     emtf_assert(((child_index + 0) < num_nodes) and ((child_index + 2) < num_nodes));
 
-    details::median_of_three_op(
+    detail::median_of_three_op(
         ternary_tree[child_index + 0], ternary_tree[child_index + 1],
         ternary_tree[child_index + 2], ternary_tree[node_index]
     );
@@ -816,7 +818,7 @@ void trkbuilding_find_th_median_op(
 //#pragma HLS INLINE
 
   const unsigned int num_theta_values = trkbuilding_internal_config::num_th_median_entries;
-  const emtf_theta_t invalid_marker_th = details::th_invalid;
+  const emtf_theta_t invalid_marker_th = detail::th_invalid;
 
 #ifndef __SYNTHESIS__
   static bool initialized = false;
@@ -828,13 +830,13 @@ void trkbuilding_find_th_median_op(
   int theta_indices_table[num_theta_values];
   int theta_indices_alt_table[num_theta_values];
   int theta_indices_me1_table[num_theta_values];
-#endif
+#endif  // __SYNTHESIS__ not defined
 
   if (!initialized) {
     initialized = true;
-    details::init_table_op<num_theta_values>(theta_indices_table, details::get_trk_theta_indices_op());
-    details::init_table_op<num_theta_values>(theta_indices_alt_table, details::get_trk_theta_indices_alt_op());
-    details::init_table_op<num_theta_values>(theta_indices_me1_table, details::get_trk_theta_indices_me1_op());
+    detail::init_table_op<num_theta_values>(theta_indices_table, detail::get_trk_theta_indices_op());
+    detail::init_table_op<num_theta_values>(theta_indices_alt_table, detail::get_trk_theta_indices_alt_op());
+    detail::init_table_op<num_theta_values>(theta_indices_me1_table, detail::get_trk_theta_indices_me1_op());
   }
 
   // Intermediate arrays
@@ -909,13 +911,13 @@ void trkbuilding_match_th_select_op(
 
   typedef T_IN data_t;
   typedef dio_th_diff_t diff_t;
-  const data_t invalid_marker_th = details::th_invalid;
+  const data_t invalid_marker_th = detail::th_invalid;
   const diff_t invalid_marker_th_diff = find_ap_int_max_allowed<diff_t>::value;
-  const diff_t th_window = details::th_window;
+  const diff_t th_window = detail::th_window;
 
   // Calculate abs(delta-theta)
-  const data_t th_diff_tmp_0 = details::calc_abs_diff(th0, th_median);
-  const data_t th_diff_tmp_1 = details::calc_abs_diff(th1, th_median);
+  const data_t th_diff_tmp_0 = detail::calc_abs_diff(th0, th_median);
+  const data_t th_diff_tmp_1 = detail::calc_abs_diff(th1, th_median);
   const diff_t th_diff_0 = (
       ((th0 != invalid_marker_th) and (th_diff_tmp_0 <= invalid_marker_th_diff)) ?
       static_cast<diff_t>(th_diff_tmp_0) : invalid_marker_th_diff
@@ -950,12 +952,12 @@ void trkbuilding_match_th_select_op(
 
   typedef T_IN data_t;
   typedef dio_th_diff_t diff_t;
-  const data_t invalid_marker_th = details::th_invalid;
+  const data_t invalid_marker_th = detail::th_invalid;
   const diff_t invalid_marker_th_diff = find_ap_int_max_allowed<diff_t>::value;
-  const diff_t th_window = details::th_window;
+  const diff_t th_window = detail::th_window;
 
   // Calculate abs(delta-theta)
-  const data_t th_diff_tmp_0 = details::calc_abs_diff(th0, th_median);
+  const data_t th_diff_tmp_0 = detail::calc_abs_diff(th0, th_median);
   const diff_t th_diff_0 = (
       ((th0 != invalid_marker_th) and (th_diff_tmp_0 <= invalid_marker_th_diff)) ?
       static_cast<diff_t>(th_diff_tmp_0) : invalid_marker_th_diff
@@ -1000,7 +1002,7 @@ void trkbuilding_match_th_op(
 
   // Sanity check
 #ifndef __SYNTHESIS__
-  const emtf_theta_t invalid_marker_th = details::th_invalid;
+  const emtf_theta_t invalid_marker_th = detail::th_invalid;
   bool is_any_valid = false;
   for (unsigned i = 0; i < num_emtf_sites; i++) {
     const emtf_theta_t& th0 = feat_emtf_theta_ambi[i];
@@ -1068,11 +1070,11 @@ void trkbuilding_extract_features_op(
 
 #pragma HLS UNROLL
 
-    feat_emtf_phi_signed[i] = details::calc_signed_diff(feat_emtf_phi[i], ph_median);
-    feat_emtf_theta_signed[i] = details::calc_signed_diff(feat_emtf_theta[i], th_median);
+    feat_emtf_phi_signed[i] = detail::calc_signed_diff(feat_emtf_phi[i], ph_median);
+    feat_emtf_theta_signed[i] = detail::calc_signed_diff(feat_emtf_theta[i], th_median);
   }  // end loop over phi and theta values
 
-  const emtf_phi_signed_t ph_median_signed = details::calc_signed_diff(ph_median, ph_sector);
+  const emtf_phi_signed_t ph_median_signed = detail::calc_signed_diff(ph_median, ph_sector);
 
   // Find curr_trk_qual_gt_0
   const bool_t curr_trk_qual_gt_0 = (curr_trk_qual > 0);  // require quality > 0
@@ -1091,48 +1093,48 @@ void trkbuilding_extract_features_op(
     unsigned i = 0;
 
     // emtf_phi
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[0], feat_emtf_phi_signed[0]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[1], feat_emtf_phi_signed[1]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[2], feat_emtf_phi_signed[2]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[3], feat_emtf_phi_signed[3]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[4], feat_emtf_phi_signed[4]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[5], feat_emtf_phi_signed[5]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[6], feat_emtf_phi_signed[6]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[7], feat_emtf_phi_signed[7]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[8], feat_emtf_phi_signed[8]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[9], feat_emtf_phi_signed[9]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[10], feat_emtf_phi_signed[10]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[11], feat_emtf_phi_signed[11]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[0], feat_emtf_phi_signed[0]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[1], feat_emtf_phi_signed[1]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[2], feat_emtf_phi_signed[2]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[3], feat_emtf_phi_signed[3]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[4], feat_emtf_phi_signed[4]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[5], feat_emtf_phi_signed[5]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[6], feat_emtf_phi_signed[6]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[7], feat_emtf_phi_signed[7]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[8], feat_emtf_phi_signed[8]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[9], feat_emtf_phi_signed[9]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[10], feat_emtf_phi_signed[10]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[11], feat_emtf_phi_signed[11]);
     // emtf_theta
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[0], feat_emtf_theta_signed[0]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[1], feat_emtf_theta_signed[1]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[2], feat_emtf_theta_signed[2]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[3], feat_emtf_theta_signed[3]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[4], feat_emtf_theta_signed[4]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[5], feat_emtf_theta_signed[5]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[6], feat_emtf_theta_signed[6]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[7], feat_emtf_theta_signed[7]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[8], feat_emtf_theta_signed[8]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[9], feat_emtf_theta_signed[9]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[10], feat_emtf_theta_signed[10]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[11], feat_emtf_theta_signed[11]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[0], feat_emtf_theta_signed[0]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[1], feat_emtf_theta_signed[1]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[2], feat_emtf_theta_signed[2]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[3], feat_emtf_theta_signed[3]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[4], feat_emtf_theta_signed[4]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[5], feat_emtf_theta_signed[5]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[6], feat_emtf_theta_signed[6]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[7], feat_emtf_theta_signed[7]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[8], feat_emtf_theta_signed[8]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[9], feat_emtf_theta_signed[9]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[10], feat_emtf_theta_signed[10]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[11], feat_emtf_theta_signed[11]);
     // emtf_bend
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[0], feat_emtf_bend[0]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[1], feat_emtf_bend[1]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[2], feat_emtf_bend[2]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[3], feat_emtf_bend[3]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[4], feat_emtf_bend[4]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[11], feat_emtf_bend[11]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[0], feat_emtf_bend[0]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[1], feat_emtf_bend[1]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[2], feat_emtf_bend[2]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[3], feat_emtf_bend[3]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[4], feat_emtf_bend[4]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[11], feat_emtf_bend[11]);
     // emtf_qual
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[0], feat_emtf_qual[0]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[1], feat_emtf_qual[1]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[2], feat_emtf_qual[2]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[3], feat_emtf_qual[3]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[4], feat_emtf_qual[4]);
-    curr_trk_feat[i++] = details::take_value_if(th_seg_v[11], feat_emtf_qual[11]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[0], feat_emtf_qual[0]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[1], feat_emtf_qual[1]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[2], feat_emtf_qual[2]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[3], feat_emtf_qual[3]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[4], feat_emtf_qual[4]);
+    curr_trk_feat[i++] = detail::take_value_if(th_seg_v[11], feat_emtf_qual[11]);
     // additional features
-    curr_trk_feat[i++] = details::take_value_if(curr_trk_qual_gt_0, ph_median_signed);
-    curr_trk_feat[i++] = details::take_value_if(curr_trk_qual_gt_0, th_median);
+    curr_trk_feat[i++] = detail::take_value_if(curr_trk_qual_gt_0, ph_median_signed);
+    curr_trk_feat[i++] = detail::take_value_if(curr_trk_qual_gt_0, th_median);
     curr_trk_feat[i++] = curr_trk_qual;
     curr_trk_feat[i++] = 0;  // unused
     emtf_assert(i == num_emtf_features);
@@ -1265,7 +1267,7 @@ void trkbuilding_layer(
   static_assert(num_emtf_features == 40, "num_emtf_features must be 40");
   static_assert(num_emtf_img_gates == 3, "num_emtf_img_gates must be 3");
   static_assert(
-      dio_ph_diff_idx_t::width == details::ceil_log2<trkbuilding_internal_config::num_site_segments>::value,
+      dio_ph_diff_idx_t::width == detail::ceil_log2<trkbuilding_internal_config::num_site_segments>::value,
       "dio_ph_diff_idx_t type check failed"
   );
 
@@ -1276,6 +1278,8 @@ void trkbuilding_layer(
       curr_trk_seg, curr_trk_seg_v, curr_trk_feat, curr_trk_valid
   );
 }
+
+}  // namespace phase2
 
 }  // namespace emtf
 

@@ -3,7 +3,9 @@
 
 namespace emtf {
 
-namespace details {
+namespace phase2 {
+
+namespace detail {
 
 constexpr static const int num_nodes_nnet_0_layer_0 = 40;
 constexpr static const int num_nodes_nnet_0_layer_1 = 24;
@@ -174,7 +176,9 @@ constexpr static const int biases_nnet_0_layer_4[1] = {
  0
 };
 
-}  // namespace details
+}  // namespace detail
+
+}  // namespace phase2
 
 }  // namespace emtf
 

@@ -6,11 +6,13 @@
 #define emtf_assert(expr) assert(expr)
 #else
 #define emtf_assert(expr) ((void)0)
-#endif
+#endif  // __SYNTHESIS__ not defined
 
 #define emtf_unused(param) (void)(param)
 
 namespace emtf {
+
+namespace phase2 {
 
 // from official-cmssw: DataFormats/MuonDetId/interface/CSCDetId.h
 constexpr int min_endcap = 1;
@@ -54,9 +56,10 @@ constexpr int num_emtf_img_gates = 3;
 
 constexpr int emtf_img_col_factor = 16;
 constexpr int emtf_img_col_factor_log2 = 4;  // (1 << 4) = 16
-constexpr int max_emtf_img_col_pad = 36;
 constexpr int max_emtf_pattern_activation = 63;
 constexpr int max_emtf_pattern_activation_log2 = 6;  // (1 << 6) - 1 = 63
+
+}  // namespace phase2
 
 }  // namespace emtf
 

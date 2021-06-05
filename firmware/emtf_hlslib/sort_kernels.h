@@ -9,7 +9,9 @@
 
 namespace emtf {
 
-namespace details {
+namespace phase2 {
+
+namespace detail {
 
 // Helper class for argsort
 template <typename T1, typename T2>
@@ -320,7 +322,9 @@ void median_of_three_op(
   out = (tmp_0_0.first & tmp_0_1.first & tmp_0_2.first) ? tmp_3_1 : tmp_3_0;
 }
 
-}  // namespace details
+}  // namespace detail
+
+}  // namespace phase2
 
 }  // namespace emtf
 

@@ -15,7 +15,9 @@
 
 namespace emtf {
 
-namespace details {
+namespace phase2 {
+
+namespace detail {
 
 template <typename Zone, typename T_IN, typename T_OUT>
 void apply_pattern_activation_op(const T_IN& in0, T_OUT& out) {
@@ -36,11 +38,11 @@ void apply_pattern_activation_op(const T_IN& in0, T_OUT& out) {
 #else
   bool initialized = false;
   int lookup_table[N_TABLE];
-#endif
+#endif  // __SYNTHESIS__ not defined
 
   if (!initialized) {
     initialized = true;
-    details::init_table_op<N_TABLE>(lookup_table, details::get_pattern_activation_op<Zone>{});
+    detail::init_table_op<N_TABLE>(lookup_table, detail::get_pattern_activation_op<Zone>{});
   }
 
   // Lookup
@@ -48,19 +50,19 @@ void apply_pattern_activation_op(const T_IN& in0, T_OUT& out) {
   out = static_cast<T_OUT>(lookup_table[in0]);
 }
 
-}  // namespace details
+}  // namespace detail
 
 // _____________________________________________________________________________
 template <typename Zone>
 void pooling_col_pool_op(
-    const typename details::select_pattern_col_patch_type<Zone, 0>::type& patch_row_0,
-    const typename details::select_pattern_col_patch_type<Zone, 1>::type& patch_row_1,
-    const typename details::select_pattern_col_patch_type<Zone, 2>::type& patch_row_2,
-    const typename details::select_pattern_col_patch_type<Zone, 3>::type& patch_row_3,
-    const typename details::select_pattern_col_patch_type<Zone, 4>::type& patch_row_4,
-    const typename details::select_pattern_col_patch_type<Zone, 5>::type& patch_row_5,
-    const typename details::select_pattern_col_patch_type<Zone, 6>::type& patch_row_6,
-    const typename details::select_pattern_col_patch_type<Zone, 7>::type& patch_row_7,
+    const typename detail::select_pattern_col_patch_type<Zone, 0>::type& patch_row_0,
+    const typename detail::select_pattern_col_patch_type<Zone, 1>::type& patch_row_1,
+    const typename detail::select_pattern_col_patch_type<Zone, 2>::type& patch_row_2,
+    const typename detail::select_pattern_col_patch_type<Zone, 3>::type& patch_row_3,
+    const typename detail::select_pattern_col_patch_type<Zone, 4>::type& patch_row_4,
+    const typename detail::select_pattern_col_patch_type<Zone, 5>::type& patch_row_5,
+    const typename detail::select_pattern_col_patch_type<Zone, 6>::type& patch_row_6,
+    const typename detail::select_pattern_col_patch_type<Zone, 7>::type& patch_row_7,
     trk_qual_t activations[num_emtf_patterns]
 ) {
 
@@ -78,15 +80,15 @@ void pooling_col_pool_op(
   bool initialized = false;
   int pattern_col_start_table[num_emtf_patterns * num_emtf_img_rows];
   int pattern_col_stop_table[num_emtf_patterns * num_emtf_img_rows];
-#endif
+#endif  // __SYNTHESIS__ not defined
 
   if (!initialized) {
     initialized = true;
-    details::init_2d_table_op<num_emtf_patterns, num_emtf_img_rows>(
-        pattern_col_start_table, details::get_pattern_col_start_op<Zone>{}
+    detail::init_2d_table_op<num_emtf_patterns, num_emtf_img_rows>(
+        pattern_col_start_table, detail::get_pattern_col_start_op<Zone>{}
     );
-    details::init_2d_table_op<num_emtf_patterns, num_emtf_img_rows>(
-        pattern_col_stop_table, details::get_pattern_col_stop_op<Zone>{}
+    detail::init_2d_table_op<num_emtf_patterns, num_emtf_img_rows>(
+        pattern_col_stop_table, detail::get_pattern_col_stop_op<Zone>{}
     );
   }
 
@@ -131,7 +133,7 @@ void pooling_col_pool_op(
     const dio_patt_preact_t preactivation = (b7, b6, b5, b4, b3, b2, b1, b0);
 
     // Activation (a.k.a. trk_qual), done by a LUT
-    details::apply_pattern_activation_op<Zone>(preactivation, activations[i]);
+    detail::apply_pattern_activation_op<Zone>(preactivation, activations[i]);
   }  // end loop over patterns
 }
 
@@ -184,14 +186,14 @@ void pooling_col_argmax_op(
 
 template <typename Zone>
 void pooling_col_op(
-    const typename details::select_pattern_col_patch_type<Zone, 0>::type& patch_row_0,
-    const typename details::select_pattern_col_patch_type<Zone, 1>::type& patch_row_1,
-    const typename details::select_pattern_col_patch_type<Zone, 2>::type& patch_row_2,
-    const typename details::select_pattern_col_patch_type<Zone, 3>::type& patch_row_3,
-    const typename details::select_pattern_col_patch_type<Zone, 4>::type& patch_row_4,
-    const typename details::select_pattern_col_patch_type<Zone, 5>::type& patch_row_5,
-    const typename details::select_pattern_col_patch_type<Zone, 6>::type& patch_row_6,
-    const typename details::select_pattern_col_patch_type<Zone, 7>::type& patch_row_7,
+    const typename detail::select_pattern_col_patch_type<Zone, 0>::type& patch_row_0,
+    const typename detail::select_pattern_col_patch_type<Zone, 1>::type& patch_row_1,
+    const typename detail::select_pattern_col_patch_type<Zone, 2>::type& patch_row_2,
+    const typename detail::select_pattern_col_patch_type<Zone, 3>::type& patch_row_3,
+    const typename detail::select_pattern_col_patch_type<Zone, 4>::type& patch_row_4,
+    const typename detail::select_pattern_col_patch_type<Zone, 5>::type& patch_row_5,
+    const typename detail::select_pattern_col_patch_type<Zone, 6>::type& patch_row_6,
+    const typename detail::select_pattern_col_patch_type<Zone, 7>::type& patch_row_7,
     pooling_out_t& pooling_out_col_k
 ) {
 
@@ -217,14 +219,14 @@ void pooling_col_op(
 
 template <typename Zone>
 void pooling_fused_col_op(
-    const typename details::select_pattern_fused_col_patch_type<Zone, 0>::type& fused_patch_row_0,
-    const typename details::select_pattern_fused_col_patch_type<Zone, 1>::type& fused_patch_row_1,
-    const typename details::select_pattern_fused_col_patch_type<Zone, 2>::type& fused_patch_row_2,
-    const typename details::select_pattern_fused_col_patch_type<Zone, 3>::type& fused_patch_row_3,
-    const typename details::select_pattern_fused_col_patch_type<Zone, 4>::type& fused_patch_row_4,
-    const typename details::select_pattern_fused_col_patch_type<Zone, 5>::type& fused_patch_row_5,
-    const typename details::select_pattern_fused_col_patch_type<Zone, 6>::type& fused_patch_row_6,
-    const typename details::select_pattern_fused_col_patch_type<Zone, 7>::type& fused_patch_row_7,
+    const typename detail::select_pattern_fused_col_patch_type<Zone, 0>::type& fused_patch_row_0,
+    const typename detail::select_pattern_fused_col_patch_type<Zone, 1>::type& fused_patch_row_1,
+    const typename detail::select_pattern_fused_col_patch_type<Zone, 2>::type& fused_patch_row_2,
+    const typename detail::select_pattern_fused_col_patch_type<Zone, 3>::type& fused_patch_row_3,
+    const typename detail::select_pattern_fused_col_patch_type<Zone, 4>::type& fused_patch_row_4,
+    const typename detail::select_pattern_fused_col_patch_type<Zone, 5>::type& fused_patch_row_5,
+    const typename detail::select_pattern_fused_col_patch_type<Zone, 6>::type& fused_patch_row_6,
+    const typename detail::select_pattern_fused_col_patch_type<Zone, 7>::type& fused_patch_row_7,
     pooling_out_t pooling_out_reg[pooling_config::fusion_factor]
 ) {
 
@@ -234,14 +236,14 @@ void pooling_fused_col_op(
 
 //#pragma HLS INLINE
 
-  typedef typename details::select_pattern_col_padding_type<Zone, 0>::type padding_row_0_t;
-  typedef typename details::select_pattern_col_padding_type<Zone, 1>::type padding_row_1_t;
-  typedef typename details::select_pattern_col_padding_type<Zone, 2>::type padding_row_2_t;
-  typedef typename details::select_pattern_col_padding_type<Zone, 3>::type padding_row_3_t;
-  typedef typename details::select_pattern_col_padding_type<Zone, 4>::type padding_row_4_t;
-  typedef typename details::select_pattern_col_padding_type<Zone, 5>::type padding_row_5_t;
-  typedef typename details::select_pattern_col_padding_type<Zone, 6>::type padding_row_6_t;
-  typedef typename details::select_pattern_col_padding_type<Zone, 7>::type padding_row_7_t;
+  typedef typename detail::select_pattern_col_padding_type<Zone, 0>::type padding_row_0_t;
+  typedef typename detail::select_pattern_col_padding_type<Zone, 1>::type padding_row_1_t;
+  typedef typename detail::select_pattern_col_padding_type<Zone, 2>::type padding_row_2_t;
+  typedef typename detail::select_pattern_col_padding_type<Zone, 3>::type padding_row_3_t;
+  typedef typename detail::select_pattern_col_padding_type<Zone, 4>::type padding_row_4_t;
+  typedef typename detail::select_pattern_col_padding_type<Zone, 5>::type padding_row_5_t;
+  typedef typename detail::select_pattern_col_padding_type<Zone, 6>::type padding_row_6_t;
+  typedef typename detail::select_pattern_col_padding_type<Zone, 7>::type padding_row_7_t;
 
   const unsigned int fusion_factor = pooling_config::fusion_factor;
 
@@ -280,23 +282,23 @@ void pooling_op(
 
 #pragma HLS INLINE
 
-  typedef typename details::select_pattern_col_padding_type<Zone, 0>::type padding_row_0_t;
-  typedef typename details::select_pattern_col_padding_type<Zone, 1>::type padding_row_1_t;
-  typedef typename details::select_pattern_col_padding_type<Zone, 2>::type padding_row_2_t;
-  typedef typename details::select_pattern_col_padding_type<Zone, 3>::type padding_row_3_t;
-  typedef typename details::select_pattern_col_padding_type<Zone, 4>::type padding_row_4_t;
-  typedef typename details::select_pattern_col_padding_type<Zone, 5>::type padding_row_5_t;
-  typedef typename details::select_pattern_col_padding_type<Zone, 6>::type padding_row_6_t;
-  typedef typename details::select_pattern_col_padding_type<Zone, 7>::type padding_row_7_t;
+  typedef typename detail::select_pattern_col_padding_type<Zone, 0>::type padding_row_0_t;
+  typedef typename detail::select_pattern_col_padding_type<Zone, 1>::type padding_row_1_t;
+  typedef typename detail::select_pattern_col_padding_type<Zone, 2>::type padding_row_2_t;
+  typedef typename detail::select_pattern_col_padding_type<Zone, 3>::type padding_row_3_t;
+  typedef typename detail::select_pattern_col_padding_type<Zone, 4>::type padding_row_4_t;
+  typedef typename detail::select_pattern_col_padding_type<Zone, 5>::type padding_row_5_t;
+  typedef typename detail::select_pattern_col_padding_type<Zone, 6>::type padding_row_6_t;
+  typedef typename detail::select_pattern_col_padding_type<Zone, 7>::type padding_row_7_t;
 
-  typedef typename details::select_pattern_col_padded_type<Zone, 0>::type padded_row_0_t;
-  typedef typename details::select_pattern_col_padded_type<Zone, 1>::type padded_row_1_t;
-  typedef typename details::select_pattern_col_padded_type<Zone, 2>::type padded_row_2_t;
-  typedef typename details::select_pattern_col_padded_type<Zone, 3>::type padded_row_3_t;
-  typedef typename details::select_pattern_col_padded_type<Zone, 4>::type padded_row_4_t;
-  typedef typename details::select_pattern_col_padded_type<Zone, 5>::type padded_row_5_t;
-  typedef typename details::select_pattern_col_padded_type<Zone, 6>::type padded_row_6_t;
-  typedef typename details::select_pattern_col_padded_type<Zone, 7>::type padded_row_7_t;
+  typedef typename detail::select_pattern_col_padded_type<Zone, 0>::type padded_row_0_t;
+  typedef typename detail::select_pattern_col_padded_type<Zone, 1>::type padded_row_1_t;
+  typedef typename detail::select_pattern_col_padded_type<Zone, 2>::type padded_row_2_t;
+  typedef typename detail::select_pattern_col_padded_type<Zone, 3>::type padded_row_3_t;
+  typedef typename detail::select_pattern_col_padded_type<Zone, 4>::type padded_row_4_t;
+  typedef typename detail::select_pattern_col_padded_type<Zone, 5>::type padded_row_5_t;
+  typedef typename detail::select_pattern_col_padded_type<Zone, 6>::type padded_row_6_t;
+  typedef typename detail::select_pattern_col_padded_type<Zone, 7>::type padded_row_7_t;
 
   // Add padding (two-sided)
   const padded_row_0_t padded_row_0 = (padding_row_0_t(0), pooling_in[0], padding_row_0_t(0));
@@ -370,6 +372,8 @@ void pooling_layer(
 
   pooling_op<Zone>(pooling_in, pooling_out);
 }
+
+}  // namespace phase2
 
 }  // namespace emtf
 

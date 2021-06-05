@@ -4,7 +4,7 @@
 #if !defined(__SYNTHESIS__) && !defined(NDEBUG)
 #include <iostream>
 #include <sstream>
-#endif
+#endif  // __SYNTHESIS__ and NDEBUG not defined
 
 #if !defined(__SYNTHESIS__) && !defined(NDEBUG)
 #define PRINT_TOP_FN_ARRAYS_IN0 \
@@ -31,7 +31,7 @@
     }
 #else
 #define PRINT_TOP_FN_ARRAYS_IN0
-#endif
+#endif  // __SYNTHESIS__ and NDEBUG not defined
 
 #if !defined(__SYNTHESIS__) && !defined(NDEBUG)
 #define PRINT_TOP_FN_ARRAYS_OTHER \
@@ -161,6 +161,6 @@
     std::cout << "]" << std::endl;
 #else
 #define PRINT_TOP_FN_ARRAYS_OTHER
-#endif
+#endif  // __SYNTHESIS__ and NDEBUG not defined
 
 #endif  // __EMTF_HLSLIB_PRINT_MACROS_H__ not defined

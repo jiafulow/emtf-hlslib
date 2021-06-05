@@ -2,9 +2,12 @@
 #define __EMTF_HLSLIB_TYPES_H__
 
 // EMTF HLS
+#include "common.h"
 #include "traits.h"
 
 namespace emtf {
+
+namespace phase2 {
 
 // Scoped enums
 enum struct SegmentDataType {
@@ -215,6 +218,8 @@ typedef zonemerging_out_t                               trkbuilding_in_t;
 // Misc
 typedef emtf_theta1_t emtf_theta_t;
 typedef emtf_qual1_t  emtf_qual_t;
+
+}  // namespace phase2
 
 }  // namespace emtf
 
