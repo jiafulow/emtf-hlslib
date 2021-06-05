@@ -10,10 +10,10 @@
 #include "emtf_hlslib.h"
 
 // Defines
-typedef emtf::trk_feat_t top_in_t;
-typedef emtf::trk_invpt_t top_out_t;
-constexpr int TOP_N_IN = emtf::num_emtf_features;
-constexpr int TOP_N_OUT = emtf::num_emtf_predictions;
+typedef emtf::phase2::trk_feat_t top_in_t;
+typedef emtf::phase2::trk_invpt_t top_out_t;
+constexpr int TOP_N_IN = emtf::phase2::num_emtf_features;
+constexpr int TOP_N_OUT = emtf::phase2::num_emtf_predictions;
 
 // Top-level function prototype
 void myproject(

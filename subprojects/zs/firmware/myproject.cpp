@@ -1,6 +1,12 @@
 #include "myproject.h"
 
-using namespace emtf;
+namespace {
+  using namespace emtf::phase2;
+}
+
+namespace detail {
+  using namespace emtf::phase2::detail;
+}
 
 // Top-level function implementation
 void myproject(

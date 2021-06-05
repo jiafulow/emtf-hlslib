@@ -1,6 +1,12 @@
 #include "myproject.h"
 
-using namespace emtf;
+namespace {
+  using namespace emtf::phase2;
+}
+
+namespace detail {
+  using namespace emtf::phase2::detail;
+}
 
 // Top-level function implementation
 void myproject(
@@ -72,20 +78,20 @@ void myproject(
   PRINT_TOP_FN_ARRAYS_IN0
 
   // Check assumptions
-  constexpr int num_trk_cols_with_safety = (((80 * 64) / emtf_img_col_factor) + (max_emtf_img_col_pad * 2));
+  constexpr int num_trk_cols_with_safety = (((80 * 64) / emtf_img_col_factor) + (::detail::pattern_col_max_pad * 2));
   static_assert(is_same<seg_valid_t, bool_t>::value, "seg_valid_t type check failed");
   static_assert(trk_qual_t::width == max_emtf_pattern_activation_log2, "trk_qual_t type check failed");
-  static_assert(trk_patt_t::width == details::ceil_log2<num_emtf_patterns>::value, "trk_patt_t type check failed");
-  static_assert(trk_col_t::width == details::ceil_log2<num_trk_cols_with_safety>::value, "trk_col_t type check failed");
-  static_assert(trk_zone_t::width == details::ceil_log2<num_emtf_zones>::value, "trk_zone_t type check failed");
-  static_assert(trk_tzone_t::width == details::ceil_log2<num_emtf_timezones>::value, "trk_tzone_t type check failed");
-  static_assert(trk_gate_t::width == details::ceil_log2<num_emtf_img_gates>::value, "trk_gate_t type check failed");
-  static_assert(trk_seg_t::width == details::ceil_log2<model_config::n_in>::value, "trk_seg_t type check failed");
+  static_assert(trk_patt_t::width == ::detail::ceil_log2<num_emtf_patterns>::value, "trk_patt_t type check failed");
+  static_assert(trk_col_t::width == ::detail::ceil_log2<num_trk_cols_with_safety>::value, "trk_col_t type check failed");
+  static_assert(trk_zone_t::width == ::detail::ceil_log2<num_emtf_zones>::value, "trk_zone_t type check failed");
+  static_assert(trk_tzone_t::width == ::detail::ceil_log2<num_emtf_timezones>::value, "trk_tzone_t type check failed");
+  static_assert(trk_gate_t::width == ::detail::ceil_log2<num_emtf_img_gates>::value, "trk_gate_t type check failed");
+  static_assert(trk_seg_t::width == ::detail::ceil_log2<model_config::n_in>::value, "trk_seg_t type check failed");
   static_assert(trk_seg_v_t::width == num_emtf_sites, "trk_seg_v_t type check failed");
   static_assert(trk_feat_t::width == emtf_phi_t::width, "trk_feat_t type check failed");
   static_assert(is_same<trk_valid_t, bool_t>::value, "trk_valid_t type check failed");
   static_assert(
-      num_emtf_img_cols == (details::chamber_img_joined_col_stop - details::chamber_img_joined_col_start + 1),
+      num_emtf_img_cols == (::detail::chamber_img_joined_col_stop - ::detail::chamber_img_joined_col_start + 1),
       "num_emtf_img_cols value check failed"
   );
   static_assert(
@@ -163,7 +169,7 @@ void myproject(
 #pragma HLS UNROLL
 
     const trkbuilding_in_t curr_trk_in = zonemerging_0_out[itrk];
-    const trk_tzone_t curr_trk_tzone = details::timezone_traits<m_timezone_0_tag>::value;  // default timezone
+    const trk_tzone_t curr_trk_tzone = ::detail::timezone_traits<m_timezone_0_tag>::value;  // default timezone
 
     constexpr int bits_lo_0 = 0;
     constexpr int bits_lo_1 = trk_qual_t::width;
@@ -230,10 +236,10 @@ void myproject(
     );
 
     // Copy to arrays
-    details::copy_n_values<num_emtf_sites>(
+    ::detail::copy_n_values<num_emtf_sites>(
         curr_trk_seg, &(trk_seg[itrk * num_emtf_sites])
     );
-    details::copy_n_values<num_emtf_features>(
+    ::detail::copy_n_values<num_emtf_features>(
         curr_trk_feat, &(trk_feat[itrk * num_emtf_features])
     );
   }  // end loop over tracks
@@ -257,7 +263,7 @@ void myproject(
 #pragma HLS ARRAY_PARTITION variable=curr_trk_feat complete dim=0
 
     // Copy from array
-    details::copy_n_values<num_emtf_features>(
+    ::detail::copy_n_values<num_emtf_features>(
         &(trk_feat_rm[itrk * num_emtf_features]), curr_trk_feat_rm
     );
 

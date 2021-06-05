@@ -10,10 +10,10 @@
 #include "emtf_hlslib.h"
 
 // Defines
-typedef emtf::pooling_out_t top_in_t;
-typedef emtf::zonesorting_out_t top_out_t;
-constexpr int TOP_N_IN = emtf::pooling_config::n_out;
-constexpr int TOP_N_OUT = emtf::zonesorting_config::n_out;
+typedef emtf::phase2::pooling_out_t top_in_t;
+typedef emtf::phase2::zonesorting_out_t top_out_t;
+constexpr int TOP_N_IN = emtf::phase2::pooling_config::n_out;
+constexpr int TOP_N_OUT = emtf::phase2::zonesorting_config::n_out;
 
 // Top-level function prototype
 void myproject(

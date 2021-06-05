@@ -4,6 +4,7 @@
 // Test bench
 #include "software/testbench.h"
 
+using namespace emtf::phase2;
 using namespace testbench;
 
 void sanity_check() {

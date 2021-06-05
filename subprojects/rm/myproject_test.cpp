@@ -4,13 +4,14 @@
 // Test bench
 #include "software/testbench.h"
 
+using namespace emtf::phase2;
 using namespace testbench;
 
 void sanity_check() {
   RmEvent evt(1);
-  assert(evt.front().size() == TOP_N_IN / emtf::num_emtf_tracks);
+  assert(evt.front().size() == TOP_N_IN / num_emtf_tracks);
   RmResult res(1);
-  assert(res.front().size() == TOP_N_OUT / emtf::num_emtf_tracks);
+  assert(res.front().size() == TOP_N_OUT / num_emtf_tracks);
 }
 
 // Main driver
@@ -44,7 +45,7 @@ int main(int argc, char **argv) {
     read_tb_data(filename.str(), res);
 
     // Create evt_flat & res_flat
-    assert((evt.size() == emtf::num_emtf_tracks) and (res.size() == emtf::num_emtf_tracks));
+    assert((evt.size() == num_emtf_tracks) and (res.size() == num_emtf_tracks));
     std::vector<RmEvent::value_type::value_type> evt_flat;
     std::vector<RmResult::value_type::value_type> res_flat;
     for (const auto& x : evt) {

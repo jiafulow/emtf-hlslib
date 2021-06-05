@@ -1,6 +1,12 @@
 #include "myproject.h"
 
-using namespace emtf;
+namespace {
+  using namespace emtf::phase2;
+}
+
+namespace detail {
+  using namespace emtf::phase2::detail;
+}
 
 // Top-level function implementation
 void myproject(
@@ -82,7 +88,7 @@ void myproject(
   trk_patt_t  curr_trk_patt  = in1[1];
   trk_col_t   curr_trk_col   = in1[2];
   trk_zone_t  curr_trk_zone  = in1[3];
-  trk_tzone_t curr_trk_tzone = details::timezone_traits<m_timezone_0_tag>::value;  // default timezone
+  trk_tzone_t curr_trk_tzone = ::detail::timezone_traits<m_timezone_0_tag>::value;  // default timezone
   trk_seg_v_t curr_trk_seg_v = 0;
   trk_valid_t curr_trk_valid = 0;
 

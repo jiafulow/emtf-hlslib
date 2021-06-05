@@ -4,13 +4,14 @@
 // Test bench
 #include "software/testbench.h"
 
+using namespace emtf::phase2;
 using namespace testbench;
 
 void sanity_check() {
-  static_assert(HitsType::len == (emtf::num_emtf_variables + 2), "Inconsistent HitsType::len");
-  static_assert(TracksType::len == (emtf::num_emtf_features + emtf::num_emtf_sites + 2), "Inconsistent TracksType::len");
-  static_assert(FpgaEvent::len == emtf::model_config::n_in, "Inconsistent FpgaEvent::len");
-  static_assert(FpgaResult::len == emtf::model_config::n_out, "Inconsistent FpgaResult::len");
+  static_assert(HitsType::len == (num_emtf_variables + 2), "Inconsistent HitsType::len");
+  static_assert(TracksType::len == (num_emtf_features + num_emtf_sites + 2), "Inconsistent TracksType::len");
+  static_assert(FpgaEvent::len == model_config::n_in, "Inconsistent FpgaEvent::len");
+  static_assert(FpgaResult::len == model_config::n_out, "Inconsistent FpgaResult::len");
 }
 
 // Main driver

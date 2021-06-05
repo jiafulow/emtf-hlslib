@@ -4,11 +4,12 @@
 // Test bench
 #include "software/testbench.h"
 
+using namespace emtf::phase2;
 using namespace testbench;
 
 void sanity_check() {
   PrResult res(1);
-  assert(res.front().size() == TOP_N_OUT / emtf::num_emtf_tracks);
+  assert(res.front().size() == TOP_N_OUT / num_emtf_tracks);
 }
 
 // Main driver
@@ -45,7 +46,7 @@ int main(int argc, char **argv) {
     const FpgaEvent fpga_evt(evt);
 
     // Create res_flat
-    assert(res.size() == emtf::num_emtf_tracks);
+    assert(res.size() == num_emtf_tracks);
     std::vector<PrResult::value_type::value_type> res_flat;
     for (const auto& x : res) {
       std::copy(x.begin(), x.end(), std::back_inserter(res_flat));

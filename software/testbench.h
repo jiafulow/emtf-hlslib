@@ -16,6 +16,14 @@
 #include <algorithm>
 #include <numeric>
 
+// EMTF HLS
+#include "../firmware/emtf_hlslib/common.h"
+#include "../firmware/emtf_hlslib/types.h"
+
+namespace {
+  using namespace emtf::phase2;
+}
+
 namespace testbench {
 
 // Hits contains N integer values.
@@ -84,12 +92,12 @@ typedef std::vector<MiResultType::type> MiResult;
 // FpgaEvent contains the input, which is a list of max num of chambers,
 // with max num of segments per chamber.
 struct FpgaEvent {
-  static const unsigned int num_chambers = emtf::num_emtf_chambers;
-  static const unsigned int num_segments = emtf::num_emtf_segments;
-  static const unsigned int num_variables = emtf::num_emtf_variables;
+  static const unsigned int num_chambers = num_emtf_chambers;
+  static const unsigned int num_segments = num_emtf_segments;
+  static const unsigned int num_variables = num_emtf_variables;
   static const unsigned int len = (num_chambers * num_segments);
 
-  emtf::model_in_t data[len];
+  model_in_t data[len];
 
   struct ArrayIndex {
     inline unsigned int operator ()(unsigned int emtf_chamber, unsigned int emtf_segment) const {
@@ -150,11 +158,11 @@ struct FpgaEvent {
 // FpgaResult contains the output that is going to be sent to the NN.
 // It is a list of max num of tracks, with fixed num of variables per track.
 struct FpgaResult {
-  static const unsigned int num_tracks = emtf::num_emtf_tracks;
-  static const unsigned int num_trk_variables = (emtf::num_emtf_features + emtf::num_emtf_sites + 2);
+  static const unsigned int num_tracks = num_emtf_tracks;
+  static const unsigned int num_trk_variables = (num_emtf_features + num_emtf_sites + 2);
   static const unsigned int len = (num_tracks * num_trk_variables);
 
-  emtf::model_out_t data[len];
+  model_out_t data[len];
 
   struct ArrayIndex {
     inline unsigned int operator ()(unsigned int track, unsigned int variable) const {
