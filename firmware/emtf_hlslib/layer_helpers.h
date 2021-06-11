@@ -456,81 +456,6 @@ struct floor_mul4 {
   static const unsigned int value = (N / divisor) * divisor;
 };
 
-// Helper function to force registering
-template <typename T>
-T force_reg(const T& x) {
-
-#pragma HLS INLINE self off
-
-#pragma HLS INTERFACE ap_none port=return register
-
-  return x;
-}
-
-// Helper function to calculate abs difference
-template <typename T>
-T calc_abs_diff(const T& lhs, const T& rhs) {
-
-#pragma HLS INLINE
-
-  return (lhs >= rhs) ? static_cast<T>(lhs - rhs) : static_cast<T>(rhs - lhs);
-}
-
-// Helper function to calculate rectified difference i.e. max(0, lhs - rhs)
-template <typename T>
-T calc_rectified_diff(const T& lhs, const T& rhs) {
-
-#pragma HLS INLINE
-
-  return (lhs >= rhs) ? static_cast<T>(lhs - rhs) : static_cast<T>(0);
-}
-
-// Helper function to calculate signed difference
-template <typename T, typename U=typename make_signed<typename make_wider<T>::type>::type>
-U calc_signed_diff(const T& lhs, const T& rhs) {
-
-#pragma HLS INLINE
-
-  return static_cast<U>(static_cast<U>(lhs) - static_cast<U>(rhs));
-}
-
-// Helper function to suppress value if condition is false
-template <typename B, typename T>
-T take_value_if(B cond, const T& a) {
-
-#pragma HLS INLINE
-
-  return cond ? a : static_cast<T>(0);
-}
-
-// Helper function to copy multiple values
-template <unsigned int N, typename T>
-void copy_n_values(const T in0[N], T out[N]) {
-
-#pragma HLS INLINE
-
-  for (unsigned i = 0; i < N; i++) {
-
-#pragma HLS UNROLL
-
-    out[i] = in0[i];
-  }
-}
-
-// Helper function to fill multiple values
-template <unsigned int N, typename T>
-void fill_n_values(T out[N], const T& value) {
-
-#pragma HLS INLINE
-
-  for (unsigned i = 0; i < N; i++) {
-
-#pragma HLS UNROLL
-
-    out[i] = value;
-  }
-}
-
 // Helper function to init a lookup table
 // Note: If complex assignments are used to initialize a ROM, placing the array initialization
 // into a separate function allows a ROM to be inferred.
@@ -551,6 +476,17 @@ void init_2d_table_op(T* arr, U op) {
       arr[(i * N) + j] = op(i, j);
     }
   }
+}
+
+// Helper function to force registering
+template <typename T>
+T force_reg(const T& x) {
+
+#pragma HLS INLINE self off
+
+#pragma HLS INTERFACE ap_none port=return register
+
+  return x;
 }
 
 }  // namespace details

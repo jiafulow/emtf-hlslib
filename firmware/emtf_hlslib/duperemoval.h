@@ -11,6 +11,7 @@
 
 // EMTF HLS
 #include "layer_helpers.h"
+#include "copy_kernels.h"
 
 namespace emtf {
 

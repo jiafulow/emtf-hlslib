@@ -19,6 +19,7 @@
 
 // EMTF HLS
 #include "layer_helpers.h"
+#include "copy_kernels.h"
 #include "sort_kernels.h"
 
 namespace emtf {
@@ -96,6 +97,58 @@ void find_pattern_windows_op(const T_IN& in0, T_OUT& par0, T_OUT& par1, T_OUT& p
   par1 = x_i.par1;
   par2 = x_i.par2;
   par3 = x_i.par3;
+}
+
+// Helper function to calculate abs difference
+template <typename T>
+T calc_abs_diff(const T& lhs, const T& rhs) {
+
+#pragma HLS PIPELINE II=trkbuilding_config::target_ii
+
+#pragma HLS INTERFACE ap_ctrl_none port=return
+
+#pragma HLS INLINE
+
+  return (lhs >= rhs) ? static_cast<T>(lhs - rhs) : static_cast<T>(rhs - lhs);
+}
+
+// Helper function to calculate signed difference
+template <typename T, typename U=typename make_signed<typename make_wider<T>::type>::type>
+U calc_signed_diff(const T& lhs, const T& rhs) {
+
+#pragma HLS PIPELINE II=trkbuilding_config::target_ii
+
+#pragma HLS INTERFACE ap_ctrl_none port=return
+
+#pragma HLS INLINE
+
+  return static_cast<U>(static_cast<U>(lhs) - static_cast<U>(rhs));
+}
+
+// Helper function to calculate rectified difference i.e. max(0, lhs - rhs)
+template <typename T>
+T calc_rectified_diff(const T& lhs, const T& rhs) {
+
+#pragma HLS PIPELINE II=trkbuilding_config::target_ii
+
+#pragma HLS INTERFACE ap_ctrl_none port=return
+
+#pragma HLS INLINE
+
+  return (lhs >= rhs) ? static_cast<T>(lhs - rhs) : static_cast<T>(0);
+}
+
+// Helper function to suppress value if condition is not met
+template <typename B, typename T>
+T take_value_if(B cond, const T& a) {
+
+#pragma HLS PIPELINE II=trkbuilding_config::target_ii
+
+#pragma HLS INTERFACE ap_ctrl_none port=return
+
+#pragma HLS INLINE
+
+  return cond ? a : static_cast<T>(0);
 }
 
 }  // namespace details
