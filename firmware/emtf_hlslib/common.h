@@ -35,13 +35,13 @@ constexpr int min_trigsubsector = 0;
 constexpr int max_trigsubsector = 2;
 
 // EMTF specific
-constexpr int num_emtf_sectors = 12;     // 2 endcaps, 6 sectors per endcap
-constexpr int num_emtf_zones = 3;        // per sector
-constexpr int num_emtf_timezones = 3;    // per sector
+constexpr int num_emtf_sectors = 12;   // 2 endcaps, 6 sectors per endcap
+constexpr int num_emtf_zones = 3;      // per sector
+constexpr int num_emtf_timezones = 3;  // per sector
 
-constexpr int num_emtf_chambers = 115;   // per sector
-constexpr int num_emtf_segments = 2;     // per chamber
-constexpr int num_emtf_variables = 13;   // per segment
+constexpr int num_emtf_chambers = 115;  // per sector
+constexpr int num_emtf_segments = 2;    // per chamber
+constexpr int num_emtf_variables = 13;  // per segment
 
 constexpr int num_emtf_tracks = 4;       // per sector
 constexpr int num_emtf_patterns = 7;     // per zone
