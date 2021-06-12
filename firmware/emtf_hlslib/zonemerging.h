@@ -17,28 +17,26 @@ namespace emtf {
 namespace phase2 {
 
 template <typename T_IN, typename T_OUT>
-void zonemerging_preprocess_op(
-    const T_IN in0[zonemerging_config::n_in],
-    const T_IN in1[zonemerging_config::n_in],
-    const T_IN in2[zonemerging_config::n_in],
-    T_OUT out[zonemerging_config::n_stage_0]
-) {
+void zonemerging_preprocess_op(const T_IN in0[zonemerging_config::n_in], const T_IN in1[zonemerging_config::n_in],
+                               const T_IN in2[zonemerging_config::n_in], T_OUT out[zonemerging_config::n_stage_0]) {
   static_assert(is_same<T_IN, zonemerging_in_t>::value, "T_IN type check failed");
   static_assert(is_same<T_OUT, zonemerging_out_t>::value, "T_OUT type check failed");
 
-#pragma HLS PIPELINE II=zonemerging_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
-//#pragma HLS INLINE
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = zonemerging_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
+  //#pragma HLS INLINE
+  // hls-pragmas end
 
   const unsigned int n_in = zonemerging_config::n_in;
   const unsigned int n_stage_0 = zonemerging_config::n_stage_0;
 
   // Loop over input
-  LOOP_PREPROC: for (unsigned i = 0; i < n_stage_0; i++) {
-
+LOOP_PREPROC:
+  for (unsigned i = 0; i < n_stage_0; i++) {
+    // hls-pragmas begin
 #pragma HLS UNROLL
+    // hls-pragmas end
 
     T_IN x_i = 0;
 
@@ -58,18 +56,15 @@ void zonemerging_preprocess_op(
 
 // _____________________________________________________________________________
 template <typename T_IN, typename T_OUT>
-void zonemerging_argmax_op(
-    const T_IN in0[zonemerging_config::n_stage_0],
-    T_OUT out[zonemerging_config::n_out]
-) {
+void zonemerging_argmax_op(const T_IN in0[zonemerging_config::n_stage_0], T_OUT out[zonemerging_config::n_out]) {
   static_assert(is_same<T_IN, zonemerging_out_t>::value, "T_IN type check failed");
   static_assert(is_same<T_OUT, zonemerging_out_t>::value, "T_OUT type check failed");
 
-#pragma HLS PIPELINE II=zonemerging_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
-//#pragma HLS INLINE
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = zonemerging_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
+  //#pragma HLS INLINE
+  // hls-pragmas end
 
   const unsigned int N = zonemerging_config::n_stage_0;
   typedef trk_qual_t data_t;
@@ -85,9 +80,10 @@ void zonemerging_argmax_op(
 
   pair_t octal_tree[num_nodes];
 
-#pragma HLS ARRAY_PARTITION variable=octal_tree complete dim=0
-
-#pragma HLS DATA_PACK variable=octal_tree
+  // hls-pragmas begin
+#pragma HLS ARRAY_PARTITION variable = octal_tree complete dim = 0
+#pragma HLS DATA_PACK variable = octal_tree
+  // hls-pragmas end
 
   // For N = 12, the octal tree is not balanced (as N is not a power of 8), we need to alter
   // the ordering of the nodes. By default:
@@ -97,9 +93,11 @@ void zonemerging_argmax_op(
   // Need to rotate by 8 - (12 - 8) = 4
 
   // Fetch input
-  LOOP_ARGMAX_1: for (unsigned i = 0; i < N; i++) {
-
+LOOP_ARGMAX_1:
+  for (unsigned i = 0; i < N; i++) {
+    // hls-pragmas begin
 #pragma HLS UNROLL
+    // hls-pragmas end
 
     const unsigned int node_index = (N - 4) + ((i + 4) % N);  // N-4 .. (N*2)-5 with rotation
     emtf_assert(node_index < num_nodes);
@@ -111,21 +109,22 @@ void zonemerging_argmax_op(
   }  // end fetch input loop
 
   // Tree reduce
-  LOOP_ARGMAX_2: for (int i = (N - 4) - 1; i >= 0; i -= 4) {
-
+LOOP_ARGMAX_2:
+  for (int i = (N - 4) - 1; i >= 0; i -= 4) {
+    // hls-pragmas begin
 #pragma HLS UNROLL
+    // hls-pragmas end
 
-    const unsigned int node_index = i - 3;  // 0 .. N-4 with step size 4 in reverse order
+    const unsigned int node_index = i - 3;                  // 0 .. N-4 with step size 4 in reverse order
     const unsigned int child_index = (2 * node_index) + 4;  // step size 4
     emtf_assert(node_index < num_nodes);
     emtf_assert(((child_index + 0) < num_nodes) and ((child_index + 7) < num_nodes));
 
     // Merge 8 -> 4
-    detail::merge_eight_op(
-        octal_tree[child_index + 0], octal_tree[child_index + 1], octal_tree[child_index + 2], octal_tree[child_index + 3],
-        octal_tree[child_index + 4], octal_tree[child_index + 5], octal_tree[child_index + 6], octal_tree[child_index + 7],
-        octal_tree[node_index + 0], octal_tree[node_index + 1], octal_tree[node_index + 2], octal_tree[node_index + 3]
-    );
+    detail::merge_eight_op(octal_tree[child_index + 0], octal_tree[child_index + 1], octal_tree[child_index + 2],
+                           octal_tree[child_index + 3], octal_tree[child_index + 4], octal_tree[child_index + 5],
+                           octal_tree[child_index + 6], octal_tree[child_index + 7], octal_tree[node_index + 0],
+                           octal_tree[node_index + 1], octal_tree[node_index + 2], octal_tree[node_index + 3]);
 
     // Sanity check
 #ifndef __SYNTHESIS__
@@ -134,30 +133,26 @@ void zonemerging_argmax_op(
     const pair_t& r2 = octal_tree[node_index + 2];
     const pair_t& r3 = octal_tree[node_index + 3];
     pair_t r4, r5, r6, r7;
-    detail::cpp_merge_eight_op(
-        octal_tree[child_index + 0], octal_tree[child_index + 1], octal_tree[child_index + 2], octal_tree[child_index + 3],
-        octal_tree[child_index + 4], octal_tree[child_index + 5], octal_tree[child_index + 6], octal_tree[child_index + 7],
-        r4, r5, r6, r7
-    );
-    auto cmp = [](const pair_t& lhs, const pair_t& rhs) -> bool {
-      return lhs.second == rhs.second;
-    };
-    //auto str = [](std::stringstream& ss, const pair_t& a) -> std::stringstream& {
-    //  ss << "(" << a.first << "," << a.second << ") ";
-    //  return ss;
-    //};
-    //std::stringstream ss;
-    //str(ss, r0);
-    //str(ss, r1);
-    //str(ss, r2);
-    //str(ss, r3);
-    //std::cout << "Got:\n" << ss.str() << std::endl;
-    //ss.str("");
-    //str(ss, r4);
-    //str(ss, r5);
-    //str(ss, r6);
-    //str(ss, r7);
-    //std::cout << "Expected:\n" << ss.str() << std::endl;
+    detail::cpp_merge_eight_op(octal_tree[child_index + 0], octal_tree[child_index + 1], octal_tree[child_index + 2],
+                               octal_tree[child_index + 3], octal_tree[child_index + 4], octal_tree[child_index + 5],
+                               octal_tree[child_index + 6], octal_tree[child_index + 7], r4, r5, r6, r7);
+    auto cmp = [](const pair_t& lhs, const pair_t& rhs) -> bool { return lhs.second == rhs.second; };
+    // auto str = [](std::stringstream& ss, const pair_t& a) -> std::stringstream& {
+    //   ss << "(" << a.first << "," << a.second << ") ";
+    //   return ss;
+    // };
+    // std::stringstream ss;
+    // str(ss, r0);
+    // str(ss, r1);
+    // str(ss, r2);
+    // str(ss, r3);
+    // std::cout << "Got:\n" << ss.str() << std::endl;
+    // ss.str("");
+    // str(ss, r4);
+    // str(ss, r5);
+    // str(ss, r6);
+    // str(ss, r7);
+    // std::cout << "Expected:\n" << ss.str() << std::endl;
     emtf_assert(cmp(r0, r4) and cmp(r1, r5) and cmp(r2, r6) and cmp(r3, r7));
 #endif  // __SYNTHESIS__ not defined
 
@@ -174,25 +169,24 @@ void zonemerging_argmax_op(
 // Zone merging op
 
 template <typename Zone>
-void zonemerging_op(
-    const zonemerging_in_t zonemerging_in_0[zonemerging_config::n_in],
-    const zonemerging_in_t zonemerging_in_1[zonemerging_config::n_in],
-    const zonemerging_in_t zonemerging_in_2[zonemerging_config::n_in],
-    zonemerging_out_t zonemerging_out[zonemerging_config::n_out]
-) {
-
-#pragma HLS PIPELINE II=zonemerging_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
+void zonemerging_op(const zonemerging_in_t zonemerging_in_0[zonemerging_config::n_in],
+                    const zonemerging_in_t zonemerging_in_1[zonemerging_config::n_in],
+                    const zonemerging_in_t zonemerging_in_2[zonemerging_config::n_in],
+                    zonemerging_out_t zonemerging_out[zonemerging_config::n_out]) {
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = zonemerging_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
 #pragma HLS INLINE
+  // hls-pragmas end
 
   const unsigned int n_stage_0 = zonemerging_config::n_stage_0;
 
   // Intermediate arrays
   zonemerging_out_t stage_0_out[n_stage_0];
 
-#pragma HLS ARRAY_PARTITION variable=stage_0_out complete dim=0
+  // hls-pragmas begin
+#pragma HLS ARRAY_PARTITION variable = stage_0_out complete dim = 0
+  // hls-pragmas end
 
   zonemerging_preprocess_op(zonemerging_in_0, zonemerging_in_1, zonemerging_in_2, stage_0_out);
 
@@ -203,16 +197,14 @@ void zonemerging_op(
 // Entry point
 
 template <typename Zone>
-void zonemerging_layer(
-    const zonemerging_in_t zonemerging_in_0[zonemerging_config::n_in],
-    const zonemerging_in_t zonemerging_in_1[zonemerging_config::n_in],
-    const zonemerging_in_t zonemerging_in_2[zonemerging_config::n_in],
-    zonemerging_out_t zonemerging_out[zonemerging_config::n_out]
-) {
-
-#pragma HLS PIPELINE II=zonemerging_config::layer_target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
+void zonemerging_layer(const zonemerging_in_t zonemerging_in_0[zonemerging_config::n_in],
+                       const zonemerging_in_t zonemerging_in_1[zonemerging_config::n_in],
+                       const zonemerging_in_t zonemerging_in_2[zonemerging_config::n_in],
+                       zonemerging_out_t zonemerging_out[zonemerging_config::n_out]) {
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = zonemerging_config::layer_target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
+  // hls-pragmas end
 
   // Check assumptions
   static_assert(zonemerging_config::n_in == num_emtf_tracks, "zonemerging_config::n_in check failed");

@@ -24,11 +24,11 @@ void apply_pattern_activation_op(const T_IN& in0, T_OUT& out) {
   static_assert(is_ap_int_type<T_IN>::value, "T_IN type check failed");
   static_assert(is_ap_int_type<T_OUT>::value, "T_OUT type check failed");
 
-#pragma HLS PIPELINE II=pooling_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = pooling_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
 #pragma HLS INLINE
+  // hls-pragmas end
 
   const unsigned int N_TABLE = (1u << T_IN::width);
 
@@ -54,23 +54,20 @@ void apply_pattern_activation_op(const T_IN& in0, T_OUT& out) {
 
 // _____________________________________________________________________________
 template <typename Zone>
-void pooling_col_pool_op(
-    const typename detail::select_pattern_col_patch_type<Zone, 0>::type& patch_row_0,
-    const typename detail::select_pattern_col_patch_type<Zone, 1>::type& patch_row_1,
-    const typename detail::select_pattern_col_patch_type<Zone, 2>::type& patch_row_2,
-    const typename detail::select_pattern_col_patch_type<Zone, 3>::type& patch_row_3,
-    const typename detail::select_pattern_col_patch_type<Zone, 4>::type& patch_row_4,
-    const typename detail::select_pattern_col_patch_type<Zone, 5>::type& patch_row_5,
-    const typename detail::select_pattern_col_patch_type<Zone, 6>::type& patch_row_6,
-    const typename detail::select_pattern_col_patch_type<Zone, 7>::type& patch_row_7,
-    trk_qual_t activations[num_emtf_patterns]
-) {
-
-#pragma HLS PIPELINE II=pooling_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
+void pooling_col_pool_op(const typename detail::select_pattern_col_patch_type<Zone, 0>::type& patch_row_0,
+                         const typename detail::select_pattern_col_patch_type<Zone, 1>::type& patch_row_1,
+                         const typename detail::select_pattern_col_patch_type<Zone, 2>::type& patch_row_2,
+                         const typename detail::select_pattern_col_patch_type<Zone, 3>::type& patch_row_3,
+                         const typename detail::select_pattern_col_patch_type<Zone, 4>::type& patch_row_4,
+                         const typename detail::select_pattern_col_patch_type<Zone, 5>::type& patch_row_5,
+                         const typename detail::select_pattern_col_patch_type<Zone, 6>::type& patch_row_6,
+                         const typename detail::select_pattern_col_patch_type<Zone, 7>::type& patch_row_7,
+                         trk_qual_t activations[num_emtf_patterns]) {
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = pooling_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
 #pragma HLS INLINE
+  // hls-pragmas end
 
 #ifndef __SYNTHESIS__
   static bool initialized = false;
@@ -84,18 +81,18 @@ void pooling_col_pool_op(
 
   if (!initialized) {
     initialized = true;
-    detail::init_2d_table_op<num_emtf_patterns, num_emtf_img_rows>(
-        pattern_col_start_table, detail::get_pattern_col_start_op<Zone>{}
-    );
-    detail::init_2d_table_op<num_emtf_patterns, num_emtf_img_rows>(
-        pattern_col_stop_table, detail::get_pattern_col_stop_op<Zone>{}
-    );
+    detail::init_2d_table_op<num_emtf_patterns, num_emtf_img_rows>(pattern_col_start_table,
+                                                                   detail::get_pattern_col_start_op<Zone>{});
+    detail::init_2d_table_op<num_emtf_patterns, num_emtf_img_rows>(pattern_col_stop_table,
+                                                                   detail::get_pattern_col_stop_op<Zone>{});
   }
 
   // Loop over patterns
-  LOOP_POOL: for (unsigned i = 0; i < num_emtf_patterns; i++) {
-
+LOOP_POOL:
+  for (unsigned i = 0; i < num_emtf_patterns; i++) {
+    // hls-pragmas begin
 #pragma HLS UNROLL
+    // hls-pragmas end
 
     const unsigned int table_index = (i * num_emtf_img_rows);
 
@@ -138,20 +135,16 @@ void pooling_col_pool_op(
 }
 
 template <typename T_IN, typename T_OUT>
-void pooling_col_argmax_op(
-    const T_IN in0[num_emtf_patterns],
-    T_OUT& out
-) {
+void pooling_col_argmax_op(const T_IN in0[num_emtf_patterns], T_OUT& out) {
   static_assert(is_same<T_IN, trk_qual_t>::value, "T_IN type check failed");
   static_assert(is_same<T_OUT, pooling_out_t>::value, "T_OUT type check failed");
 
-#pragma HLS PIPELINE II=pooling_config::target_ii
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = pooling_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
+  //#pragma HLS INLINE
+  // hls-pragmas end
 
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
-//#pragma HLS INLINE
-
-  //const unsigned int N = num_emtf_patterns;
   typedef T_IN data_t;
   typedef trk_patt_t arg_t;
   typedef typename make_concat<arg_t, data_t>::type pair_t;
@@ -160,7 +153,7 @@ void pooling_col_argmax_op(
   constexpr int bits_hi = (data_t::width - 1);
 
   const pair_t tmp_0_0 = (static_cast<arg_t>(0), in0[0]);
-  //const pair_t tmp_0_1 = (static_cast<arg_t>(0), in0[0]);  // unused
+  // const pair_t tmp_0_1 = (static_cast<arg_t>(0), in0[0]);  // unused
   const pair_t tmp_0_2 = (static_cast<arg_t>(1), in0[1]);
   const pair_t tmp_0_3 = (static_cast<arg_t>(2), in0[2]);
   const pair_t tmp_0_4 = (static_cast<arg_t>(3), in0[3]);
@@ -185,56 +178,49 @@ void pooling_col_argmax_op(
 // the pattern with max activation.
 
 template <typename Zone>
-void pooling_col_op(
-    const typename detail::select_pattern_col_patch_type<Zone, 0>::type& patch_row_0,
-    const typename detail::select_pattern_col_patch_type<Zone, 1>::type& patch_row_1,
-    const typename detail::select_pattern_col_patch_type<Zone, 2>::type& patch_row_2,
-    const typename detail::select_pattern_col_patch_type<Zone, 3>::type& patch_row_3,
-    const typename detail::select_pattern_col_patch_type<Zone, 4>::type& patch_row_4,
-    const typename detail::select_pattern_col_patch_type<Zone, 5>::type& patch_row_5,
-    const typename detail::select_pattern_col_patch_type<Zone, 6>::type& patch_row_6,
-    const typename detail::select_pattern_col_patch_type<Zone, 7>::type& patch_row_7,
-    pooling_out_t& pooling_out_col_k
-) {
-
-#pragma HLS PIPELINE II=pooling_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
+void pooling_col_op(const typename detail::select_pattern_col_patch_type<Zone, 0>::type& patch_row_0,
+                    const typename detail::select_pattern_col_patch_type<Zone, 1>::type& patch_row_1,
+                    const typename detail::select_pattern_col_patch_type<Zone, 2>::type& patch_row_2,
+                    const typename detail::select_pattern_col_patch_type<Zone, 3>::type& patch_row_3,
+                    const typename detail::select_pattern_col_patch_type<Zone, 4>::type& patch_row_4,
+                    const typename detail::select_pattern_col_patch_type<Zone, 5>::type& patch_row_5,
+                    const typename detail::select_pattern_col_patch_type<Zone, 6>::type& patch_row_6,
+                    const typename detail::select_pattern_col_patch_type<Zone, 7>::type& patch_row_7,
+                    pooling_out_t& pooling_out_col_k) {
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = pooling_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
 #pragma HLS INLINE
+  // hls-pragmas end
 
   // Intermediate arrays
   trk_qual_t activations[num_emtf_patterns];
 
-#pragma HLS ARRAY_PARTITION variable=activations complete dim=0
+  // hls-pragmas begin
+#pragma HLS ARRAY_PARTITION variable = activations complete dim = 0
+  // hls-pragmas end
 
-  pooling_col_pool_op<Zone>(
-      patch_row_0, patch_row_1, patch_row_2, patch_row_3,
-      patch_row_4, patch_row_5, patch_row_6, patch_row_7,
-      activations
-  );
+  pooling_col_pool_op<Zone>(patch_row_0, patch_row_1, patch_row_2, patch_row_3, patch_row_4, patch_row_5, patch_row_6,
+                            patch_row_7, activations);
 
   pooling_col_argmax_op(activations, pooling_out_col_k);
 }
 
 template <typename Zone>
-void pooling_fused_col_op(
-    const typename detail::select_pattern_fused_col_patch_type<Zone, 0>::type& fused_patch_row_0,
-    const typename detail::select_pattern_fused_col_patch_type<Zone, 1>::type& fused_patch_row_1,
-    const typename detail::select_pattern_fused_col_patch_type<Zone, 2>::type& fused_patch_row_2,
-    const typename detail::select_pattern_fused_col_patch_type<Zone, 3>::type& fused_patch_row_3,
-    const typename detail::select_pattern_fused_col_patch_type<Zone, 4>::type& fused_patch_row_4,
-    const typename detail::select_pattern_fused_col_patch_type<Zone, 5>::type& fused_patch_row_5,
-    const typename detail::select_pattern_fused_col_patch_type<Zone, 6>::type& fused_patch_row_6,
-    const typename detail::select_pattern_fused_col_patch_type<Zone, 7>::type& fused_patch_row_7,
-    pooling_out_t pooling_out_reg[pooling_config::fusion_factor]
-) {
-
-#pragma HLS PIPELINE II=pooling_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
-//#pragma HLS INLINE
+void pooling_fused_col_op(const typename detail::select_pattern_fused_col_patch_type<Zone, 0>::type& fused_patch_row_0,
+                          const typename detail::select_pattern_fused_col_patch_type<Zone, 1>::type& fused_patch_row_1,
+                          const typename detail::select_pattern_fused_col_patch_type<Zone, 2>::type& fused_patch_row_2,
+                          const typename detail::select_pattern_fused_col_patch_type<Zone, 3>::type& fused_patch_row_3,
+                          const typename detail::select_pattern_fused_col_patch_type<Zone, 4>::type& fused_patch_row_4,
+                          const typename detail::select_pattern_fused_col_patch_type<Zone, 5>::type& fused_patch_row_5,
+                          const typename detail::select_pattern_fused_col_patch_type<Zone, 6>::type& fused_patch_row_6,
+                          const typename detail::select_pattern_fused_col_patch_type<Zone, 7>::type& fused_patch_row_7,
+                          pooling_out_t pooling_out_reg[pooling_config::fusion_factor]) {
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = pooling_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
+  //#pragma HLS INLINE
+  // hls-pragmas end
 
   typedef typename detail::select_pattern_col_padding_type<Zone, 0>::type padding_row_0_t;
   typedef typename detail::select_pattern_col_padding_type<Zone, 1>::type padding_row_1_t;
@@ -248,22 +234,21 @@ void pooling_fused_col_op(
   const unsigned int fusion_factor = pooling_config::fusion_factor;
 
   // Loop over columns that are fused
-  LOOP_COL_3: for (unsigned j = 0; j < fusion_factor; j++) {
-
+LOOP_COL_3:
+  for (unsigned j = 0; j < fusion_factor; j++) {
+    // hls-pragmas begin
 #pragma HLS UNROLL
+    // hls-pragmas end
 
     // Apply pooling to each column
-    pooling_col_op<Zone>(
-        fused_patch_row_0.range(j + (padding_row_0_t::width * 2), j),
-        fused_patch_row_1.range(j + (padding_row_1_t::width * 2), j),
-        fused_patch_row_2.range(j + (padding_row_2_t::width * 2), j),
-        fused_patch_row_3.range(j + (padding_row_3_t::width * 2), j),
-        fused_patch_row_4.range(j + (padding_row_4_t::width * 2), j),
-        fused_patch_row_5.range(j + (padding_row_5_t::width * 2), j),
-        fused_patch_row_6.range(j + (padding_row_6_t::width * 2), j),
-        fused_patch_row_7.range(j + (padding_row_7_t::width * 2), j),
-        pooling_out_reg[j]
-    );
+    pooling_col_op<Zone>(fused_patch_row_0.range(j + (padding_row_0_t::width * 2), j),
+                         fused_patch_row_1.range(j + (padding_row_1_t::width * 2), j),
+                         fused_patch_row_2.range(j + (padding_row_2_t::width * 2), j),
+                         fused_patch_row_3.range(j + (padding_row_3_t::width * 2), j),
+                         fused_patch_row_4.range(j + (padding_row_4_t::width * 2), j),
+                         fused_patch_row_5.range(j + (padding_row_5_t::width * 2), j),
+                         fused_patch_row_6.range(j + (padding_row_6_t::width * 2), j),
+                         fused_patch_row_7.range(j + (padding_row_7_t::width * 2), j), pooling_out_reg[j]);
   }  // end loop over columns that are fused
 }
 
@@ -271,16 +256,12 @@ void pooling_fused_col_op(
 // Pooling op
 
 template <typename Zone>
-void pooling_op(
-    const pooling_in_t pooling_in[pooling_config::n_in],
-    pooling_out_t pooling_out[pooling_config::n_out]
-) {
-
-#pragma HLS PIPELINE II=pooling_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
+void pooling_op(const pooling_in_t pooling_in[pooling_config::n_in], pooling_out_t pooling_out[pooling_config::n_out]) {
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = pooling_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
 #pragma HLS INLINE
+  // hls-pragmas end
 
   typedef typename detail::select_pattern_col_padding_type<Zone, 0>::type padding_row_0_t;
   typedef typename detail::select_pattern_col_padding_type<Zone, 1>::type padding_row_1_t;
@@ -315,51 +296,53 @@ void pooling_op(
   unsigned col = 0;
 
   // Loop over columns with step size = fusion_factor
-  LOOP_COL_1: for (unsigned i = 0; i < num_emtf_img_cols; i += fusion_factor) {
-
+LOOP_COL_1:
+  for (unsigned i = 0; i < num_emtf_img_cols; i += fusion_factor) {
+    // hls-pragmas begin
 #pragma HLS UNROLL
+    // hls-pragmas end
 
     // Intermediate arrays
     pooling_out_t pooling_out_reg[fusion_factor];
 
-#pragma HLS ARRAY_PARTITION variable=pooling_out_reg complete dim=0
+    // hls-pragmas begin
+#pragma HLS ARRAY_PARTITION variable = pooling_out_reg complete dim = 0
+    // hls-pragmas end
 
     // Apply pooling to several columns
-    pooling_fused_col_op<Zone>(
-        padded_row_0.range(i + (padding_row_0_t::width * 2) + (fusion_factor - 1), i),
-        padded_row_1.range(i + (padding_row_1_t::width * 2) + (fusion_factor - 1), i),
-        padded_row_2.range(i + (padding_row_2_t::width * 2) + (fusion_factor - 1), i),
-        padded_row_3.range(i + (padding_row_3_t::width * 2) + (fusion_factor - 1), i),
-        padded_row_4.range(i + (padding_row_4_t::width * 2) + (fusion_factor - 1), i),
-        padded_row_5.range(i + (padding_row_5_t::width * 2) + (fusion_factor - 1), i),
-        padded_row_6.range(i + (padding_row_6_t::width * 2) + (fusion_factor - 1), i),
-        padded_row_7.range(i + (padding_row_7_t::width * 2) + (fusion_factor - 1), i),
-        pooling_out_reg
-    );
+    pooling_fused_col_op<Zone>(padded_row_0.range(i + (padding_row_0_t::width * 2) + (fusion_factor - 1), i),
+                               padded_row_1.range(i + (padding_row_1_t::width * 2) + (fusion_factor - 1), i),
+                               padded_row_2.range(i + (padding_row_2_t::width * 2) + (fusion_factor - 1), i),
+                               padded_row_3.range(i + (padding_row_3_t::width * 2) + (fusion_factor - 1), i),
+                               padded_row_4.range(i + (padding_row_4_t::width * 2) + (fusion_factor - 1), i),
+                               padded_row_5.range(i + (padding_row_5_t::width * 2) + (fusion_factor - 1), i),
+                               padded_row_6.range(i + (padding_row_6_t::width * 2) + (fusion_factor - 1), i),
+                               padded_row_7.range(i + (padding_row_7_t::width * 2) + (fusion_factor - 1), i),
+                               pooling_out_reg);
 
     // Loop over columns that are fused
-    LOOP_COL_2: for (unsigned j = 0; j < fusion_factor; j++) {
-
+  LOOP_COL_2:
+    for (unsigned j = 0; j < fusion_factor; j++) {
+      // hls-pragmas begin
 #pragma HLS UNROLL
+      // hls-pragmas end
 
       pooling_out[col] = pooling_out_reg[j];
       col++;
     }  // end loop over columns that are fused
-  }  // end loop over columns
+  }    // end loop over columns
 }
 
 // _____________________________________________________________________________
 // Entry point
 
 template <typename Zone>
-void pooling_layer(
-    const pooling_in_t pooling_in[pooling_config::n_in],
-    pooling_out_t pooling_out[pooling_config::n_out]
-) {
-
-#pragma HLS PIPELINE II=pooling_config::layer_target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
+void pooling_layer(const pooling_in_t pooling_in[pooling_config::n_in],
+                   pooling_out_t pooling_out[pooling_config::n_out]) {
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = pooling_config::layer_target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
+  // hls-pragmas end
 
   // Check assumptions
   static_assert(pooling_config::n_in == num_emtf_img_rows, "pooling_config::n_in check failed");

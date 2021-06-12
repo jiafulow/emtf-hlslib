@@ -20,19 +20,17 @@ namespace emtf {
 namespace phase2 {
 
 template <typename T_IN, typename T_OUT>
-void zonesorting_preprocess_suppress_op(
-    const T_IN in0[zonesorting_config::n_in],
-    T_OUT suppression[zonesorting_config::n_in],
-    bool_t suppression_v[zonesorting_config::n_in]
-) {
+void zonesorting_preprocess_suppress_op(const T_IN in0[zonesorting_config::n_in],
+                                        T_OUT suppression[zonesorting_config::n_in],
+                                        bool_t suppression_v[zonesorting_config::n_in]) {
   static_assert(is_same<T_IN, zonesorting_in_t>::value, "T_IN type check failed");
   static_assert(is_same<T_OUT, zonesorting_in_t>::value, "T_OUT type check failed");
 
-#pragma HLS PIPELINE II=zonesorting_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = zonesorting_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
 #pragma HLS INLINE
+  // hls-pragmas end
 
   const unsigned int n_in = zonesorting_config::n_in;
   typedef trk_qual_t data_t;
@@ -41,9 +39,11 @@ void zonesorting_preprocess_suppress_op(
   constexpr int bits_hi = (data_t::width - 1);
 
   // Perform non-max suppression by comparing with left and right neighbors
-  LOOP_PREPROC_1: for (unsigned i = 0; i < n_in; i++) {
-
+LOOP_PREPROC_1:
+  for (unsigned i = 0; i < n_in; i++) {
+    // hls-pragmas begin
 #pragma HLS UNROLL
+    // hls-pragmas end
 
     const bool leftmost = (i == 0);
     const bool rightmost = (i == (n_in - 1));
@@ -64,28 +64,28 @@ void zonesorting_preprocess_suppress_op(
 }
 
 template <typename T_IN, typename T_OUT>
-void zonesorting_preprocess_mux_op(
-    const T_IN suppression[zonesorting_config::n_in],
-    const bool_t suppression_v[zonesorting_config::n_in],
-    T_OUT multiplexed[zonesorting_config::n_stage_0],
-    bool_t multiplexed_v[zonesorting_config::n_stage_0]
-) {
+void zonesorting_preprocess_mux_op(const T_IN suppression[zonesorting_config::n_in],
+                                   const bool_t suppression_v[zonesorting_config::n_in],
+                                   T_OUT multiplexed[zonesorting_config::n_stage_0],
+                                   bool_t multiplexed_v[zonesorting_config::n_stage_0]) {
   static_assert(is_same<T_IN, zonesorting_in_t>::value, "T_IN type check failed");
   static_assert(is_same<T_OUT, zonesorting_in_t>::value, "T_OUT type check failed");
 
-#pragma HLS PIPELINE II=zonesorting_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = zonesorting_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
 #pragma HLS INLINE
+  // hls-pragmas end
 
   const unsigned int n_stage_0 = zonesorting_config::n_stage_0;
 
   // Perform mux for each pair of columns
   // After non-max suppression, the adjacent col next to the local-max col is always zero
-  LOOP_PREPROC_2: for (unsigned i = 0; i < n_stage_0; i++) {
-
+LOOP_PREPROC_2:
+  for (unsigned i = 0; i < n_stage_0; i++) {
+    // hls-pragmas begin
 #pragma HLS UNROLL
+    // hls-pragmas end
 
     // x0 = suppression[(i * 2) + 0];
     // x1 = suppression[(i * 2) + 1];
@@ -99,19 +99,17 @@ void zonesorting_preprocess_mux_op(
 }
 
 template <typename T_IN, typename T_OUT>
-void zonesorting_preprocess_sort_op(
-    const T_IN multiplexed[zonesorting_config::n_stage_0],
-    const bool_t multiplexed_v[zonesorting_config::n_stage_0],
-    T_OUT out[zonesorting_config::n_stage_0]
-) {
+void zonesorting_preprocess_sort_op(const T_IN multiplexed[zonesorting_config::n_stage_0],
+                                    const bool_t multiplexed_v[zonesorting_config::n_stage_0],
+                                    T_OUT out[zonesorting_config::n_stage_0]) {
   static_assert(is_same<T_IN, zonesorting_in_t>::value, "T_IN type check failed");
   static_assert(is_same<T_OUT, zonesorting_out_t>::value, "T_OUT type check failed");
 
-#pragma HLS PIPELINE II=zonesorting_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = zonesorting_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
 #pragma HLS INLINE
+  // hls-pragmas end
 
   const unsigned int n_stage_0 = zonesorting_config::n_stage_0;
   const unsigned int batch_size = 4;
@@ -130,22 +128,27 @@ void zonesorting_preprocess_sort_op(
   constexpr int bits_lo_2 = T_IN::width;
 
   // Loop over columns with step size = batch_size
-  LOOP_PREPROC_3: for (unsigned i = 0; i < n_stage_0; i += batch_size) {
-
+LOOP_PREPROC_3:
+  for (unsigned i = 0; i < n_stage_0; i += batch_size) {
+    // hls-pragmas begin
 #pragma HLS UNROLL
+    // hls-pragmas end
 
     const unsigned int num_nodes = (batch_size * 2);  // plus 4 output nodes
 
     pair_t nodes[num_nodes];
 
-#pragma HLS ARRAY_PARTITION variable=nodes complete dim=0
-
-#pragma HLS DATA_PACK variable=nodes
+    // hls-pragmas begin
+#pragma HLS ARRAY_PARTITION variable = nodes complete dim = 0
+#pragma HLS DATA_PACK variable = nodes
+    // hls-pragmas end
 
     // Loop over columns in the batch
-    LOOP_PREPROC_3_1: for (unsigned j = 0; j < batch_size; j++) {
-
+  LOOP_PREPROC_3_1:
+    for (unsigned j = 0; j < batch_size; j++) {
+      // hls-pragmas begin
 #pragma HLS UNROLL
+      // hls-pragmas end
 
       // col is broken up as 2 pieces: (i >> 2) and (j << 1) + b,
       // where b is the one bit inherited from zonesorting_preprocess_mux_op().
@@ -154,9 +157,7 @@ void zonesorting_preprocess_sort_op(
       //     = ((i >> 2) << 3) + (j << 1) + b
       const trk_col_trunc_t col_trunc = (i >> 2);
       const trk_col_short_t col_short = (j << 1) + multiplexed_v[i + j];
-      emtf_assert(
-          (col_trunc, col_short) == (((i + j) << 1) + multiplexed_v[i + j])
-      );
+      emtf_assert((col_trunc, col_short) == (((i + j) << 1) + multiplexed_v[i + j]));
 
       // Make pairs
       const data_t data = multiplexed[i + j].range(bits_lo_1 - 1, bits_lo_0);
@@ -166,10 +167,7 @@ void zonesorting_preprocess_sort_op(
 
     // Sort a batch of 4 columns
     // nodes[0]..nodes[3] are the input nodes, nodes[4]..nodes[7] are the output nodes
-    detail::sort_four_op(
-        nodes[0], nodes[1], nodes[2], nodes[3],
-        nodes[4], nodes[5], nodes[6], nodes[7]
-    );
+    detail::sort_four_op(nodes[0], nodes[1], nodes[2], nodes[3], nodes[4], nodes[5], nodes[6], nodes[7]);
 
     // Sanity check
 #ifndef __SYNTHESIS__
@@ -178,29 +176,24 @@ void zonesorting_preprocess_sort_op(
     const pair_t& r2 = nodes[6];
     const pair_t& r3 = nodes[7];
     pair_t r4, r5, r6, r7;
-    detail::cpp_sort_four_op(
-        nodes[0], nodes[1], nodes[2], nodes[3],
-        r4, r5, r6, r7
-    );
-    auto cmp = [](const pair_t& lhs, const pair_t& rhs) -> bool {
-      return lhs.second == rhs.second;
-    };
-    //auto str = [](std::stringstream& ss, const pair_t& a) -> std::stringstream& {
-    //  ss << "(" << a.first << "," << a.second << ") ";
-    //  return ss;
-    //};
-    //std::stringstream ss;
-    //str(ss, r0);
-    //str(ss, r1);
-    //str(ss, r2);
-    //str(ss, r3);
-    //std::cout << "Got:\n" << ss.str() << std::endl;
-    //ss.str("");
-    //str(ss, r4);
-    //str(ss, r5);
-    //str(ss, r6);
-    //str(ss, r7);
-    //std::cout << "Expected:\n" << ss.str() << std::endl;
+    detail::cpp_sort_four_op(nodes[0], nodes[1], nodes[2], nodes[3], r4, r5, r6, r7);
+    auto cmp = [](const pair_t& lhs, const pair_t& rhs) -> bool { return lhs.second == rhs.second; };
+    // auto str = [](std::stringstream& ss, const pair_t& a) -> std::stringstream& {
+    //   ss << "(" << a.first << "," << a.second << ") ";
+    //   return ss;
+    // };
+    // std::stringstream ss;
+    // str(ss, r0);
+    // str(ss, r1);
+    // str(ss, r2);
+    // str(ss, r3);
+    // std::cout << "Got:\n" << ss.str() << std::endl;
+    // ss.str("");
+    // str(ss, r4);
+    // str(ss, r5);
+    // str(ss, r6);
+    // str(ss, r7);
+    // std::cout << "Expected:\n" << ss.str() << std::endl;
     emtf_assert(cmp(r0, r4) and cmp(r1, r5) and cmp(r2, r6) and cmp(r3, r7));
 #endif  // __SYNTHESIS__ not defined
 
@@ -215,32 +208,31 @@ void zonesorting_preprocess_sort_op(
 
 // _____________________________________________________________________________
 template <typename T_IN, typename T_OUT>
-void zonesorting_preprocess_op(
-    const T_IN in0[zonesorting_config::n_in],
-    T_OUT out[zonesorting_config::n_stage_0]
-) {
+void zonesorting_preprocess_op(const T_IN in0[zonesorting_config::n_in], T_OUT out[zonesorting_config::n_stage_0]) {
   static_assert(is_same<T_IN, zonesorting_in_t>::value, "T_IN type check failed");
   static_assert(is_same<T_OUT, zonesorting_out_t>::value, "T_OUT type check failed");
 
-#pragma HLS PIPELINE II=zonesorting_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
-//#pragma HLS INLINE
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = zonesorting_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
+  //#pragma HLS INLINE
+  // hls-pragmas end
 
   const unsigned int n_in = zonesorting_config::n_in;
   const unsigned int n_stage_0 = zonesorting_config::n_stage_0;
 
   // Intermediate arrays
-  T_IN   suppression   [n_in];
-  bool_t suppression_v [n_in];
-  T_IN   multiplexed   [n_stage_0];
-  bool_t multiplexed_v [n_stage_0];
+  T_IN suppression[n_in];
+  bool_t suppression_v[n_in];
+  T_IN multiplexed[n_stage_0];
+  bool_t multiplexed_v[n_stage_0];
 
-#pragma HLS ARRAY_PARTITION variable=suppression complete dim=0
-#pragma HLS ARRAY_PARTITION variable=suppression_v complete dim=0
-#pragma HLS ARRAY_PARTITION variable=multiplexed complete dim=0
-#pragma HLS ARRAY_PARTITION variable=multiplexed_v complete dim=0
+  // hls-pragmas begin
+#pragma HLS ARRAY_PARTITION variable = suppression complete dim = 0
+#pragma HLS ARRAY_PARTITION variable = suppression_v complete dim = 0
+#pragma HLS ARRAY_PARTITION variable = multiplexed complete dim = 0
+#pragma HLS ARRAY_PARTITION variable = multiplexed_v complete dim = 0
+  // hls-pragmas end
 
   zonesorting_preprocess_suppress_op(in0, suppression, suppression_v);
 
@@ -251,18 +243,15 @@ void zonesorting_preprocess_op(
 
 // _____________________________________________________________________________
 template <typename T_IN, typename T_OUT>
-void zonesorting_argmax_op(
-    const T_IN in0[zonesorting_config::n_stage_0],
-    T_OUT out[zonesorting_config::n_out]
-) {
+void zonesorting_argmax_op(const T_IN in0[zonesorting_config::n_stage_0], T_OUT out[zonesorting_config::n_out]) {
   static_assert(is_same<T_IN, zonesorting_out_t>::value, "T_IN type check failed");
   static_assert(is_same<T_OUT, zonesorting_out_t>::value, "T_OUT type check failed");
 
-#pragma HLS PIPELINE II=zonesorting_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
-//#pragma HLS INLINE
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = zonesorting_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
+  //#pragma HLS INLINE
+  // hls-pragmas end
 
   const unsigned int N = zonesorting_config::n_stage_0;
   typedef trk_qual_t data_t;
@@ -278,9 +267,10 @@ void zonesorting_argmax_op(
 
   pair_t octal_tree[num_nodes];
 
-#pragma HLS ARRAY_PARTITION variable=octal_tree complete dim=0
-
-#pragma HLS DATA_PACK variable=octal_tree
+  // hls-pragmas begin
+#pragma HLS ARRAY_PARTITION variable = octal_tree complete dim = 0
+#pragma HLS DATA_PACK variable = octal_tree
+  // hls-pragmas end
 
   // For N = 144, the octal tree is not balanced (as N is not a power of 8), we need to alter
   // the ordering of the nodes. By default:
@@ -290,9 +280,11 @@ void zonesorting_argmax_op(
   // Need to rotate by 128 - (144 - 128) = 112
 
   // Fetch input
-  LOOP_ARGMAX_1: for (unsigned i = 0; i < N; i++) {
-
+LOOP_ARGMAX_1:
+  for (unsigned i = 0; i < N; i++) {
+    // hls-pragmas begin
 #pragma HLS UNROLL
+    // hls-pragmas end
 
     const unsigned int node_index = (N - 4) + ((i + 112) % N);  // N-4 .. (N*2)-5 with rotation
     emtf_assert(node_index < num_nodes);
@@ -304,21 +296,22 @@ void zonesorting_argmax_op(
   }  // end fetch input loop
 
   // Tree reduce
-  LOOP_ARGMAX_2: for (int i = (N - 4) - 1; i >= 0; i -= 4) {
-
+LOOP_ARGMAX_2:
+  for (int i = (N - 4) - 1; i >= 0; i -= 4) {
+    // hls-pragmas begin
 #pragma HLS UNROLL
+    // hls-pragmas end
 
-    const unsigned int node_index = i - 3;  // 0 .. N-4 with step size 4 in reverse order
+    const unsigned int node_index = i - 3;                  // 0 .. N-4 with step size 4 in reverse order
     const unsigned int child_index = (2 * node_index) + 4;  // step size 4
     emtf_assert(node_index < num_nodes);
     emtf_assert(((child_index + 0) < num_nodes) and ((child_index + 7) < num_nodes));
 
     // Merge 8 -> 4
-    detail::merge_eight_op(
-        octal_tree[child_index + 0], octal_tree[child_index + 1], octal_tree[child_index + 2], octal_tree[child_index + 3],
-        octal_tree[child_index + 4], octal_tree[child_index + 5], octal_tree[child_index + 6], octal_tree[child_index + 7],
-        octal_tree[node_index + 0], octal_tree[node_index + 1], octal_tree[node_index + 2], octal_tree[node_index + 3]
-    );
+    detail::merge_eight_op(octal_tree[child_index + 0], octal_tree[child_index + 1], octal_tree[child_index + 2],
+                           octal_tree[child_index + 3], octal_tree[child_index + 4], octal_tree[child_index + 5],
+                           octal_tree[child_index + 6], octal_tree[child_index + 7], octal_tree[node_index + 0],
+                           octal_tree[node_index + 1], octal_tree[node_index + 2], octal_tree[node_index + 3]);
 
     // Sanity check
 #ifndef __SYNTHESIS__
@@ -327,30 +320,26 @@ void zonesorting_argmax_op(
     const pair_t& r2 = octal_tree[node_index + 2];
     const pair_t& r3 = octal_tree[node_index + 3];
     pair_t r4, r5, r6, r7;
-    detail::cpp_merge_eight_op(
-        octal_tree[child_index + 0], octal_tree[child_index + 1], octal_tree[child_index + 2], octal_tree[child_index + 3],
-        octal_tree[child_index + 4], octal_tree[child_index + 5], octal_tree[child_index + 6], octal_tree[child_index + 7],
-        r4, r5, r6, r7
-    );
-    auto cmp = [](const pair_t& lhs, const pair_t& rhs) -> bool {
-      return lhs.second == rhs.second;
-    };
-    //auto str = [](std::stringstream& ss, const pair_t& a) -> std::stringstream& {
-    //  ss << "(" << a.first << "," << a.second << ") ";
-    //  return ss;
-    //};
-    //std::stringstream ss;
-    //str(ss, r0);
-    //str(ss, r1);
-    //str(ss, r2);
-    //str(ss, r3);
-    //std::cout << "Got:\n" << ss.str() << std::endl;
-    //ss.str("");
-    //str(ss, r4);
-    //str(ss, r5);
-    //str(ss, r6);
-    //str(ss, r7);
-    //std::cout << "Expected:\n" << ss.str() << std::endl;
+    detail::cpp_merge_eight_op(octal_tree[child_index + 0], octal_tree[child_index + 1], octal_tree[child_index + 2],
+                               octal_tree[child_index + 3], octal_tree[child_index + 4], octal_tree[child_index + 5],
+                               octal_tree[child_index + 6], octal_tree[child_index + 7], r4, r5, r6, r7);
+    auto cmp = [](const pair_t& lhs, const pair_t& rhs) -> bool { return lhs.second == rhs.second; };
+    // auto str = [](std::stringstream& ss, const pair_t& a) -> std::stringstream& {
+    //   ss << "(" << a.first << "," << a.second << ") ";
+    //   return ss;
+    // };
+    // std::stringstream ss;
+    // str(ss, r0);
+    // str(ss, r1);
+    // str(ss, r2);
+    // str(ss, r3);
+    // std::cout << "Got:\n" << ss.str() << std::endl;
+    // ss.str("");
+    // str(ss, r4);
+    // str(ss, r5);
+    // str(ss, r6);
+    // str(ss, r7);
+    // std::cout << "Expected:\n" << ss.str() << std::endl;
     emtf_assert(cmp(r0, r4) and cmp(r1, r5) and cmp(r2, r6) and cmp(r3, r7));
 #endif  // __SYNTHESIS__ not defined
 
@@ -367,23 +356,22 @@ void zonesorting_argmax_op(
 // Zone sorting op
 
 template <typename Zone>
-void zonesorting_op(
-    const zonesorting_in_t zonesorting_in[zonesorting_config::n_in],
-    zonesorting_out_t zonesorting_out[zonesorting_config::n_out]
-) {
-
-#pragma HLS PIPELINE II=zonesorting_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
+void zonesorting_op(const zonesorting_in_t zonesorting_in[zonesorting_config::n_in],
+                    zonesorting_out_t zonesorting_out[zonesorting_config::n_out]) {
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = zonesorting_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
 #pragma HLS INLINE
+  // hls-pragmas end
 
   const unsigned int n_stage_0 = zonesorting_config::n_stage_0;
 
   // Intermediate arrays
   zonesorting_out_t stage_0_out[n_stage_0];
 
-#pragma HLS ARRAY_PARTITION variable=stage_0_out complete dim=0
+  // hls-pragmas begin
+#pragma HLS ARRAY_PARTITION variable = stage_0_out complete dim = 0
+  // hls-pragmas end
 
   zonesorting_preprocess_op(zonesorting_in, stage_0_out);
 
@@ -394,14 +382,12 @@ void zonesorting_op(
 // Entry point
 
 template <typename Zone>
-void zonesorting_layer(
-    const zonesorting_in_t zonesorting_in[zonesorting_config::n_in],
-    zonesorting_out_t zonesorting_out[zonesorting_config::n_out]
-) {
-
-#pragma HLS PIPELINE II=zonesorting_config::layer_target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
+void zonesorting_layer(const zonesorting_in_t zonesorting_in[zonesorting_config::n_in],
+                       zonesorting_out_t zonesorting_out[zonesorting_config::n_out]) {
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = zonesorting_config::layer_target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
+  // hls-pragmas end
 
   // Check assumptions
   static_assert(zonesorting_config::n_in == num_emtf_img_cols, "zonesorting_config::n_in check failed");
