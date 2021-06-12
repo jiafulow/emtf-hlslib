@@ -7,6 +7,8 @@ namespace phase2 {
 
 namespace detail {
 
+// clang-format off
+
 constexpr static const int pattern_col_reference = 55;
 constexpr static const int pattern_col_max_pad = 36;
 
@@ -123,6 +125,8 @@ constexpr static const int pattern_activation_zone_2[1u << 8] = {
  19, 36, 38, 57, 41, 57, 54, 63,  6, 18, 32, 49, 15, 37, 42, 60,  8, 22, 35, 55, 23, 49, 50, 62,
   8, 21, 34, 53, 21, 50, 48, 62, 38, 55, 52, 62, 58, 63, 61, 63
 };
+
+// clang-format on
 
 }  // namespace detail
 

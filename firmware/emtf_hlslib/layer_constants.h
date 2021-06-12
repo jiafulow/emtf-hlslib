@@ -7,6 +7,8 @@ namespace phase2 {
 
 namespace detail {
 
+// clang-format off
+
 // Num of chambers in a row
 // 10 deg: 6 native + 1 neighbor
 // 20 deg: 3 native + 1 neighbor
@@ -109,6 +111,8 @@ constexpr static const int trk_theta_indices_me1[9] = { 1,  0, 23, 13, 12, 23,  
 // Theta window
 constexpr static const int th_invalid = 0;
 constexpr static const int th_window = 8;  // max - min + 1
+
+// clang-format on
 
 }  // namespace detail
 

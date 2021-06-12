@@ -7,6 +7,8 @@ namespace phase2 {
 
 namespace detail {
 
+// clang-format off
+
 constexpr static const int num_nodes_nnet_0_layer_0 = 40;
 constexpr static const int num_nodes_nnet_0_layer_1 = 24;
 constexpr static const int num_nodes_nnet_0_layer_2 = 24;
@@ -175,6 +177,8 @@ constexpr static const int weights_nnet_0_layer_4[16 * 1] = {
 constexpr static const int biases_nnet_0_layer_4[1] = {
  0
 };
+
+// clang-format on
 
 }  // namespace detail
 

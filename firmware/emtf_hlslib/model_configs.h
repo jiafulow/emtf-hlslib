@@ -121,7 +121,7 @@ struct m_zone_0_row_5_tag : m_zone_0_tag {};
 struct m_zone_0_row_6_tag : m_zone_0_tag {};
 struct m_zone_0_row_7_0_tag : m_zone_0_tag {};
 struct m_zone_0_row_7_1_tag : m_zone_0_tag {};
-//
+
 struct m_zone_1_row_0_tag : m_zone_1_tag {};
 struct m_zone_1_row_1_tag : m_zone_1_tag {};
 struct m_zone_1_row_2_0_tag : m_zone_1_tag {};
@@ -132,7 +132,7 @@ struct m_zone_1_row_5_tag : m_zone_1_tag {};
 struct m_zone_1_row_6_tag : m_zone_1_tag {};
 struct m_zone_1_row_7_0_tag : m_zone_1_tag {};
 struct m_zone_1_row_7_1_tag : m_zone_1_tag {};
-//
+
 struct m_zone_2_row_0_tag : m_zone_2_tag {};
 struct m_zone_2_row_1_tag : m_zone_2_tag {};
 struct m_zone_2_row_2_tag : m_zone_2_tag {};
