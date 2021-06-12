@@ -17,19 +17,16 @@ namespace emtf {
 
 namespace phase2 {
 
-template <typename T=void>
-void duperemoval_preprocess_op(
-    const trk_seg_t   trk_seg           [duperemoval_config::n_in * num_emtf_sites],
-    const trk_seg_v_t trk_seg_v         [duperemoval_config::n_in],
-    trk_seg_t         trk_seg_reduced   [duperemoval_config::n_in * num_emtf_sites_rm],
-    trk_seg_v_t       trk_seg_reduced_v [duperemoval_config::n_in]
-) {
-
-#pragma HLS PIPELINE II=duperemoval_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
+template <typename T = void>
+void duperemoval_preprocess_op(const trk_seg_t trk_seg[duperemoval_config::n_in * num_emtf_sites],
+                               const trk_seg_v_t trk_seg_v[duperemoval_config::n_in],
+                               trk_seg_t trk_seg_reduced[duperemoval_config::n_in * num_emtf_sites_rm],
+                               trk_seg_v_t trk_seg_reduced_v[duperemoval_config::n_in]) {
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = duperemoval_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
 #pragma HLS INLINE
+  // hls-pragmas end
 
   // Reduce to 5 sites for duplicate removal: ME1, ME2, ME3, ME4, ME0
   //
@@ -45,9 +42,11 @@ void duperemoval_preprocess_op(
   typedef trk_seg_t data_t;
 
   // Loop over tracks
-  LOOP_TRK_1: for (unsigned i = 0; i < N; i++) {
-
+LOOP_TRK_1:
+  for (unsigned i = 0; i < N; i++) {
+    // hls-pragmas begin
 #pragma HLS UNROLL
+    // hls-pragmas end
 
     // Priority encoder (input at lower index has higher priority)
     //
@@ -103,18 +102,15 @@ void duperemoval_preprocess_op(
   }  // end loop over tracks
 }
 
-template <typename T=void>
-void duperemoval_find_dupes_op(
-    const trk_seg_t   trk_seg_reduced   [duperemoval_config::n_in * num_emtf_sites_rm],
-    const trk_seg_v_t trk_seg_reduced_v [duperemoval_config::n_in],
-    dio_survivor_t    survivors         [duperemoval_config::n_in]
-) {
-
-#pragma HLS PIPELINE II=duperemoval_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
+template <typename T = void>
+void duperemoval_find_dupes_op(const trk_seg_t trk_seg_reduced[duperemoval_config::n_in * num_emtf_sites_rm],
+                               const trk_seg_v_t trk_seg_reduced_v[duperemoval_config::n_in],
+                               dio_survivor_t survivors[duperemoval_config::n_in]) {
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = duperemoval_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
 #pragma HLS INLINE
+  // hls-pragmas end
 
   // Find duplicates by checking pairs of tracks and their associated segments. Basically:
   //
@@ -129,13 +125,18 @@ void duperemoval_find_dupes_op(
   // survivors_tmp is used to keep the not-duplicate tracks
   bool_t survivors_tmp[N_sq];
 
-#pragma HLS ARRAY_PARTITION variable=survivors_tmp complete dim=0
+  // hls-pragmas begin
+#pragma HLS ARRAY_PARTITION variable = survivors_tmp complete dim = 0
+  // hls-pragmas end
 
-  LOOP_TRK_2: for (unsigned i = 0; i < N_sq; i++) {
-
+LOOP_TRK_2:
+  for (unsigned i = 0; i < N_sq; i++) {
+    // hls-pragmas begin
 #pragma HLS UNROLL
+    // hls-pragmas end
 
     survivors_tmp[i] = 0;  // init as zero
+
   }  // end i loop
 
   // Survivor count
@@ -147,32 +148,39 @@ void duperemoval_find_dupes_op(
   cnt++;
 
   // Loop over pairs of tracks (trk 0 is skipped), and check all 5 sites for each pair
-  LOOP_TRK_3: for (unsigned i = 1; i < N; i++) {
-
+LOOP_TRK_3:
+  for (unsigned i = 1; i < N; i++) {
+    // hls-pragmas begin
 #pragma HLS UNROLL
+    // hls-pragmas end
 
     // Kill the track if it is a duplicate
     bool_t killed = 0;
 
-    LOOP_TRK_3_1: for (unsigned j = 0; j < i; j++) {
-
+  LOOP_TRK_3_1:
+    for (unsigned j = 0; j < i; j++) {
+      // hls-pragmas begin
 #pragma HLS UNROLL
+      // hls-pragmas end
 
       bool_t killed_tmp = 0;
 
-      LOOP_TRK_3_1_1: for (unsigned k = 0; k < num_emtf_sites_rm; k++) {
-
+    LOOP_TRK_3_1_1:
+      for (unsigned k = 0; k < num_emtf_sites_rm; k++) {
+        // hls-pragmas begin
 #pragma HLS UNROLL
+        // hls-pragmas end
 
         const bool_t vld_i = trk_seg_reduced_v[i][k];
         const bool_t vld_j = trk_seg_reduced_v[j][k];
-        const bool_t has_shared_seg = (
-            trk_seg_reduced[(i * num_emtf_sites_rm) + k] == trk_seg_reduced[(j * num_emtf_sites_rm) + k]
-        );
+        const bool_t has_shared_seg =
+            (trk_seg_reduced[(i * num_emtf_sites_rm) + k] == trk_seg_reduced[(j * num_emtf_sites_rm) + k]);
         killed_tmp |= (vld_i & vld_j & has_shared_seg);  // logical OR over all 5 sites
+
       }  // end k loop
 
       killed |= killed_tmp;  // logical OR over all tracks (j < i)
+
     }  // end j loop
 
     // Survive if not a duplicate
@@ -183,77 +191,72 @@ void duperemoval_find_dupes_op(
   }  // end i loop
 
   // Output
-  LOOP_TRK_4: for (unsigned i = 0; i < N; i++) {
-
+LOOP_TRK_4:
+  for (unsigned i = 0; i < N; i++) {
+    // hls-pragmas begin
 #pragma HLS UNROLL
+    // hls-pragmas end
 
-    const auto x_i = (
-        survivors_tmp[(i * N) + 3],
-        survivors_tmp[(i * N) + 2],
-        survivors_tmp[(i * N) + 1],
-        survivors_tmp[(i * N) + 0]
-    );
+    const auto x_i = (survivors_tmp[(i * N) + 3], survivors_tmp[(i * N) + 2], survivors_tmp[(i * N) + 1],
+                      survivors_tmp[(i * N) + 0]);
     survivors[i] = x_i;
   }  // end i loop
 
-  //std::cout << "[DEBUG] trk_seg_reduced_v: " << std::endl;
-  //for (unsigned i = 0; i < N; i++) {
-  //  for (unsigned j = 0; j < num_emtf_sites_rm; j++) {
-  //    std::cout << trk_seg_reduced_v[i][j] << " ";
-  //  }
-  //  std::cout << std::endl;
-  //}
-  //std::cout << "[DEBUG] survivors: " << std::endl;
-  //for (unsigned i = 0; i < N; i++) {
-  //  for (unsigned j = 0; j < N; j++) {
-  //    std::cout << survivors[i][j] << " ";
-  //  }
-  //  std::cout << std::endl;
-  //}
+  // std::cout << "[DEBUG] trk_seg_reduced_v: " << std::endl;
+  // for (unsigned i = 0; i < N; i++) {
+  //   for (unsigned j = 0; j < num_emtf_sites_rm; j++) {
+  //     std::cout << trk_seg_reduced_v[i][j] << " ";
+  //   }
+  //   std::cout << std::endl;
+  // }
+  // std::cout << "[DEBUG] survivors: " << std::endl;
+  // for (unsigned i = 0; i < N; i++) {
+  //   for (unsigned j = 0; j < N; j++) {
+  //     std::cout << survivors[i][j] << " ";
+  //   }
+  //   std::cout << std::endl;
+  // }
 }
 
-template <typename T=void>
-void duperemoval_remove_dupes_op(
-    const trk_seg_t      trk_seg      [duperemoval_config::n_in * num_emtf_sites],
-    const trk_seg_v_t    trk_seg_v    [duperemoval_config::n_in],
-    const trk_feat_t     trk_feat     [duperemoval_config::n_in * num_emtf_features],
-    const trk_valid_t    trk_valid    [duperemoval_config::n_in],
-    const dio_survivor_t survivors    [duperemoval_config::n_in],
-    trk_seg_t            trk_seg_rm   [duperemoval_config::n_out * num_emtf_sites],
-    trk_seg_v_t          trk_seg_rm_v [duperemoval_config::n_out],
-    trk_feat_t           trk_feat_rm  [duperemoval_config::n_out * num_emtf_features],
-    trk_valid_t          trk_valid_rm [duperemoval_config::n_out]
-) {
-
-#pragma HLS PIPELINE II=duperemoval_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
+template <typename T = void>
+void duperemoval_remove_dupes_op(const trk_seg_t trk_seg[duperemoval_config::n_in * num_emtf_sites],
+                                 const trk_seg_v_t trk_seg_v[duperemoval_config::n_in],
+                                 const trk_feat_t trk_feat[duperemoval_config::n_in * num_emtf_features],
+                                 const trk_valid_t trk_valid[duperemoval_config::n_in],
+                                 const dio_survivor_t survivors[duperemoval_config::n_in],
+                                 trk_seg_t trk_seg_rm[duperemoval_config::n_out * num_emtf_sites],
+                                 trk_seg_v_t trk_seg_rm_v[duperemoval_config::n_out],
+                                 trk_feat_t trk_feat_rm[duperemoval_config::n_out * num_emtf_features],
+                                 trk_valid_t trk_valid_rm[duperemoval_config::n_out]) {
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = duperemoval_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
 #pragma HLS INLINE
+  // hls-pragmas end
 
   // Remove duplicates by saving only the survivors
   const trk_seg_t invalid_marker_ph_seg = model_config::n_in;
   const trk_feat_t invalid_marker_trk_feat = 0;
 
   // Multiplex to output
-  LOOP_TRK_5: for (unsigned i = 0; i < duperemoval_config::n_out; i++) {
-
+LOOP_TRK_5:
+  for (unsigned i = 0; i < duperemoval_config::n_out; i++) {
+    // hls-pragmas begin
 #pragma HLS UNROLL
+    // hls-pragmas end
 
     // Fill with default values
     trk_valid_rm[i] = 0;
     trk_seg_rm_v[i] = 0;
-    detail::fill_n_values<num_emtf_sites>(
-        &(trk_seg_rm[i * num_emtf_sites]), invalid_marker_ph_seg
-    );
-    detail::fill_n_values<num_emtf_features>(
-        &(trk_feat_rm[i * num_emtf_features]), invalid_marker_trk_feat
-    );
+    detail::fill_n_values<num_emtf_sites>(&(trk_seg_rm[i * num_emtf_sites]), invalid_marker_ph_seg);
+    detail::fill_n_values<num_emtf_features>(&(trk_feat_rm[i * num_emtf_features]), invalid_marker_trk_feat);
 
     // Loop over possible tracks (j >= i)
-    LOOP_TRK_5_1: for (unsigned j = i; j < duperemoval_config::n_in; j++) {
-
+  LOOP_TRK_5_1:
+    for (unsigned j = i; j < duperemoval_config::n_in; j++) {
+      // hls-pragmas begin
 #pragma HLS UNROLL
+      // hls-pragmas end
 
       // trk 0 is a special case where i == j by construction
       if ((i == 0) and (j != 0))
@@ -266,85 +269,75 @@ void duperemoval_remove_dupes_op(
         trk_valid_rm[i] = trk_valid[j];
         trk_seg_rm_v[i] = trk_seg_v[j];
         // Copy to arrays
-        detail::copy_n_values<num_emtf_sites>(
-            &(trk_seg[j * num_emtf_sites]), &(trk_seg_rm[i * num_emtf_sites])
-        );
-        detail::copy_n_values<num_emtf_features>(
-            &(trk_feat[j * num_emtf_features]), &(trk_feat_rm[i * num_emtf_features])
-        );
+        detail::copy_n_values<num_emtf_sites>(&(trk_seg[j * num_emtf_sites]), &(trk_seg_rm[i * num_emtf_sites]));
+        detail::copy_n_values<num_emtf_features>(&(trk_feat[j * num_emtf_features]),
+                                                 &(trk_feat_rm[i * num_emtf_features]));
       }
     }  // end j loop
-  }  // end i loop
+  }    // end i loop
 
   // Sanity check
 #ifndef __SYNTHESIS__
-  auto is_power_of_two = [](unsigned x) -> bool {
-    return ((x & (x - 1)) == 0);
-  };
+  auto is_power_of_two = [](unsigned x) -> bool { return ((x & (x - 1)) == 0); };
   for (unsigned i = 0; i < duperemoval_config::n_out; i++) {
     emtf_assert(is_power_of_two(survivors[i]));  // make sure it is either zero or power of 2
   }
 #endif  // __SYNTHESIS__ not defined
-
 }
 
 // _____________________________________________________________________________
 // Duplicate removal op
 
 template <typename Zone>
-void duperemoval_op(
-    const trk_seg_t   trk_seg      [duperemoval_config::n_in * num_emtf_sites],
-    const trk_seg_v_t trk_seg_v    [duperemoval_config::n_in],
-    const trk_feat_t  trk_feat     [duperemoval_config::n_in * num_emtf_features],
-    const trk_valid_t trk_valid    [duperemoval_config::n_in],
-    trk_seg_t         trk_seg_rm   [duperemoval_config::n_out * num_emtf_sites],
-    trk_seg_v_t       trk_seg_rm_v [duperemoval_config::n_out],
-    trk_feat_t        trk_feat_rm  [duperemoval_config::n_out * num_emtf_features],
-    trk_valid_t       trk_valid_rm [duperemoval_config::n_out]
-) {
-
-#pragma HLS PIPELINE II=duperemoval_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
+void duperemoval_op(const trk_seg_t trk_seg[duperemoval_config::n_in * num_emtf_sites],
+                    const trk_seg_v_t trk_seg_v[duperemoval_config::n_in],
+                    const trk_feat_t trk_feat[duperemoval_config::n_in * num_emtf_features],
+                    const trk_valid_t trk_valid[duperemoval_config::n_in],
+                    trk_seg_t trk_seg_rm[duperemoval_config::n_out * num_emtf_sites],
+                    trk_seg_v_t trk_seg_rm_v[duperemoval_config::n_out],
+                    trk_feat_t trk_feat_rm[duperemoval_config::n_out * num_emtf_features],
+                    trk_valid_t trk_valid_rm[duperemoval_config::n_out]) {
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = duperemoval_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
 #pragma HLS INLINE
+  // hls-pragmas end
 
-  trk_seg_t      trk_seg_reduced   [duperemoval_config::n_in * num_emtf_sites_rm];
-  trk_seg_v_t    trk_seg_reduced_v [duperemoval_config::n_in];
-  dio_survivor_t survivors         [duperemoval_config::n_in];
+  // Intermediate arrays
+  trk_seg_t trk_seg_reduced[duperemoval_config::n_in * num_emtf_sites_rm];
+  trk_seg_v_t trk_seg_reduced_v[duperemoval_config::n_in];
+  dio_survivor_t survivors[duperemoval_config::n_in];
 
-#pragma HLS ARRAY_PARTITION variable=trk_seg_reduced complete dim=0
-#pragma HLS ARRAY_PARTITION variable=trk_seg_reduced_v complete dim=0
-#pragma HLS ARRAY_PARTITION variable=survivors complete dim=0
+  // hls-pragmas begin
+#pragma HLS ARRAY_PARTITION variable = trk_seg_reduced complete dim = 0
+#pragma HLS ARRAY_PARTITION variable = trk_seg_reduced_v complete dim = 0
+#pragma HLS ARRAY_PARTITION variable = survivors complete dim = 0
+  // hls-pragmas end
 
   duperemoval_preprocess_op(trk_seg, trk_seg_v, trk_seg_reduced, trk_seg_reduced_v);
 
   duperemoval_find_dupes_op(trk_seg_reduced, trk_seg_reduced_v, survivors);
 
-  duperemoval_remove_dupes_op(
-      trk_seg, trk_seg_v, trk_feat, trk_valid, survivors, trk_seg_rm,
-      trk_seg_rm_v, trk_feat_rm, trk_valid_rm
-  );
+  duperemoval_remove_dupes_op(trk_seg, trk_seg_v, trk_feat, trk_valid, survivors, trk_seg_rm, trk_seg_rm_v, trk_feat_rm,
+                              trk_valid_rm);
 }
 
 // _____________________________________________________________________________
 // Entry point
 
 template <typename Zone>
-void duperemoval_layer(
-    const trk_seg_t   trk_seg      [duperemoval_config::n_in * num_emtf_sites],
-    const trk_seg_v_t trk_seg_v    [duperemoval_config::n_in],
-    const trk_feat_t  trk_feat     [duperemoval_config::n_in * num_emtf_features],
-    const trk_valid_t trk_valid    [duperemoval_config::n_in],
-    trk_seg_t         trk_seg_rm   [duperemoval_config::n_out * num_emtf_sites],
-    trk_seg_v_t       trk_seg_rm_v [duperemoval_config::n_out],
-    trk_feat_t        trk_feat_rm  [duperemoval_config::n_out * num_emtf_features],
-    trk_valid_t       trk_valid_rm [duperemoval_config::n_out]
-) {
-
-#pragma HLS PIPELINE II=duperemoval_config::layer_target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
+void duperemoval_layer(const trk_seg_t trk_seg[duperemoval_config::n_in * num_emtf_sites],
+                       const trk_seg_v_t trk_seg_v[duperemoval_config::n_in],
+                       const trk_feat_t trk_feat[duperemoval_config::n_in * num_emtf_features],
+                       const trk_valid_t trk_valid[duperemoval_config::n_in],
+                       trk_seg_t trk_seg_rm[duperemoval_config::n_out * num_emtf_sites],
+                       trk_seg_v_t trk_seg_rm_v[duperemoval_config::n_out],
+                       trk_feat_t trk_feat_rm[duperemoval_config::n_out * num_emtf_features],
+                       trk_valid_t trk_valid_rm[duperemoval_config::n_out]) {
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = duperemoval_config::layer_target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
+  // hls-pragmas end
 
   // Check assumptions
   static_assert(duperemoval_config::n_in == num_emtf_tracks, "duperemoval_config::n_in check failed");
@@ -353,10 +346,7 @@ void duperemoval_layer(
   static_assert(num_emtf_sites_rm == 5, "num_emtf_sites_rm must be 5");
   static_assert(dio_survivor_t::width == duperemoval_config::n_in, "dio_survivor_t type check failed");
 
-  duperemoval_op<Zone>(
-      trk_seg, trk_seg_v, trk_feat, trk_valid, trk_seg_rm, trk_seg_rm_v,
-      trk_feat_rm, trk_valid_rm
-  );
+  duperemoval_op<Zone>(trk_seg, trk_seg_v, trk_feat, trk_valid, trk_seg_rm, trk_seg_rm_v, trk_feat_rm, trk_valid_rm);
 }
 
 }  // namespace phase2

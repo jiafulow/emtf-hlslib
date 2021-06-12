@@ -55,11 +55,11 @@ void vector_tanh_activate_op(const T_IN x[N], T_OUT out[N]) {
   static_assert(is_ap_fixed_type<T_IN>::value, "T_IN type check failed");
   static_assert(is_ap_fixed_type<T_OUT>::value, "T_OUT type check failed");
 
-#pragma HLS PIPELINE II=fullyconnect_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = fullyconnect_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
 #pragma HLS INLINE
+  // hls-pragmas end
 
   const unsigned int N_TABLE = (1u << T_IN::width);
 
@@ -76,9 +76,11 @@ void vector_tanh_activate_op(const T_IN x[N], T_OUT out[N]) {
     init_tanh_table_op<N_TABLE, T_IN>(tanh_table);
   }
 
-  LOOP_ACT: for (unsigned i = 0; i < N; i++) {
-
+LOOP_ACT:
+  for (unsigned i = 0; i < N; i++) {
+    // hls-pragmas begin
 #pragma HLS UNROLL
+    // hls-pragmas end
 
     // Reinterpret ap_fixed as ap_uint
     const T_IN x_i = x[i];
@@ -95,15 +97,17 @@ void vector_cast_op(const T_IN x[N], T_OUT out[N]) {
   static_assert(is_ap_fixed_type<T_OUT>::value, "T_OUT type check failed");
   static_assert(T_IN::width == T_OUT::width, "T_OUT type check faild");
 
-#pragma HLS PIPELINE II=fullyconnect_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = fullyconnect_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
 #pragma HLS INLINE
+  // hls-pragmas end
 
-  LOOP_CAST: for (unsigned i = 0; i < N; i++) {
-
+LOOP_CAST:
+  for (unsigned i = 0; i < N; i++) {
+    // hls-pragmas begin
 #pragma HLS UNROLL
+    // hls-pragmas end
 
     // Cast from ap_int to ap_fixed
     const T_IN x_i = x[i];
@@ -118,25 +122,27 @@ void vec_vec_mult_op(const T_IN0 x[N], const T_IN1 y[N], T_OUT out[N]) {
   static_assert(is_ap_fixed_type<T_IN1>::value, "T_IN1 type check failed");
   static_assert(is_ap_fixed_type<T_OUT>::value, "T_OUT type check failed");
 
-#pragma HLS PIPELINE II=fullyconnect_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = fullyconnect_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
 #pragma HLS INLINE
+  // hls-pragmas end
 
   constexpr int W_MULT = T_OUT::width;
   constexpr int I_MULT = T_OUT::iwidth;
 
-  ap_fixed<W_MULT,I_MULT> mult[N];
+  ap_fixed<W_MULT, I_MULT> mult[N];
 
-//#pragma HLS ARRAY_PARTITION variable=mult complete dim=0
-
-#pragma HLS RESOURCE variable=mult core=DSP48 latency=1
+  // hls-pragmas begin
+#pragma HLS RESOURCE variable = mult core = DSP48 latency = 1
+  // hls-pragmas end
 
   // Multiply
-  LOOP_MULT: for (unsigned i = 0; i < N; i++) {
-
+LOOP_MULT_1:
+  for (unsigned i = 0; i < N; i++) {
+    // hls-pragmas begin
 #pragma HLS UNROLL
+    // hls-pragmas end
 
     const T_IN0 x_i = x[i];
     const T_IN1 y_i = y[i];
@@ -154,11 +160,11 @@ void vec_vec_mult_biasadd_op(const T_IN0 x[N], const T_IN1 y[N], const T_IN2& z,
   static_assert(is_ap_fixed_type<T_IN2>::value, "T_IN2 type check failed");
   static_assert(is_ap_fixed_type<T_OUT>::value, "T_OUT type check failed");
 
-#pragma HLS PIPELINE II=fullyconnect_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = fullyconnect_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
 #pragma HLS INLINE
+  // hls-pragmas end
 
   constexpr int W_MULT = AP_MIN(T_IN0::width + T_IN1::width, 24);  // capped at 24 bits (found empirically)
   constexpr int I_MULT = (T_IN0::iwidth + T_IN1::iwidth);
@@ -167,36 +173,42 @@ void vec_vec_mult_biasadd_op(const T_IN0 x[N], const T_IN1 y[N], const T_IN2& z,
   constexpr int W_OUT = T_OUT::width;
   constexpr int I_OUT = T_OUT::iwidth;
 
-  ap_fixed<W_MULT,I_MULT> mult[N];
+  ap_fixed<W_MULT, I_MULT> mult[N];
 
-//#pragma HLS ARRAY_PARTITION variable=mult complete dim=0
-
-#pragma HLS RESOURCE variable=mult core=DSP48 latency=1
+  // hls-pragmas begin
+#pragma HLS RESOURCE variable = mult core = DSP48 latency = 1
+  // hls-pragmas end
 
   // Multiply
-  LOOP_MULT: for (unsigned i = 0; i < N; i++) {
-
+LOOP_MULT_2:
+  for (unsigned i = 0; i < N; i++) {
+    // hls-pragmas begin
 #pragma HLS UNROLL
+    // hls-pragmas end
 
     const T_IN0 x_i = x[i];
     const T_IN1 y_i = y[i];
     mult[i] = x_i * y_i;  // using DSP48
   }
 
-  ap_fixed<W_ACCUM,I_ACCUM> accum = z;  // init with the bias term
+  ap_fixed<W_ACCUM, I_ACCUM> accum = z;  // init with the bias term
 
-//#pragma HLS RESOURCE variable=accum core=AddSubnS latency=2
+  // hls-pragmas begin
+  //#pragma HLS RESOURCE variable=accum core=AddSubnS latency=2
+  // hls-pragmas end
 
   // Accumulate
-  LOOP_ACCUM: for (unsigned i = 0; i < N; i++) {
-
+LOOP_ACCUM_2:
+  for (unsigned i = 0; i < N; i++) {
+    // hls-pragmas begin
 #pragma HLS UNROLL
+    // hls-pragmas end
 
     accum += mult[i];
   }
 
   // Round and saturate
-  out = ap_fixed<W_OUT,I_OUT,AP_RND,AP_SAT>(accum);
+  out = ap_fixed<W_OUT, I_OUT, AP_RND, AP_SAT>(accum);
 
   // Sanity check
 #ifndef __SYNTHESIS__
@@ -205,10 +217,9 @@ void vec_vec_mult_biasadd_op(const T_IN0 x[N], const T_IN1 y[N], const T_IN2& z,
     for (unsigned i = 0; i < N; i++) {
       f_accum += static_cast<float>(x[i]) * static_cast<float>(y[i]);
     }
-    emtf_assert(std::abs(f_accum) < static_cast<float>(1 << (I_ACCUM-1)));  // make sure no overflow
+    emtf_assert(std::abs(f_accum) < static_cast<float>(1 << (I_ACCUM - 1)));  // make sure no overflow
   }
 #endif  // __SYNTHESIS__ not defined
-
 }
 
 // Returns matmul(X, Y) + Z
@@ -220,11 +231,11 @@ void mat_vec_mult_biasadd_op(const T_IN0 x[M], const T_IN1 y[M * N], const T_IN2
   static_assert(is_ap_fixed_type<T_IN2>::value, "T_IN2 type check failed");
   static_assert(is_ap_fixed_type<T_OUT>::value, "T_OUT type check failed");
 
-#pragma HLS PIPELINE II=fullyconnect_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = fullyconnect_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
 #pragma HLS INLINE
+  // hls-pragmas end
 
   constexpr int W_MULT = AP_MIN(T_IN0::width + T_IN1::width, 24);  // capped at 24 bits (found empirically)
   constexpr int I_MULT = (T_IN0::iwidth + T_IN1::iwidth);
@@ -233,40 +244,48 @@ void mat_vec_mult_biasadd_op(const T_IN0 x[M], const T_IN1 y[M * N], const T_IN2
   constexpr int W_OUT = T_OUT::width;
   constexpr int I_OUT = T_OUT::iwidth;
 
-  LOOP_MULT_J: for (unsigned j = 0; j < N; j++) {
-
+LOOP_MULT_3:
+  for (unsigned j = 0; j < N; j++) {
+    // hls-pragmas begin
 #pragma HLS UNROLL
+    // hls-pragmas end
 
-    ap_fixed<W_MULT,I_MULT> mult[M];
+    ap_fixed<W_MULT, I_MULT> mult[M];
 
-//#pragma HLS ARRAY_PARTITION variable=mult complete dim=0
-
-#pragma HLS RESOURCE variable=mult core=DSP48 latency=1
+    // hls-pragmas begin
+#pragma HLS RESOURCE variable = mult core = DSP48 latency = 1
+    // hls-pragmas end
 
     // Multiply
-    LOOP_MULT_I: for (unsigned i = 0; i < M; i++) {
-
+  LOOP_MULT_3_1:
+    for (unsigned i = 0; i < M; i++) {
+      // hls-pragmas begin
 #pragma HLS UNROLL
+      // hls-pragmas end
 
       const T_IN0 x_i = x[i];
       const T_IN1 y_i = y[(j * M) + i];
       mult[i] = x_i * y_i;  // using DSP48
     }
 
-    ap_fixed<W_ACCUM,I_ACCUM> accum = z[j];  // init with the bias term
+    ap_fixed<W_ACCUM, I_ACCUM> accum = z[j];  // init with the bias term
 
-//#pragma HLS RESOURCE variable=accum core=AddSubnS latency=2
+    // hls-pragmas begin
+    //#pragma HLS RESOURCE variable=accum core=AddSubnS latency=2
+    // hls-pragmas end
 
     // Accumulate
-    LOOP_ACCUM_I: for (unsigned i = 0; i < M; i++) {
-
+  LOOP_ACCUM_3_1:
+    for (unsigned i = 0; i < M; i++) {
+      // hls-pragmas begin
 #pragma HLS UNROLL
+      // hls-pragmas end
 
       accum += mult[i];
     }
 
     // Round and saturate
-    out[j] = ap_fixed<W_OUT,I_OUT,AP_RND,AP_SAT>(accum);
+    out[j] = ap_fixed<W_OUT, I_OUT, AP_RND, AP_SAT>(accum);
   }
 
   // Sanity check
@@ -276,10 +295,9 @@ void mat_vec_mult_biasadd_op(const T_IN0 x[M], const T_IN1 y[M * N], const T_IN2
     for (unsigned i = 0; i < M; i++) {
       f_accum += static_cast<float>(x[i]) * static_cast<float>(y[(i * N) + j]);
     }
-    emtf_assert(std::abs(f_accum) < static_cast<float>(1 << (I_ACCUM-1)));  // make sure no overflow
+    emtf_assert(std::abs(f_accum) < static_cast<float>(1 << (I_ACCUM - 1)));  // make sure no overflow
   }
 #endif  // __SYNTHESIS__ not defined
-
 }
 
 }  // namespace detail

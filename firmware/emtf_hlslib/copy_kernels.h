@@ -14,46 +14,46 @@ namespace detail {
 
 template <unsigned int N, typename T>
 void copy_n_values(const T in0[N], T out[N]) {
-
-#pragma HLS PIPELINE II=trkbuilding_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = trkbuilding_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
 #pragma HLS INLINE
+  // hls-pragmas end
 
 #ifndef __SYNTHESIS__
   std::copy(in0, in0 + N, out);
 #else
-  LOOP_COPY: for (unsigned i = 0; i < N; i++) {
-
+LOOP_COPY:
+  for (unsigned i = 0; i < N; i++) {
+    // hls-pragmas begin
 #pragma HLS UNROLL
+    // hls-pragmas end
 
     out[i] = in0[i];
   }
 #endif  // __SYNTHESIS__ not defined
-
 }
 
 template <unsigned int N, typename T>
 void fill_n_values(T out[N], const T& value) {
-
-#pragma HLS PIPELINE II=trkbuilding_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
+  // hls-pragmas begin
+#pragma HLS PIPELINE II = trkbuilding_config::target_ii
+#pragma HLS INTERFACE ap_ctrl_none port = return
 #pragma HLS INLINE
+  // hls-pragmas end
 
 #ifndef __SYNTHESIS__
   std::fill(out, out + N, value);
 #else
-  LOOP_FILL: for (unsigned i = 0; i < N; i++) {
-
+LOOP_FILL:
+  for (unsigned i = 0; i < N; i++) {
+    // hls-pragmas begin
 #pragma HLS UNROLL
+    // hls-pragmas end
 
     out[i] = value;
   }
 #endif  // __SYNTHESIS__ not defined
-
 }
 
 }  // namespace detail
