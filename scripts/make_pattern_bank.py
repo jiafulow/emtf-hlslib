@@ -26,12 +26,16 @@ header = [
   '',
   'namespace detail {',
   '',
+  '// clang-format off',
+  '',
   'constexpr static const int pattern_col_reference = {};'.format(reference),
   'constexpr static const int pattern_col_max_pad = {};'.format(max_pad),
   '',
 ]
 
 footer = [
+  '// clang-format on',
+  '',
   '}  // namespace detail',
   '',
   '}  // namespace phase2',

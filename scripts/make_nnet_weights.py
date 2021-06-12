@@ -22,6 +22,8 @@ header = [
   '',
   'namespace detail {',
   '',
+  '// clang-format off',
+  '',
   'constexpr static const int num_nodes_nnet_0_layer_0 = {};'.format(nodes_in),
   'constexpr static const int num_nodes_nnet_0_layer_1 = {};'.format(nodes0),
   'constexpr static const int num_nodes_nnet_0_layer_2 = {};'.format(nodes1),
@@ -31,6 +33,8 @@ header = [
 ]
 
 footer = [
+  '// clang-format on',
+  '',
   '}  // namespace detail',
   '',
   '}  // namespace phase2',
