@@ -7,11 +7,10 @@
 using namespace emtf::phase2;
 using namespace testbench;
 
-void sanity_check() {
-}
+void sanity_check() {}
 
 // Main driver
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   // Perform sanity check
   sanity_check();
 
@@ -22,8 +21,8 @@ int main(int argc, char **argv) {
 
   // List of event numbers
   std::initializer_list<int> event_list = {0};
-  //std::vector<int> event_list(100);
-  //std::iota(event_list.begin(), event_list.end(), 0);
+  // std::vector<int> event_list(100);
+  // std::iota(event_list.begin(), event_list.end(), 0);
 
   // Loop over events
   for (auto ievt : event_list) {
@@ -32,6 +31,8 @@ int main(int argc, char **argv) {
     // Create evt_flat & res_flat (hardcoded)
     std::vector<PrEvent::value_type::value_type> evt_flat;
     std::vector<PrResult::value_type::value_type> res_flat;
+
+    // clang-format off
     evt_flat = {
        0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
        0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
@@ -53,6 +54,7 @@ int main(int argc, char **argv) {
        0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0
     };
     res_flat = {71423, 63142, 66086, 68198};
+    // clang-format on
 
     // Initialize input & output
     top_in_t in0[TOP_N_IN];

@@ -13,7 +13,7 @@ void sanity_check() {
 }
 
 // Main driver
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   // Perform sanity check
   sanity_check();
 
@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
   std::string clr_reset = "\033[0m";     // no format
 
   // List of event numbers
-  //std::initializer_list<int> event_list = {0};
+  // std::initializer_list<int> event_list = {0};
   std::vector<int> event_list(100);
   std::iota(event_list.begin(), event_list.end(), 0);
 
@@ -56,14 +56,15 @@ int main(int argc, char **argv) {
     top_in_t in0[TOP_N_IN];
     top_out_t out[TOP_N_OUT];
     std::copy(std::begin(fpga_evt.data), std::end(fpga_evt.data), std::begin(in0));  // copy array
-    std::fill(std::begin(out), std::end(out), 0);  // init as zeros
+    std::fill(std::begin(out), std::end(out), 0);                                    // init as zeros
 
     // Call the top function !!
     myproject(in0, out);
 
     // Compare with the expectation
-    //int ievt_err = count_mismatches(std::begin(res_flat), std::end(res_flat), std::begin(out));
-    int ievt_err = count_mismatches(std::begin(res_flat), std::begin(res_flat) + res.front().size(), std::begin(out));  // first track only
+    // int ievt_err = count_mismatches(std::begin(res_flat), std::end(res_flat), std::begin(out));
+    int ievt_err = count_mismatches(std::begin(res_flat), std::begin(res_flat) + res.front().size(),
+                                    std::begin(out));  // first track only
     err += ievt_err;
 
     // Print error info

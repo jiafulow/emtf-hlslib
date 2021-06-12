@@ -15,7 +15,7 @@ void sanity_check() {
 }
 
 // Main driver
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   // Perform sanity check
   sanity_check();
 
@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
   std::string clr_reset = "\033[0m";     // no format
 
   // List of event numbers
-  //std::initializer_list<int> event_list = {0};
+  // std::initializer_list<int> event_list = {0};
   std::vector<int> event_list(100);
   std::iota(event_list.begin(), event_list.end(), 0);
 

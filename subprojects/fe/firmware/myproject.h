@@ -18,10 +18,6 @@ constexpr int TOP_N_IN1 = 4;  // trk_qual, trk_patt, trk_col, trk_zone
 constexpr int TOP_N_OUT = (emtf::phase2::num_emtf_features + emtf::phase2::num_emtf_sites);
 
 // Top-level function prototype
-void myproject(
-    const top_in0_t in0[TOP_N_IN0],
-    const top_in1_t in1[TOP_N_IN1],
-    top_out_t out[TOP_N_OUT]
-);
+void myproject(const top_in0_t in0[TOP_N_IN0], const top_in1_t in1[TOP_N_IN1], top_out_t out[TOP_N_OUT]);
 
 #endif  // __MYPROJECT_H__ not defined

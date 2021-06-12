@@ -15,7 +15,7 @@ void sanity_check() {
 }
 
 // Main driver
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   // Perform sanity check
   sanity_check();
 
@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
   std::string clr_reset = "\033[0m";     // no format
 
   // List of event numbers
-  //std::initializer_list<int> event_list = {0};
+  // std::initializer_list<int> event_list = {0};
   std::vector<int> event_list(100);
   std::iota(event_list.begin(), event_list.end(), 0);
 
@@ -46,8 +46,8 @@ int main(int argc, char **argv) {
 
     // Create evt_flat & res_flat
     assert((evt.size() == 1) and (res.size() == 1));
-    auto evt_flat = evt.front();
-    auto res_flat = res.front();
+    const auto evt_flat = evt.front();
+    const auto res_flat = res.front();
 
     // Initialize input & output
     top_in_t in0[TOP_N_IN];

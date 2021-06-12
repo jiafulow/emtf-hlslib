@@ -16,9 +16,6 @@ constexpr int TOP_N_IN = emtf::phase2::num_emtf_features;
 constexpr int TOP_N_OUT = emtf::phase2::num_emtf_predictions;
 
 // Top-level function prototype
-void myproject(
-    const top_in_t in0[TOP_N_IN],
-    top_out_t out[TOP_N_OUT]
-);
+void myproject(const top_in_t in0[TOP_N_IN], top_out_t out[TOP_N_OUT]);
 
 #endif  // __MYPROJECT_H__ not defined

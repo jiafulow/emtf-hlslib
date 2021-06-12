@@ -7,11 +7,10 @@
 using namespace emtf::phase2;
 using namespace testbench;
 
-void sanity_check() {
-}
+void sanity_check() {}
 
 // Main driver
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   // Perform sanity check
   sanity_check();
 
@@ -22,8 +21,8 @@ int main(int argc, char **argv) {
 
   // List of event numbers
   std::initializer_list<int> event_list = {0};
-  //std::vector<int> event_list(100);
-  //std::iota(event_list.begin(), event_list.end(), 0);
+  // std::vector<int> event_list(100);
+  // std::iota(event_list.begin(), event_list.end(), 0);
 
   // Loop over events
   for (auto ievt : event_list) {
@@ -32,6 +31,8 @@ int main(int argc, char **argv) {
     // Create evt_flat & res_flat (hardcoded)
     std::vector<PrEvent::value_type::value_type> evt_flat;
     std::vector<PrResult::value_type::value_type> res_flat;
+
+    // clang-format off
     evt_flat = {
        0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
        0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
@@ -53,11 +54,12 @@ int main(int argc, char **argv) {
        0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0
     };
     res_flat = {71423, 63142, 66086, 68198};
+    // clang-format on
 
     // Initialize input & output
+    // Note: using zeros as input.
     top_in_t in0[TOP_N_IN];
     top_out_t out[TOP_N_OUT];
-    //std::copy(std::begin(evt_flat), std::end(evt_flat), std::begin(in0));  //FIXME
     std::fill(std::begin(in0), std::end(in0), 0);  // init as zeros
     std::fill(std::begin(out), std::end(out), 0);  // init as zeros
 
@@ -65,7 +67,7 @@ int main(int argc, char **argv) {
     myproject(in0, out);
 
     // Compare with the expectation
-    //int ievt_err = count_mismatches(std::begin(res_flat), std::end(res_flat), std::begin(out));  //FIXME
+    // Note: no error check with output.
     int ievt_err = 0;
     err += ievt_err;
 

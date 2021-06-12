@@ -7,11 +7,10 @@
 using namespace emtf::phase2;
 using namespace testbench;
 
-void sanity_check() {
-}
+void sanity_check() {}
 
 // Main driver
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   // Perform sanity check
   sanity_check();
 
@@ -22,8 +21,8 @@ int main(int argc, char **argv) {
 
   // List of event numbers
   std::initializer_list<int> event_list = {0};
-  //std::vector<int> event_list(100);
-  //std::iota(event_list.begin(), event_list.end(), 0);
+  // std::vector<int> event_list(100);
+  // std::iota(event_list.begin(), event_list.end(), 0);
 
   // Loop over events
   for (auto ievt : event_list) {
