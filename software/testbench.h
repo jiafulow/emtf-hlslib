@@ -21,7 +21,7 @@
 #include "../firmware/emtf_hlslib/types.h"
 
 namespace {
-  using namespace emtf::phase2;
+using namespace emtf::phase2;
 }
 
 namespace testbench {
@@ -100,12 +100,12 @@ struct FpgaEvent {
   model_in_t data[len];
 
   struct ArrayIndex {
-    inline unsigned int operator ()(unsigned int emtf_chamber, unsigned int emtf_segment) const {
+    inline unsigned int operator()(unsigned int emtf_chamber, unsigned int emtf_segment) const {
       assert(emtf_chamber < num_chambers);
       assert(emtf_segment < num_segments);
       return (emtf_chamber * num_segments) + emtf_segment;
     }
-    inline int operator ()(int emtf_chamber, int emtf_segment) const {
+    inline int operator()(int emtf_chamber, int emtf_segment) const {
       assert(static_cast<unsigned int>(emtf_chamber) < num_chambers);
       assert(static_cast<unsigned int>(emtf_segment) < num_segments);
       return (emtf_chamber * num_segments) + emtf_segment;
@@ -136,19 +136,19 @@ struct FpgaEvent {
       const int iseg = index_fn(emtf_chamber, emtf_segment);
 
       // 13 variables
-      data[iseg].emtf_phi    = evt[ihit][2];
-      data[iseg].emtf_bend   = evt[ihit][3];
+      data[iseg].emtf_phi = evt[ihit][2];
+      data[iseg].emtf_bend = evt[ihit][3];
       data[iseg].emtf_theta1 = evt[ihit][4];
       data[iseg].emtf_theta2 = evt[ihit][5];
-      data[iseg].emtf_qual1  = evt[ihit][6];
-      data[iseg].emtf_qual2  = evt[ihit][7];
-      data[iseg].emtf_time   = evt[ihit][8];
-      data[iseg].seg_zones   = evt[ihit][9];
-      data[iseg].seg_tzones  = evt[ihit][10];
-      data[iseg].seg_fr      = evt[ihit][11];
-      data[iseg].seg_dl      = evt[ihit][12];
-      data[iseg].seg_bx      = evt[ihit][13];
-      data[iseg].seg_valid   = evt[ihit][14];
+      data[iseg].emtf_qual1 = evt[ihit][6];
+      data[iseg].emtf_qual2 = evt[ihit][7];
+      data[iseg].emtf_time = evt[ihit][8];
+      data[iseg].seg_zones = evt[ihit][9];
+      data[iseg].seg_tzones = evt[ihit][10];
+      data[iseg].seg_fr = evt[ihit][11];
+      data[iseg].seg_dl = evt[ihit][12];
+      data[iseg].seg_bx = evt[ihit][13];
+      data[iseg].seg_valid = evt[ihit][14];
 
       assert(data[iseg].seg_valid == 1);  // segment must be valid
     }
@@ -165,12 +165,12 @@ struct FpgaResult {
   model_out_t data[len];
 
   struct ArrayIndex {
-    inline unsigned int operator ()(unsigned int track, unsigned int variable) const {
+    inline unsigned int operator()(unsigned int track, unsigned int variable) const {
       assert(track < num_tracks);
       assert(variable < num_trk_variables);
       return (track * num_trk_variables) + variable;
     }
-    inline int operator ()(int track, int variable) const {
+    inline int operator()(int track, int variable) const {
       assert(static_cast<unsigned int>(track) < num_tracks);
       assert(static_cast<unsigned int>(variable) < num_trk_variables);
       return (track * num_trk_variables) + variable;
@@ -197,7 +197,6 @@ struct FpgaResult {
     }
   }  // end constructor
 };
-
 
 // _____________________________________________________________________________
 // Read test bench text files.
@@ -262,7 +261,6 @@ int read_tb_data(const std::string filename, T& evt) {
   return 0;
 }
 
-
 // _____________________________________________________________________________
 // Print plain array
 template <typename T, std::size_t N>
@@ -284,7 +282,7 @@ std::size_t get_array_length(T const (&arr)[N]) {
 
 // Count mismatches
 template <typename InputIt1, typename InputIt2>
-int count_mismatches(InputIt1 first1, InputIt1 last1, InputIt2 first2, int tol=0) {
+int count_mismatches(InputIt1 first1, InputIt1 last1, InputIt2 first2, int tol = 0) {
   int cnt = 0;
   assert(tol >= 0);  // tol must be a positive integer
   for (; first1 != last1; ++first1, ++first2) {
