@@ -13,7 +13,7 @@
 #include "layer_helpers.h"
 #include "copy_kernels.h"
 
-namespace emtf {
+namespace emtf_hlslib {
 
 namespace phase2 {
 
@@ -235,7 +235,7 @@ void duperemoval_remove_dupes_op(const trk_seg_t trk_seg[duperemoval_config::n_i
   // hls-pragmas end
 
   // Remove duplicates by saving only the survivors
-  const trk_seg_t invalid_marker_ph_seg = model_config::n_in;
+  const trk_seg_t invalid_marker_trk_seg = model_config::n_in;
   const trk_feat_t invalid_marker_trk_feat = 0;
 
   // Multiplex to output
@@ -248,7 +248,7 @@ LOOP_TRK_5:
     // Fill with default values
     trk_valid_rm[i] = 0;
     trk_seg_rm_v[i] = 0;
-    detail::fill_n_values<num_emtf_sites>(&(trk_seg_rm[i * num_emtf_sites]), invalid_marker_ph_seg);
+    detail::fill_n_values<num_emtf_sites>(&(trk_seg_rm[i * num_emtf_sites]), invalid_marker_trk_seg);
     detail::fill_n_values<num_emtf_features>(&(trk_feat_rm[i * num_emtf_features]), invalid_marker_trk_feat);
 
     // Loop over possible tracks (j >= i)
@@ -351,6 +351,6 @@ void duperemoval_layer(const trk_seg_t trk_seg[duperemoval_config::n_in * num_em
 
 }  // namespace phase2
 
-}  // namespace emtf
+}  // namespace emtf_hlslib
 
 #endif  // __EMTF_HLSLIB_DUPEREMOVAL_H__ not defined

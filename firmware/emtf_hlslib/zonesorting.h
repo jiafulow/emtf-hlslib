@@ -15,7 +15,7 @@
 #include "layer_helpers.h"
 #include "sort_kernels.h"
 
-namespace emtf {
+namespace emtf_hlslib {
 
 namespace phase2 {
 
@@ -398,6 +398,6 @@ void zonesorting_layer(const zonesorting_in_t zonesorting_in[zonesorting_config:
 
 }  // namespace phase2
 
-}  // namespace emtf
+}  // namespace emtf_hlslib
 
 #endif  // __EMTF_HLSLIB_ZONESORTING_H__ not defined

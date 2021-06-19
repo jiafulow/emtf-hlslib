@@ -18,7 +18,7 @@
 #include "layer_helpers.h"
 #include "nnet_kernels.h"
 
-namespace emtf {
+namespace emtf_hlslib {
 
 namespace phase2 {
 
@@ -280,6 +280,6 @@ void fullyconnect_layer(const trk_feat_t curr_trk_feat_rm[num_emtf_features], tr
 
 }  // namespace phase2
 
-}  // namespace emtf
+}  // namespace emtf_hlslib
 
 #endif  // __EMTF_HLSLIB_FULLYCONNECT_H__ not defined

@@ -14,7 +14,7 @@
 // EMTF HLS
 #include "layer_helpers.h"
 
-namespace emtf {
+namespace emtf_hlslib {
 
 namespace phase2 {
 
@@ -613,6 +613,6 @@ void zoning_layer(const emtf_phi_t emtf_phi[model_config::n_in], const seg_zones
 
 }  // namespace phase2
 
-}  // namespace emtf
+}  // namespace emtf_hlslib
 
 #endif  // __EMTF_HLSLIB_ZONING_H__ not defined

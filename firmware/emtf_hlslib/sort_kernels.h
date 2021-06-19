@@ -7,7 +7,7 @@
 // EMTF HLS
 #include "layer_helpers.h"
 
-namespace emtf {
+namespace emtf_hlslib {
 
 namespace phase2 {
 
@@ -38,7 +38,7 @@ struct argsort_pair {
 template <typename T>
 void cpp_sort_four_op(const T& a0, const T& a1, const T& a2, const T& a3, T& r0, T& r1, T& r2, T& r3) {
   // Reference implementation for sort_four_op() using std::stable_sort().
-  std::array<T, 4> values = {a0, a1, a2, a3};
+  std::array<T, 4> values{{a0, a1, a2, a3}};
   auto cmp = [](const T& lhs, const T& rhs) -> bool { return lhs.second < rhs.second; };
   std::stable_sort(values.rbegin(), values.rend(), cmp);
   r0 = values[0];
@@ -106,7 +106,7 @@ template <typename T>
 void cpp_merge_eight_op(const T& a0, const T& a1, const T& a2, const T& a3, const T& b0, const T& b1, const T& b2,
                         const T& b3, T& r0, T& r1, T& r2, T& r3) {
   // Reference implementation for merge_eight_op() using std::stable_sort().
-  std::array<T, 8> values = {a0, a1, a2, a3, b0, b1, b2, b3};
+  std::array<T, 8> values{{a0, a1, a2, a3, b0, b1, b2, b3}};
   auto cmp = [](const T& lhs, const T& rhs) -> bool { return lhs.second < rhs.second; };
   std::stable_sort(values.rbegin(), values.rend(), cmp);
   r0 = values[0];
@@ -302,6 +302,6 @@ void median_of_three_op(const T& a0, const T& a1, const T& a2, T& out) {
 
 }  // namespace phase2
 
-}  // namespace emtf
+}  // namespace emtf_hlslib
 
 #endif  // __EMTF_HLSLIB_SORT_KERNELS_H__ not defined

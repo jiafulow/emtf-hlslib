@@ -4,7 +4,7 @@
 // EMTF HLS
 #include "common.h"
 
-namespace emtf {
+namespace emtf_hlslib {
 
 namespace phase2 {
 
@@ -87,13 +87,6 @@ struct fullyconnect_config {
 // _____________________________________________________________________________
 // Various tags
 
-// Subsystem
-struct m_dt_subsystem_tag {};
-struct m_csc_subsystem_tag {};
-struct m_rpc_subsystem_tag {};
-struct m_gem_subsystem_tag {};
-struct m_me0_subsystem_tag {};
-
 // Chamber
 struct m_10deg_chamber_tag {};
 struct m_20deg_chamber_tag {};
@@ -163,11 +156,8 @@ struct m_nnet_0_layer_2_tag {};
 struct m_nnet_0_layer_3_tag {};
 struct m_nnet_0_layer_4_tag {};
 
-// HLS directives
-struct m_inline_directive {};
-
 }  // namespace phase2
 
-}  // namespace emtf
+}  // namespace emtf_hlslib
 
 #endif  // __EMTF_HLSLIB_MODEL_CONFIGS_H__ not defined

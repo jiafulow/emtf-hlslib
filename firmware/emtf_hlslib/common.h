@@ -1,16 +1,18 @@
 #ifndef __EMTF_HLSLIB_COMMON_H__
 #define __EMTF_HLSLIB_COMMON_H__
 
-#ifndef __SYNTHESIS__
+#if !defined(__SYNTHESIS__) && !defined(emtf_assert)
 #include <cassert>
 #define emtf_assert(expr) assert(expr)
-#else
+#elif !defined(emtf_assert)
 #define emtf_assert(expr) ((void)0)
-#endif  // __SYNTHESIS__ not defined
+#endif  // __SYNTHESIS__ and emtf_assert not defined
 
-#define emtf_unused(param) (void)(param)
+#ifndef emtf_unused
+#define emtf_unused(param) ((void)(param))
+#endif  // emtf_unused not defined
 
-namespace emtf {
+namespace emtf_hlslib {
 
 namespace phase2 {
 
@@ -61,6 +63,6 @@ constexpr int max_emtf_pattern_activation_log2 = 6;  // (1 << 6) - 1 = 63
 
 }  // namespace phase2
 
-}  // namespace emtf
+}  // namespace emtf_hlslib
 
 #endif  // __EMTF_HLSLIB_COMMON_H__ not defined

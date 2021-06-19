@@ -12,7 +12,7 @@
 #include "layer_helpers.h"
 #include "sort_kernels.h"
 
-namespace emtf {
+namespace emtf_hlslib {
 
 namespace phase2 {
 
@@ -215,6 +215,6 @@ void zonemerging_layer(const zonemerging_in_t zonemerging_in_0[zonemerging_confi
 
 }  // namespace phase2
 
-}  // namespace emtf
+}  // namespace emtf_hlslib
 
 #endif  // __EMTF_HLSLIB_ZONEMERGING_H__ not defined

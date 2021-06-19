@@ -9,7 +9,7 @@
 #include "pattern_bank.h"
 #include "nnet_weights.h"
 
-namespace emtf {
+namespace emtf_hlslib {
 
 namespace phase2 {
 
@@ -1061,6 +1061,6 @@ T force_reg(const T& x) {
 
 }  // namespace phase2
 
-}  // namespace emtf
+}  // namespace emtf_hlslib
 
 #endif  // __EMTF_HLSLIB_LAYER_HELPERS_H__ not defined

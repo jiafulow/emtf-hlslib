@@ -5,7 +5,7 @@
 #include "common.h"
 #include "traits.h"
 
-namespace emtf {
+namespace emtf_hlslib {
 
 namespace phase2 {
 
@@ -442,6 +442,6 @@ typedef emtf_qual1_t emtf_qual_t;
 
 }  // namespace phase2
 
-}  // namespace emtf
+}  // namespace emtf_hlslib
 
 #endif  // __EMTF_HLSLIB_TYPES_H__ not defined

@@ -6,7 +6,7 @@
 // EMTF HLS
 #include "layer_helpers.h"
 
-namespace emtf {
+namespace emtf_hlslib {
 
 namespace phase2 {
 
@@ -304,6 +304,6 @@ LOOP_MULT_3:
 
 }  // namespace phase2
 
-}  // namespace emtf
+}  // namespace emtf_hlslib
 
 #endif  // __EMTF_HLSLIB_NNET_KERNELS_H__ not defined

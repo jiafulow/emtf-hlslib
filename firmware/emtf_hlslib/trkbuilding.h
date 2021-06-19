@@ -22,7 +22,7 @@
 #include "copy_kernels.h"
 #include "sort_kernels.h"
 
-namespace emtf {
+namespace emtf_hlslib {
 
 namespace phase2 {
 
@@ -1124,6 +1124,6 @@ void trkbuilding_layer(const emtf_phi_t emtf_phi[model_config::n_in], const emtf
 
 }  // namespace phase2
 
-}  // namespace emtf
+}  // namespace emtf_hlslib
 
 #endif  // __EMTF_HLSLIB_TRKBUILDING_H__ not defined

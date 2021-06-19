@@ -1,7 +1,7 @@
 #ifndef __EMTF_HLSLIB_PATTERN_BANK_H__
 #define __EMTF_HLSLIB_PATTERN_BANK_H__
 
-namespace emtf {
+namespace emtf_hlslib {
 
 namespace phase2 {
 
@@ -132,6 +132,6 @@ constexpr static const int pattern_activation_zone_2[1u << 8] = {
 
 }  // namespace phase2
 
-}  // namespace emtf
+}  // namespace emtf_hlslib
 
 #endif  // __EMTF_HLSLIB_PATTERN_BANK_H__ not defined

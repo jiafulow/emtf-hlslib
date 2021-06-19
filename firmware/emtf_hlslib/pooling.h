@@ -13,7 +13,7 @@
 // EMTF HLS
 #include "layer_helpers.h"
 
-namespace emtf {
+namespace emtf_hlslib {
 
 namespace phase2 {
 
@@ -358,6 +358,6 @@ void pooling_layer(const pooling_in_t pooling_in[pooling_config::n_in],
 
 }  // namespace phase2
 
-}  // namespace emtf
+}  // namespace emtf_hlslib
 
 #endif  // __EMTF_HLSLIB_POOLING_H__ not defined

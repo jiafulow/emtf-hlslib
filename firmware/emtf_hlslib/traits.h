@@ -5,7 +5,7 @@
 #include "ap_int.h"
 #include "ap_fixed.h"
 
-namespace emtf {
+namespace emtf_hlslib {
 
 namespace phase2 {
 
@@ -213,6 +213,6 @@ struct find_ap_int_min_allowed<ap_uint<W> > {
 
 }  // namespace phase2
 
-}  // namespace emtf
+}  // namespace emtf_hlslib
 
 #endif  // __EMTF_HLSLIB_TRAITS_H__ not defined

@@ -1,7 +1,7 @@
 #ifndef __EMTF_HLSLIB_LAYER_CONSTANTS_H__
 #define __EMTF_HLSLIB_LAYER_CONSTANTS_H__
 
-namespace emtf {
+namespace emtf_hlslib {
 
 namespace phase2 {
 
@@ -118,6 +118,6 @@ constexpr static const int th_window = 8;  // max - min + 1
 
 }  // namespace phase2
 
-}  // namespace emtf
+}  // namespace emtf_hlslib
 
 #endif  // __EMTF_HLSLIB_LAYER_CONSTANTS_H__ not defined
