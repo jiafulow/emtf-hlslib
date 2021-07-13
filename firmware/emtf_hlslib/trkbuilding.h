@@ -1031,7 +1031,7 @@ void trkbuilding_op(const emtf_phi_t emtf_phi[model_config::n_in], const emtf_be
                     const emtf_qual1_t emtf_qual1[model_config::n_in],
                     const emtf_qual2_t emtf_qual2[model_config::n_in], const emtf_time_t emtf_time[model_config::n_in],
                     const seg_zones_t seg_zones[model_config::n_in], const seg_tzones_t seg_tzones[model_config::n_in],
-                    const seg_fr_t seg_fr[model_config::n_in], const seg_dl_t seg_dl[model_config::n_in],
+                    const seg_cscfr_t seg_cscfr[model_config::n_in], const seg_gemdl_t seg_gemdl[model_config::n_in],
                     const seg_bx_t seg_bx[model_config::n_in], const seg_valid_t seg_valid[model_config::n_in],
                     const trk_qual_t& curr_trk_qual, const trk_patt_t& curr_trk_patt, const trk_col_t& curr_trk_col,
                     const trk_zone_t& curr_trk_zone, const trk_tzone_t& curr_trk_tzone,
@@ -1096,13 +1096,13 @@ void trkbuilding_layer(const emtf_phi_t emtf_phi[model_config::n_in], const emtf
                        const emtf_qual1_t emtf_qual1[model_config::n_in],
                        const emtf_qual2_t emtf_qual2[model_config::n_in],
                        const emtf_time_t emtf_time[model_config::n_in], const seg_zones_t seg_zones[model_config::n_in],
-                       const seg_tzones_t seg_tzones[model_config::n_in], const seg_fr_t seg_fr[model_config::n_in],
-                       const seg_dl_t seg_dl[model_config::n_in], const seg_bx_t seg_bx[model_config::n_in],
-                       const seg_valid_t seg_valid[model_config::n_in], const trk_qual_t& curr_trk_qual,
-                       const trk_patt_t& curr_trk_patt, const trk_col_t& curr_trk_col, const trk_zone_t& curr_trk_zone,
-                       const trk_tzone_t& curr_trk_tzone, trk_seg_t curr_trk_seg[num_emtf_sites],
-                       trk_seg_v_t& curr_trk_seg_v, trk_feat_t curr_trk_feat[num_emtf_features],
-                       trk_valid_t& curr_trk_valid) {
+                       const seg_tzones_t seg_tzones[model_config::n_in],
+                       const seg_cscfr_t seg_cscfr[model_config::n_in], const seg_gemdl_t seg_gemdl[model_config::n_in],
+                       const seg_bx_t seg_bx[model_config::n_in], const seg_valid_t seg_valid[model_config::n_in],
+                       const trk_qual_t& curr_trk_qual, const trk_patt_t& curr_trk_patt, const trk_col_t& curr_trk_col,
+                       const trk_zone_t& curr_trk_zone, const trk_tzone_t& curr_trk_tzone,
+                       trk_seg_t curr_trk_seg[num_emtf_sites], trk_seg_v_t& curr_trk_seg_v,
+                       trk_feat_t curr_trk_feat[num_emtf_features], trk_valid_t& curr_trk_valid) {
   // hls-pragmas begin
 #pragma HLS PIPELINE II = trkbuilding_config::layer_target_ii
 #pragma HLS INTERFACE ap_ctrl_none port = return
@@ -1118,7 +1118,7 @@ void trkbuilding_layer(const emtf_phi_t emtf_phi[model_config::n_in], const emtf
                 "dio_ph_diff_idx_t type check failed");
 
   trkbuilding_op<Zone>(emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_qual2, emtf_time, seg_zones,
-                       seg_tzones, seg_fr, seg_dl, seg_bx, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col,
+                       seg_tzones, seg_cscfr, seg_gemdl, seg_bx, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col,
                        curr_trk_zone, curr_trk_tzone, curr_trk_seg, curr_trk_seg_v, curr_trk_feat, curr_trk_valid);
 }
 

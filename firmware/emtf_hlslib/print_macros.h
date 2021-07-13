@@ -14,7 +14,7 @@
       std::cout << (iseg / num_emtf_segments) << " " << (iseg % num_emtf_segments) << " " << emtf_phi[iseg] << " "    \
                 << emtf_bend[iseg] << " " << emtf_theta1[iseg] << " " << emtf_theta2[iseg] << " " << emtf_qual1[iseg] \
                 << " " << emtf_qual2[iseg] << " " << emtf_time[iseg] << " " << seg_zones[iseg] << " "                 \
-                << seg_tzones[iseg] << " " << seg_fr[iseg] << " " << seg_dl[iseg] << " " << seg_bx[iseg] << " "       \
+                << seg_tzones[iseg] << " " << seg_cscfr[iseg] << " " << seg_gemdl[iseg] << " " << seg_bx[iseg] << " " \
                 << seg_valid[iseg] << " " << std::endl;                                                               \
     }                                                                                                                 \
   }

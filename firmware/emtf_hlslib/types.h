@@ -20,8 +20,8 @@ enum struct SegmentDataType {
   emtf_time = 6,
   seg_zones = 7,
   seg_tzones = 8,
-  seg_fr = 9,
-  seg_dl = 10,
+  seg_cscfr = 9,
+  seg_gemdl = 10,
   seg_bx = 11,
   seg_valid = 12
 };
@@ -58,8 +58,8 @@ enum struct TrackDataType {
 // emtf_time_t   | 6         | 1
 // seg_zones_t   | 3         | 0
 // seg_tzones_t  | 3         | 0
-// seg_fr_t      | 1         | 0
-// seg_dl_t      | 1         | 0
+// seg_cscfr_t   | 1         | 0
+// seg_gemdl_t   | 1         | 0
 // seg_bx_t      | 2         | 1
 // seg_valid_t   | 1         | 0
 //
@@ -125,11 +125,11 @@ struct segment_data_bw_traits<SegmentDataType::seg_tzones> {
   static const int value = 3;
 };
 template <>
-struct segment_data_bw_traits<SegmentDataType::seg_fr> {
+struct segment_data_bw_traits<SegmentDataType::seg_cscfr> {
   static const int value = 1;
 };
 template <>
-struct segment_data_bw_traits<SegmentDataType::seg_dl> {
+struct segment_data_bw_traits<SegmentDataType::seg_gemdl> {
   static const int value = 1;
 };
 template <>
@@ -250,11 +250,11 @@ struct segment_data_sg_traits<SegmentDataType::seg_tzones> {
   static const bool value = false;
 };
 template <>
-struct segment_data_sg_traits<SegmentDataType::seg_fr> {
+struct segment_data_sg_traits<SegmentDataType::seg_cscfr> {
   static const bool value = false;
 };
 template <>
-struct segment_data_sg_traits<SegmentDataType::seg_dl> {
+struct segment_data_sg_traits<SegmentDataType::seg_gemdl> {
   static const bool value = false;
 };
 template <>
@@ -357,8 +357,8 @@ DEFINE_SEGMENT_DATATYPE(emtf_qual2)
 DEFINE_SEGMENT_DATATYPE(emtf_time)
 DEFINE_SEGMENT_DATATYPE(seg_zones)
 DEFINE_SEGMENT_DATATYPE(seg_tzones)
-DEFINE_SEGMENT_DATATYPE(seg_fr)
-DEFINE_SEGMENT_DATATYPE(seg_dl)
+DEFINE_SEGMENT_DATATYPE(seg_cscfr)
+DEFINE_SEGMENT_DATATYPE(seg_gemdl)
 DEFINE_SEGMENT_DATATYPE(seg_bx)
 DEFINE_SEGMENT_DATATYPE(seg_valid)
 #undef DEFINE_SEGMENT_DATATYPE
@@ -396,8 +396,8 @@ typedef struct {
   emtf_time_t emtf_time;
   seg_zones_t seg_zones;
   seg_tzones_t seg_tzones;
-  seg_fr_t seg_fr;
-  seg_dl_t seg_dl;
+  seg_cscfr_t seg_cscfr;
+  seg_gemdl_t seg_gemdl;
   seg_bx_t seg_bx;
   seg_valid_t seg_valid;
 } model_in_t;

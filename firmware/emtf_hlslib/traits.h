@@ -186,7 +186,7 @@ struct make_repeat<ap_uint<W>, N> {
 };
 
 // _____________________________________________________________________________
-// Find max allowed value for ap datatype
+// Find min, max allowed values for ap datatype
 template <typename T>
 struct find_ap_int_max_allowed {};
 
@@ -197,6 +197,18 @@ struct find_ap_int_max_allowed<ap_int<W> > {
 template <int W>
 struct find_ap_int_max_allowed<ap_uint<W> > {
   static const int value = (1 << W) - 1;
+};
+
+template <typename T>
+struct find_ap_int_min_allowed {};
+
+template <int W>
+struct find_ap_int_min_allowed<ap_int<W> > {
+  static const int value = -((1 << W) / 2);
+};
+template <int W>
+struct find_ap_int_min_allowed<ap_uint<W> > {
+  static const int value = 0;
 };
 
 }  // namespace phase2
