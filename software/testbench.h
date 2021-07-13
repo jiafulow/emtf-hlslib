@@ -130,12 +130,23 @@ struct FpgaEvent {
       const int emtf_segment = evt[ihit][1];
 
       // Accept at most 2 segments
-      if (!(static_cast<unsigned int>(emtf_segment) < num_segments))
+      if (not(static_cast<unsigned>(emtf_segment) < num_segments))
         continue;
+
+      // Populate the variables
+      //
+      // +-------------+-------------+-------------+-------------+
+      // | emtf_phi    | emtf_bend   | emtf_theta1 | emtf_theta2 |
+      // +-------------+-------------+-------------+-------------+
+      // | emtf_qual1  | emtf_qual2  | emtf_time   | seg_zones   |
+      // +-------------+-------------+-------------+-------------+
+      // | seg_tzones  | seg_cscfr   | seg_gemdl   | seg_bx      |
+      // +-------------+-------------+-------------+-------------+
+      // | seg_valid   |             |             |             |
+      // +-------------+-------------+-------------+-------------+
 
       const int iseg = index_fn(emtf_chamber, emtf_segment);
 
-      // 13 variables
       data[iseg].emtf_phi = evt[ihit][2];
       data[iseg].emtf_bend = evt[ihit][3];
       data[iseg].emtf_theta1 = evt[ihit][4];
@@ -145,8 +156,8 @@ struct FpgaEvent {
       data[iseg].emtf_time = evt[ihit][8];
       data[iseg].seg_zones = evt[ihit][9];
       data[iseg].seg_tzones = evt[ihit][10];
-      data[iseg].seg_fr = evt[ihit][11];
-      data[iseg].seg_dl = evt[ihit][12];
+      data[iseg].seg_cscfr = evt[ihit][11];
+      data[iseg].seg_gemdl = evt[ihit][12];
       data[iseg].seg_bx = evt[ihit][13];
       data[iseg].seg_valid = evt[ihit][14];
 
@@ -288,7 +299,7 @@ int count_mismatches(InputIt1 first1, InputIt1 last1, InputIt2 first2, int tol =
   for (; first1 != last1; ++first1, ++first2) {
     // Condition: !((gold0 <= x) and (x <= gold1))
     // If tol = 0, condition is simply (gold != x)
-    if (!(((*first1 - tol) <= *first2) and (*first2 <= (*first1 + tol)))) {
+    if (not(((*first1 - tol) <= *first2) and (*first2 <= (*first1 + tol)))) {
       ++cnt;
     }
   }
