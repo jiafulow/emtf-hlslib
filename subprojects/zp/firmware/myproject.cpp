@@ -1,11 +1,11 @@
 #include "myproject.h"
 
 namespace {
-using namespace emtf::phase2;
+using namespace emtf_hlslib::phase2;
 }
 
 namespace detail {
-using namespace emtf::phase2::detail;
+using namespace emtf_hlslib::phase2::detail;
 }
 
 // Top-level function implementation

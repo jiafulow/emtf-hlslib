@@ -1,11 +1,11 @@
 #include "myproject.h"
 
 namespace {
-using namespace emtf::phase2;
+using namespace emtf_hlslib::phase2;
 }
 
 namespace detail {
-using namespace emtf::phase2::detail;
+using namespace emtf_hlslib::phase2::detail;
 }
 
 // Top-level function implementation
@@ -222,7 +222,7 @@ LOOP_TRK_1:
 #pragma HLS UNROLL
     // hls-pragmas end
 
-    // Intermediate arrays
+    // Intermediate arrays (for layer output)
     trk_seg_t curr_trk_seg[num_emtf_sites];
     trk_feat_t curr_trk_feat[num_emtf_features];
 
@@ -254,14 +254,14 @@ LOOP_TRK_2:
 #pragma HLS UNROLL
     // hls-pragmas end
 
-    // Intermediate arrays
+    // Intermediate arrays (for layer input)
     trk_feat_t curr_trk_feat_rm[num_emtf_features];
 
     // hls-pragmas begin
 #pragma HLS ARRAY_PARTITION variable = curr_trk_feat complete dim = 0
     // hls-pragmas end
 
-    // Copy from array
+    // Copy from arrays
     ::detail::copy_n_values<num_emtf_features>(&(trk_feat_rm[itrk * num_emtf_features]), curr_trk_feat_rm);
 
     fullyconnect_layer<m_zone_any_tag>(curr_trk_feat_rm, trk_invpt[itrk], trk_phi[itrk], trk_eta[itrk], trk_d0[itrk],
@@ -278,16 +278,15 @@ LOOP_OUT:
     const unsigned itrk = (i / model_config::n_out_per_trk);
     const unsigned ivar = (i % model_config::n_out_per_trk);
 
-    const trk_seg_t invalid_marker_ph_seg = model_config::n_in;
-
-    const auto curr_trk_seg_rm = &(trk_seg_rm[itrk * num_emtf_sites]);
-    const auto curr_trk_feat_rm = &(trk_feat_rm[itrk * num_emtf_features]);
+    auto curr_trk_seg_rm = &(trk_seg_rm[itrk * num_emtf_sites]);
+    auto curr_trk_feat_rm = &(trk_feat_rm[itrk * num_emtf_features]);
 
     if (ivar < num_emtf_features) {
       out[i] = curr_trk_feat_rm[ivar];
     } else if (ivar < (num_emtf_features + num_emtf_sites + 0)) {
       const unsigned ivar_1 = (ivar - num_emtf_features);
-      out[i] = (trk_seg_rm_v[itrk][ivar_1]) ? curr_trk_seg_rm[ivar_1] : invalid_marker_ph_seg;
+      const trk_seg_t invalid_marker_trk_seg = model_config::n_in;
+      out[i] = (trk_seg_rm_v[itrk][ivar_1]) ? curr_trk_seg_rm[ivar_1] : invalid_marker_trk_seg;
     } else if (ivar < (num_emtf_features + num_emtf_sites + 1)) {
       out[i] = trk_valid_rm[itrk];
     } else if (ivar < (num_emtf_features + num_emtf_sites + 2)) {

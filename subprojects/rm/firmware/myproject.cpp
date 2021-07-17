@@ -1,11 +1,11 @@
 #include "myproject.h"
 
 namespace {
-using namespace emtf::phase2;
+using namespace emtf_hlslib::phase2;
 }
 
 namespace detail {
-using namespace emtf::phase2::detail;
+using namespace emtf_hlslib::phase2::detail;
 }
 
 // Top-level function implementation
@@ -50,8 +50,6 @@ LOOP_IN0:
     const unsigned itrk = i / n_in_per_trk;
     const unsigned ivar = i % n_in_per_trk;
 
-    const trk_seg_t invalid_marker_ph_seg = model_config::n_in;
-
     auto curr_trk_seg = &(trk_seg[itrk * num_emtf_sites]);
     auto curr_trk_feat = &(trk_feat[itrk * num_emtf_features]);
 
@@ -66,9 +64,9 @@ LOOP_IN0:
       }
     } else if (ivar < (num_emtf_features + num_emtf_sites)) {
       const unsigned ivar_1 = (ivar - num_emtf_features);
+      const trk_seg_t invalid_marker_trk_seg = model_config::n_in;
       curr_trk_seg[ivar_1] = in0[i];
-      trk_seg_v[itrk][ivar_1] =
-          ((static_cast<trk_seg_t>(in0[i]) != invalid_marker_ph_seg) ? static_cast<bool_t>(1) : static_cast<bool_t>(0));
+      trk_seg_v[itrk][ivar_1] = (static_cast<trk_seg_t>(in0[i]) != invalid_marker_trk_seg);
     }
   }  // end loop over in0
 
@@ -87,16 +85,15 @@ LOOP_OUT:
     const unsigned itrk = i / n_out_per_trk;
     const unsigned ivar = i % n_out_per_trk;
 
-    const trk_seg_t invalid_marker_ph_seg = model_config::n_in;
-
-    const auto curr_trk_seg_rm = &(trk_seg_rm[itrk * num_emtf_sites]);
-    const auto curr_trk_feat_rm = &(trk_feat_rm[itrk * num_emtf_features]);
+    auto curr_trk_seg_rm = &(trk_seg_rm[itrk * num_emtf_sites]);
+    auto curr_trk_feat_rm = &(trk_feat_rm[itrk * num_emtf_features]);
 
     if (ivar < num_emtf_features) {
       out[i] = curr_trk_feat_rm[ivar];
     } else if (ivar < (num_emtf_features + num_emtf_sites)) {
       const unsigned ivar_1 = (ivar - num_emtf_features);
-      out[i] = (trk_seg_rm_v[itrk][ivar_1]) ? curr_trk_seg_rm[ivar_1] : invalid_marker_ph_seg;
+      const trk_seg_t invalid_marker_trk_seg = model_config::n_in;
+      out[i] = (trk_seg_rm_v[itrk][ivar_1]) ? curr_trk_seg_rm[ivar_1] : invalid_marker_trk_seg;
     }
   }  // end loop over out
 }

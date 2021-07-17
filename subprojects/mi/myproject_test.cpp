@@ -4,7 +4,7 @@
 // Test bench
 #include "software/testbench.h"
 
-using namespace emtf::phase2;
+using namespace emtf_hlslib::phase2;
 using namespace testbench;
 
 void sanity_check() {
@@ -46,8 +46,8 @@ int main(int argc, char** argv) {
 
     // Create evt_flat & res_flat
     assert((evt.size() == 1) and (res.size() == 1));
-    const auto evt_flat = evt.front();
-    const auto res_flat = res.front();
+    auto evt_flat = evt.front();
+    auto res_flat = res.front();
 
     // Initialize input & output
     top_in_t in0[TOP_N_IN];

@@ -1,11 +1,11 @@
 #include "myproject.h"
 
 namespace {
-using namespace emtf::phase2;
+using namespace emtf_hlslib::phase2;
 }
 
 namespace detail {
-using namespace emtf::phase2::detail;
+using namespace emtf_hlslib::phase2::detail;
 }
 
 // Top-level function implementation
@@ -106,17 +106,15 @@ LOOP_OUT:
     // hls-pragmas end
 
     const unsigned n_out_per_trk = TOP_N_OUT;
-    const unsigned itrk = i / n_out_per_trk;
+    // const unsigned itrk = i / n_out_per_trk;  // unused
     const unsigned ivar = i % n_out_per_trk;
-    emtf_unused(itrk);
-
-    const trk_seg_t invalid_marker_ph_seg = model_config::n_in;
 
     if (ivar < num_emtf_features) {
       out[i] = curr_trk_feat[ivar];
     } else if (ivar < (num_emtf_features + num_emtf_sites)) {
       const unsigned ivar_1 = (ivar - num_emtf_features);
-      out[i] = (curr_trk_seg_v[ivar_1]) ? curr_trk_seg[ivar_1] : invalid_marker_ph_seg;
+      const trk_seg_t invalid_marker_trk_seg = model_config::n_in;
+      out[i] = (curr_trk_seg_v[ivar_1]) ? curr_trk_seg[ivar_1] : invalid_marker_trk_seg;
     }
   }  // end loop over out
 }

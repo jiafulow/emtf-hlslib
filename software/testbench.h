@@ -21,7 +21,7 @@
 #include "../firmware/emtf_hlslib/types.h"
 
 namespace {
-using namespace emtf::phase2;
+using namespace emtf_hlslib::phase2;
 }
 
 namespace testbench {
