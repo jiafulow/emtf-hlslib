@@ -93,7 +93,7 @@ LOOP_TRK_1:
     trk_seg_reduced[reduced_begin_index + 3] = vld_4 ? tmp_4 : tmp_8;
     trk_seg_reduced[reduced_begin_index + 4] = tmp_b;
 
-    // Logical OR
+    // Bitwise OR
     trk_seg_reduced_v[i][0] = vld_0 | vld_9 | vld_1 | vld_5;
     trk_seg_reduced_v[i][1] = vld_2 | vld_a | vld_6;
     trk_seg_reduced_v[i][2] = vld_3 | vld_7;
@@ -175,11 +175,11 @@ LOOP_TRK_3:
         const bool_t vld_j = trk_seg_reduced_v[j][k];
         const bool_t has_shared_seg =
             (trk_seg_reduced[(i * num_emtf_sites_rm) + k] == trk_seg_reduced[(j * num_emtf_sites_rm) + k]);
-        killed_tmp |= (vld_i & vld_j & has_shared_seg);  // logical OR over all 5 sites
+        killed_tmp |= (vld_i & vld_j & has_shared_seg);  // bitwise OR over all 5 sites
 
       }  // end k loop
 
-      killed |= killed_tmp;  // logical OR over all tracks (j < i)
+      killed |= killed_tmp;  // bitwise OR over all tracks (j < i)
 
     }  // end j loop
 
@@ -197,8 +197,12 @@ LOOP_TRK_4:
 #pragma HLS UNROLL
     // hls-pragmas end
 
-    const auto x_i = (survivors_tmp[(i * N) + 3], survivors_tmp[(i * N) + 2], survivors_tmp[(i * N) + 1],
-                      survivors_tmp[(i * N) + 0]);
+    // Bit concatenation
+    auto&& x_i =
+        (survivors_tmp[(i * N) + 3], survivors_tmp[(i * N) + 2], survivors_tmp[(i * N) + 1], survivors_tmp[(i * N) + 0])
+            .get();
+    emtf_assert(x_i.length() == dio_survivor_t::width);
+
     survivors[i] = x_i;
   }  // end i loop
 

@@ -229,8 +229,10 @@ void trkbuilding_match_ph_compute_op(const emtf_phi_t emtf_phi_mhph[trkbuilding_
   const emtf_phi_t ph_patt = ((static_cast<emtf_phi_t>(col_patt) << bits_to_shift) + (1u << (bits_to_shift - 1)));
 
   // Translate trk_zone, trk_tzone into bit selection
-  const trk_zone_t bit_sel_zone = static_cast<trk_zone_t>(num_emtf_zones - 1) - curr_trk_zone;
-  const trk_tzone_t bit_sel_tzone = static_cast<trk_tzone_t>(num_emtf_timezones - 1) - curr_trk_tzone;
+  constexpr int bit_sel_zone_hi = num_emtf_zones - 1;
+  constexpr int bit_sel_tzone_hi = num_emtf_timezones - 1;
+  const trk_zone_t bit_sel_zone = bit_sel_zone_hi - curr_trk_zone;
+  const trk_tzone_t bit_sel_tzone = bit_sel_tzone_hi - curr_trk_tzone;
 
   // Loop over segments
 LOOP_PHI_2:
@@ -1017,7 +1019,7 @@ LOOP_EXTRACT_2:
 
   // Set curr_trk_valid
   {
-    curr_trk_valid = static_cast<bool>(curr_trk_seg_v);  // logical OR reduced
+    curr_trk_valid = static_cast<bool>(curr_trk_seg_v);  // bitwise OR reduced
   }
 }
 

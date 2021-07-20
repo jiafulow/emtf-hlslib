@@ -120,7 +120,7 @@ void zoning_row_join_op(const T_IN in0[N], T_OUT& out, m_10deg_chamber_tag) {
   ap_uint<cfg::bw_slice_e> tmp_e_0 =
       in0[5].range(cfg::col_start_f - cfg::col_start_d - 1, cfg::col_start_e - cfg::col_start_d);
 
-  // Logical OR
+  // Bitwise OR
   ap_uint<cfg::bw_slice_0> tmp_1_0_0 = tmp_0_0;
   ap_uint<cfg::bw_slice_1> tmp_1_1_0 = (tmp_1_0 | tmp_1_1);
   ap_uint<cfg::bw_slice_2> tmp_1_2_0 = tmp_2_0;
@@ -138,8 +138,9 @@ void zoning_row_join_op(const T_IN in0[N], T_OUT& out, m_10deg_chamber_tag) {
   ap_uint<cfg::bw_slice_e> tmp_1_e_0 = tmp_e_0;
 
   // Bit concatenation
-  const auto tmp_2_0_0 = (tmp_1_e_0, tmp_1_d_0, tmp_1_c_0, tmp_1_b_0, tmp_1_a_0, tmp_1_9_0, tmp_1_8_0, tmp_1_7_0,
-                          tmp_1_6_0, tmp_1_5_0, tmp_1_4_0, tmp_1_3_0, tmp_1_2_0, tmp_1_1_0, tmp_1_0_0);
+  auto&& tmp_2_0_0 = (tmp_1_e_0, tmp_1_d_0, tmp_1_c_0, tmp_1_b_0, tmp_1_a_0, tmp_1_9_0, tmp_1_8_0, tmp_1_7_0, tmp_1_6_0,
+                      tmp_1_5_0, tmp_1_4_0, tmp_1_3_0, tmp_1_2_0, tmp_1_1_0, tmp_1_0_0)
+                         .get();
   emtf_assert(tmp_2_0_0.length() == zoning_out_t::width);
 
   // Output
@@ -193,7 +194,7 @@ void zoning_row_join_op(const T_IN in0[N], T_OUT& out, m_20deg_chamber_tag) {
   ap_uint<cfg::bw_slice_e> tmp_e_0 =
       in0[2].range(cfg::col_start_f - cfg::col_start_b - 1, cfg::col_start_e - cfg::col_start_b);
 
-  // Logical OR
+  // Bitwise OR
   ap_uint<cfg::bw_slice_0> tmp_1_0_0 = tmp_0_0;
   ap_uint<cfg::bw_slice_1> tmp_1_1_0 = tmp_1_0;
   ap_uint<cfg::bw_slice_2> tmp_1_2_0 = tmp_2_0;
@@ -211,8 +212,9 @@ void zoning_row_join_op(const T_IN in0[N], T_OUT& out, m_20deg_chamber_tag) {
   ap_uint<cfg::bw_slice_e> tmp_1_e_0 = tmp_e_0;
 
   // Bit concatenation
-  const auto tmp_2_0_0 = (tmp_1_e_0, tmp_1_d_0, tmp_1_c_0, tmp_1_b_0, tmp_1_a_0, tmp_1_9_0, tmp_1_8_0, tmp_1_7_0,
-                          tmp_1_6_0, tmp_1_5_0, tmp_1_4_0, tmp_1_3_0, tmp_1_2_0, tmp_1_1_0, tmp_1_0_0);
+  auto&& tmp_2_0_0 = (tmp_1_e_0, tmp_1_d_0, tmp_1_c_0, tmp_1_b_0, tmp_1_a_0, tmp_1_9_0, tmp_1_8_0, tmp_1_7_0, tmp_1_6_0,
+                      tmp_1_5_0, tmp_1_4_0, tmp_1_3_0, tmp_1_2_0, tmp_1_1_0, tmp_1_0_0)
+                         .get();
   emtf_assert(tmp_2_0_0.length() == zoning_out_t::width);
 
   // Output
@@ -307,7 +309,7 @@ void zoning_row_join_op(const T_IN in0[N], T_OUT& out, m_20deg_ext_chamber_tag) 
   ap_uint<cfg::bw_slice_e> tmp_e_1 =
       in0[4 + 5].range(cfg::col_start_f - cfg::col_start_d - 1, cfg::col_start_e - cfg::col_start_d);
 
-  // Logical OR
+  // Bitwise OR
   ap_uint<cfg::bw_slice_0> tmp_1_0_0 = tmp_0_0;
   ap_uint<cfg::bw_slice_1> tmp_1_1_0 = (tmp_1_0 | tmp_1_1);
   ap_uint<cfg::bw_slice_2> tmp_1_2_0 = (tmp_2_0 | tmp_2_1);
@@ -325,8 +327,9 @@ void zoning_row_join_op(const T_IN in0[N], T_OUT& out, m_20deg_ext_chamber_tag) 
   ap_uint<cfg::bw_slice_e> tmp_1_e_0 = (tmp_e_0 | tmp_e_1);
 
   // Bit concatenation
-  const auto tmp_2_0_0 = (tmp_1_e_0, tmp_1_d_0, tmp_1_c_0, tmp_1_b_0, tmp_1_a_0, tmp_1_9_0, tmp_1_8_0, tmp_1_7_0,
-                          tmp_1_6_0, tmp_1_5_0, tmp_1_4_0, tmp_1_3_0, tmp_1_2_0, tmp_1_1_0, tmp_1_0_0);
+  auto&& tmp_2_0_0 = (tmp_1_e_0, tmp_1_d_0, tmp_1_c_0, tmp_1_b_0, tmp_1_a_0, tmp_1_9_0, tmp_1_8_0, tmp_1_7_0, tmp_1_6_0,
+                      tmp_1_5_0, tmp_1_4_0, tmp_1_3_0, tmp_1_2_0, tmp_1_1_0, tmp_1_0_0)
+                         .get();
   emtf_assert(tmp_2_0_0.length() == zoning_out_t::width);
 
   // Output
@@ -405,10 +408,12 @@ void zoning_row_gather_op(const emtf_phi_t emtf_phi[model_config::n_in],
   }
 
   // Translate zone, timezone into bit selection
-  const trk_zone_t the_zone = detail::zone_traits<Zone>::value;
-  const trk_tzone_t the_tzone = detail::timezone_traits<Timezone>::value;
-  const trk_zone_t bit_sel_zone = static_cast<trk_zone_t>(num_emtf_zones - 1) - the_zone;
-  const trk_tzone_t bit_sel_tzone = static_cast<trk_tzone_t>(num_emtf_timezones - 1) - the_tzone;
+  constexpr int the_zone = detail::zone_traits<Zone>::value;
+  constexpr int the_tzone = detail::timezone_traits<Timezone>::value;
+  constexpr int bit_sel_zone_hi = num_emtf_zones - 1;
+  constexpr int bit_sel_tzone_hi = num_emtf_timezones - 1;
+  const trk_zone_t bit_sel_zone = bit_sel_zone_hi - the_zone;
+  const trk_tzone_t bit_sel_tzone = bit_sel_tzone_hi - the_tzone;
 
   // Loop over chambers
 LOOP_CHM_1:
@@ -486,7 +491,7 @@ LOOP_CHM_2:
 #pragma HLS UNROLL
     // hls-pragmas end
 
-    // Logical OR
+    // Bitwise OR
     out[i] = (in0[i] | in1[i]);
   }  // end loop over chambers
 }

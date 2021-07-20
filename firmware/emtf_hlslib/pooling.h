@@ -114,9 +114,9 @@ LOOP_POOL:
     const unsigned int col_stop_6 = pattern_col_stop_table[table_index + 6];
     const unsigned int col_stop_7 = pattern_col_stop_table[table_index + 7];
 
-    // Pooling, done by logical OR reduction
+    // Pooling, done by bitwise OR reduction
     // Note: static_cast<bool> is different from static_cast<bool_t>. static_cast<bool>
-    // performs logical OR reduction, whereas static_cast<bool_t> performs bit selection.
+    // performs bitwise OR reduction, whereas static_cast<bool_t> performs bit selection.
     const bool_t b0 = static_cast<bool>(patch_row_0.range(col_stop_0, col_start_0));
     const bool_t b1 = static_cast<bool>(patch_row_1.range(col_stop_1, col_start_1));
     const bool_t b2 = static_cast<bool>(patch_row_2.range(col_stop_2, col_start_2));
