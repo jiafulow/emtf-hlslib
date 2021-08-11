@@ -8,9 +8,21 @@
 #define emtf_assert(expr) ((void)0)
 #endif  // __SYNTHESIS__ and emtf_assert not defined
 
-#ifndef emtf_unused
-#define emtf_unused(param) ((void)(param))
-#endif  // emtf_unused not defined
+#if !defined(__SYNTHESIS__) && !defined(emtf_likely)
+#define emtf_likely(x) __builtin_expect(!!(x), 1)
+#elif !defined(emtf_likely)
+#define emtf_likely(x) (x)
+#endif  // __SYNTHESIS__ and emtf_likely not defined
+
+#if !defined(__SYNTHESIS__) && !defined(emtf_unlikely)
+#define emtf_unlikely(x) __builtin_expect(!!(x), 0)
+#elif !defined(emtf_unlikely)
+#define emtf_unlikely(x) (x)
+#endif  // __SYNTHESIS__ and emtf_unlikely not defined
+
+#ifndef emtf_maybe_unused
+#define emtf_maybe_unused(param) ((void)(param))
+#endif  // emtf_maybe_unused not defined
 
 namespace emtf_hlslib {
 
