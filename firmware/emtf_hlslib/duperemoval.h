@@ -284,7 +284,7 @@ LOOP_TRK_5:
 #ifndef __SYNTHESIS__
   auto is_power_of_two = [](unsigned x) -> bool { return ((x & (x - 1)) == 0); };
   for (unsigned i = 0; i < duperemoval_config::n_out; i++) {
-    emtf_assert(is_power_of_two(survivors[i]));  // make sure it is either zero or power of 2
+    emtf_assert(is_power_of_two(static_cast<unsigned>(survivors[i])));  // make sure it is either zero or power of 2
   }
 #endif  // __SYNTHESIS__ not defined
 }

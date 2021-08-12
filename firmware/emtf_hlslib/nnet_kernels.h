@@ -1,7 +1,7 @@
 #ifndef __EMTF_HLSLIB_NNET_KERNELS_H__
 #define __EMTF_HLSLIB_NNET_KERNELS_H__
 
-#include <cmath>  // provides std::tanh, std::pow, std::round
+#include <cmath>  // provides std::floor, std::tanh, std::ldexp, std::abs
 
 // EMTF HLS
 #include "layer_helpers.h"
@@ -24,15 +24,24 @@ void init_nnet_weights_op(T* arr, U op) {
   }
 }
 
+// Adapted from:
+// https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/kernels/cwise_ops.h
+template <typename T = void>
+float round_half_to_even(float x) {
+  const float round_val = std::floor(x + 0.5f);
+  const float fraction = round_val - x;
+  if (emtf_unlikely(fraction == 0.5f)) {
+    return 2.0f * std::floor(0.5f * x + 0.5f);
+  } else {
+    return round_val;
+  }
+}
+
 template <unsigned int N, typename T_IN, typename T_OUT>
 void init_tanh_table_op(T_OUT table[N]) {
   static_assert(is_ap_fixed_type<T_IN>::value, "T_IN type check failed");
   static_assert(is_ap_fixed_type<T_OUT>::value, "T_OUT type check failed");
   static_assert(N == (1u << T_IN::width), "N value check failed");
-
-  constexpr int W_OUT = T_OUT::width;
-  constexpr int I_OUT = T_OUT::iwidth;
-  constexpr int F_OUT = W_OUT - I_OUT;
 
   T_IN x = 0;
 
@@ -44,8 +53,8 @@ void init_tanh_table_op(T_OUT table[N]) {
     // Cast from ap_fixed T_IN to float32, call tanh(), cast to ap_fixed T_OUT
     float x_f32 = static_cast<float>(x);
     float y_f32 = std::tanh(x_f32);
-    float q_f32 = std::pow(2.f, -F_OUT);
-    table[i] = static_cast<T_OUT>(std::round(y_f32 / q_f32) * q_f32);
+    float q_f32 = std::ldexp(1.0f, -1 * ap_fixed_widths<T_OUT>::fwidth);
+    table[i] = static_cast<T_OUT>(round_half_to_even(y_f32 / q_f32) * q_f32);
   }
 }
 
@@ -208,7 +217,7 @@ LOOP_ACCUM_2:
   }
 
   // Round and saturate
-  out = ap_fixed<W_OUT, I_OUT, AP_RND, AP_SAT>(accum);
+  out = static_cast<ap_fixed<W_OUT, I_OUT, AP_RND, AP_SAT> >(accum);
 
   // Sanity check
 #ifndef __SYNTHESIS__
@@ -285,7 +294,7 @@ LOOP_MULT_3:
     }
 
     // Round and saturate
-    out[j] = ap_fixed<W_OUT, I_OUT, AP_RND, AP_SAT>(accum);
+    out[j] = static_cast<ap_fixed<W_OUT, I_OUT, AP_RND, AP_SAT> >(accum);
   }
 
   // Sanity check

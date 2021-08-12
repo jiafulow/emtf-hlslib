@@ -451,7 +451,7 @@ template <>
 struct select_nnet_activation_type<m_nnet_0_layer_3_tag> {
   typedef ap_fixed<14, 1> type;
 };
-// 2^6 is needed to bring the output node to the right scale
+// The output node has been applied a multiplicative factor of 2^6
 template <>
 struct select_nnet_activation_type<m_nnet_0_layer_4_tag> {
   typedef ap_fixed<14, 1 + 6> type;
