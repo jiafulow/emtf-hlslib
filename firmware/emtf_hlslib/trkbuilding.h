@@ -105,6 +105,8 @@ LOOP_PARAM:
 // Helper function to calculate abs difference
 template <typename T>
 T calc_abs_diff(const T& lhs, const T& rhs) {
+  static_assert(!ap_int_props<T>::is_signed_v, "T must be unsigned");
+
   // hls-pragmas begin
 #pragma HLS PIPELINE II = trkbuilding_config::target_ii
 #pragma HLS INTERFACE ap_ctrl_none port = return
@@ -117,6 +119,8 @@ T calc_abs_diff(const T& lhs, const T& rhs) {
 // Helper function to calculate signed difference
 template <typename T, typename U = typename make_signed<typename make_wider<T>::type>::type>
 U calc_signed_diff(const T& lhs, const T& rhs) {
+  static_assert(!ap_int_props<T>::is_signed_v, "T must be unsigned");
+
   // hls-pragmas begin
 #pragma HLS PIPELINE II = trkbuilding_config::target_ii
 #pragma HLS INTERFACE ap_ctrl_none port = return
@@ -129,6 +133,8 @@ U calc_signed_diff(const T& lhs, const T& rhs) {
 // Helper function to calculate rectified difference i.e. max(0, lhs - rhs)
 template <typename T>
 T calc_rectified_diff(const T& lhs, const T& rhs) {
+  static_assert(!ap_int_props<T>::is_signed_v, "T must be unsigned");
+
   // hls-pragmas begin
 #pragma HLS PIPELINE II = trkbuilding_config::target_ii
 #pragma HLS INTERFACE ap_ctrl_none port = return
@@ -215,7 +221,7 @@ void trkbuilding_match_ph_compute_op(const emtf_phi_t emtf_phi_mhph[trkbuilding_
 
   const unsigned int num_site_segments = trkbuilding_internal_config::num_site_segments;
   typedef dio_ph_diff_t diff_t;
-  const diff_t invalid_marker_ph_diff = find_ap_int_max_allowed<diff_t>::value;
+  const diff_t invalid_marker_ph_diff = ap_int_limits<diff_t>::max_value;
 
   constexpr int bits_to_shift = emtf_img_col_factor_log2;
 
@@ -646,7 +652,7 @@ void trkbuilding_find_th_median_of_nine_op(const T_IN in0[trkbuilding_internal_c
   // Use a different invalid_marker_th_1, because the usual invalid_marker_th, which is 0,
   // doesn't work in the following median sort.
   const data_t invalid_marker_th = detail::th_invalid;
-  const data_t invalid_marker_th_1 = find_ap_int_max_allowed<data_t>::value;
+  const data_t invalid_marker_th_1 = ap_int_limits<data_t>::max_value;
 
   // Ternary tree structure (N must be power of 3)
   const unsigned int num_nodes = ((N * 3) - 1) / 2;  // = 13
@@ -800,7 +806,7 @@ void trkbuilding_match_th_select_op(const T_IN& th0, const T_IN& th1, const T_IN
   typedef T_IN data_t;
   typedef dio_th_diff_t diff_t;
   const data_t invalid_marker_th = detail::th_invalid;
-  const diff_t invalid_marker_th_diff = find_ap_int_max_allowed<diff_t>::value;
+  const diff_t invalid_marker_th_diff = ap_int_limits<diff_t>::max_value;
   const diff_t th_window = detail::th_window;
 
   // Calculate abs(delta-theta)
@@ -835,7 +841,7 @@ void trkbuilding_match_th_select_op(const T_IN& th0, const T_IN& th_median, T_OU
   typedef T_IN data_t;
   typedef dio_th_diff_t diff_t;
   const data_t invalid_marker_th = detail::th_invalid;
-  const diff_t invalid_marker_th_diff = find_ap_int_max_allowed<diff_t>::value;
+  const diff_t invalid_marker_th_diff = ap_int_limits<diff_t>::max_value;
   const diff_t th_window = detail::th_window;
 
   // Calculate abs(delta-theta)
