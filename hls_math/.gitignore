@@ -1,0 +1,36 @@
+# Ignore everything
+/*
+
+# Except these files and subdirectories
+!/.gitignore
+!/fabs_fixed/
+!/round_fixed/
+!/fract_fixed/
+!/sat_fixed/
+!/sat2_fixed/
+
+# Subdirectories
+/fabs_fixed/*
+!/fabs_fixed/README.md
+!/fabs_fixed/Makefile
+!/fabs_fixed/main.cpp
+
+/round_fixed/*
+!/round_fixed/README.md
+!/round_fixed/Makefile
+!/round_fixed/main.cpp
+
+/fract_fixed/*
+!/fract_fixed/README.md
+!/fract_fixed/Makefile
+!/fract_fixed/main.cpp
+
+/sat_fixed/*
+!/sat_fixed/README.md
+!/sat_fixed/Makefile
+!/sat_fixed/main.cpp
+
+/sat2_fixed/*
+!/sat2_fixed/README.md
+!/sat2_fixed/Makefile
+!/sat2_fixed/main.cpp
