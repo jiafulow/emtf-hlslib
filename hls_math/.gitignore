@@ -8,6 +8,8 @@
 !/fract_fixed/
 !/sat_fixed/
 !/sat2_fixed/
+!/recip_fixed/
+!/approx_recip_fixed/
 
 # Subdirectories
 /fabs_fixed/*
@@ -34,3 +36,15 @@
 !/sat2_fixed/README.md
 !/sat2_fixed/Makefile
 !/sat2_fixed/main.cpp
+
+/recip_fixed/*
+!/recip_fixed/README.md
+!/recip_fixed/Makefile
+!/recip_fixed/main.cpp
+
+/approx_recip_fixed/*
+!/approx_recip_fixed/README.md
+!/approx_recip_fixed/Makefile
+!/approx_recip_fixed/common.h
+!/approx_recip_fixed/traits.h
+!/approx_recip_fixed/main.cpp
