@@ -1,6 +1,13 @@
 # emtf-hlslib
 
-## v3.1.2 (2021-07-24)
+## v3.1.3 (2021-08-29)
+
+- Add more trait classes.
+- Use round_half_to_even() instead of std::round() in preparing the tanh lookup table.
+- Improve debug info in the print macros.
+- Add several tests for fixed-point arithmetic in 'hls_math'.
+
+## v3.1.2 (2021-07-26)
 
 - Rename certain segment variables:
   - seg_fr -> seg_cscfr
