@@ -408,7 +408,7 @@ typedef trk_invpt_t model_out_t;
 // _____________________________________________________________________________
 // Layer typedefs
 
-// These do not appear in the layer interfaces
+// These types do not appear in the layer interfaces
 typedef ap_uint<1> bool_t;
 typedef ap_int<18> s18_t;  // for 27x18 multiplier (DSP48E2)
 typedef ap_int<27> s27_t;  // for 27x18 multiplier (DSP48E2)
@@ -426,7 +426,7 @@ typedef ap_uint<7> dio_patt_param_t;        // bw: ceil(log2(36 * 2))
 typedef dio_row_accum_t dio_patt_preact_t;  // used in pooling_col_pool_op()
 typedef dio_trk_accum_t dio_survivor_t;     // used in duperemoval_find_dupes_op()
 
-// These appear in the layer interfaces
+// These types appear in the layer interfaces
 typedef dio_col_accum_t zoning_out_t;
 typedef zoning_out_t pooling_in_t;
 typedef make_concat<trk_patt_t, trk_qual_t>::type pooling_out_t;
@@ -439,6 +439,7 @@ typedef zonemerging_out_t trkbuilding_in_t;
 // Misc
 typedef emtf_theta1_t emtf_theta_t;
 typedef emtf_qual1_t emtf_qual_t;
+typedef ap_uint<2> trk_origin_t;  // bw: ceil(log2(num_emtf_tracks))
 
 }  // namespace phase2
 

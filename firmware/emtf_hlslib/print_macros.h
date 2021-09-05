@@ -147,13 +147,15 @@
     std::cout << "] trk_valid: [" << trk_valid[i] << ", ";                                                            \
     std::cout << "]" << std::endl;                                                                                    \
   }                                                                                                                   \
-  std::cout << "Printing 'trk_feat_rm', 'trk_valid_rm' elements separately for each track:" << std::endl;             \
+  std::cout << "Printing 'trk_feat_rm', 'trk_valid_rm', 'trk_origin_rm' elements separately for each track:";         \
+  std::cout << std::endl;                                                                                             \
   for (unsigned i = 0; i < trkbuilding_config::n_in; i++) {                                                           \
     std::cout << ".. trk_feat_rm: [";                                                                                 \
     for (unsigned j = 0; j < num_emtf_features; j++) {                                                                \
       std::cout << trk_feat_rm[(i * num_emtf_features) + j] << ", ";                                                  \
     }                                                                                                                 \
     std::cout << "] trk_valid_rm: [" << trk_valid_rm[i] << ", ";                                                      \
+    std::cout << "] trk_origin_rm: [" << trk_origin_rm[i] << ", ";                                                    \
     std::cout << "]" << std::endl;                                                                                    \
   }                                                                                                                   \
   std::cout << "Printing 'trk_invpt', 'trk_phi', 'trk_eta', 'trk_d0', 'trk_z0', 'trk_beta' elements separately for "; \
