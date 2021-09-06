@@ -171,6 +171,8 @@ struct trkbuilding_internal_config {
     emtf_theta1_t emtf_theta1;
     emtf_theta2_t emtf_theta2;
     emtf_qual1_t emtf_qual1;
+    // emtf_qual2_t emtf_qual2;  // unused
+    emtf_time_t emtf_time;
     seg_valid_t seg_valid;
     trk_seg_t trk_seg;
     dio_ph_diff_t ph_diff;
@@ -276,6 +278,7 @@ void trkbuilding_match_ph_pack_op(const emtf_phi_t emtf_phi_mhph[trkbuilding_int
                                   const emtf_theta1_t emtf_theta1_mhph[trkbuilding_internal_config::num_site_segments],
                                   const emtf_theta2_t emtf_theta2_mhph[trkbuilding_internal_config::num_site_segments],
                                   const emtf_qual1_t emtf_qual1_mhph[trkbuilding_internal_config::num_site_segments],
+                                  const emtf_time_t emtf_time_mhph[trkbuilding_internal_config::num_site_segments],
                                   const trk_seg_t trk_seg_mhph[trkbuilding_internal_config::num_site_segments],
                                   const dio_ph_diff_t ph_diff[trkbuilding_internal_config::num_site_segments],
                                   const bool_t ph_diff_v[trkbuilding_internal_config::num_site_segments],
@@ -313,8 +316,8 @@ LOOP_PHI_3:
 
     const emtf_theta_t x_emtf_theta1 = ph_diff_v[i] ? emtf_theta1_mhph[i] : invalid_marker_th;
     const emtf_theta_t x_emtf_theta2 = ph_diff_v[i] ? emtf_theta2_mhph[i] : invalid_marker_th;
-    const stage_0_out_t x_i = {emtf_phi_mhph[i],   emtf_bend_mhph[i], x_emtf_theta1,   x_emtf_theta2,
-                               emtf_qual1_mhph[i], ph_diff_v[i],      trk_seg_mhph[i], ph_diff[i]};
+    const stage_0_out_t x_i = {emtf_phi_mhph[i],  emtf_bend_mhph[i], x_emtf_theta1,   x_emtf_theta2, emtf_qual1_mhph[i],
+                               emtf_time_mhph[i], ph_diff_v[i],      trk_seg_mhph[i], ph_diff[i]};
     stage_0_out_tmp[i] = x_i;
   }  // end loop over segments
 
@@ -350,8 +353,8 @@ template <typename T>
 void trkbuilding_match_ph_argmin_op(const T in0[trkbuilding_internal_config::num_gate_segments],
                                     emtf_phi_t& feat_emtf_phi_site_k, emtf_bend_t& feat_emtf_bend_site_k,
                                     emtf_theta1_t& feat_emtf_theta1_site_k, emtf_theta2_t& feat_emtf_theta2_site_k,
-                                    emtf_qual1_t& feat_emtf_qual1_site_k, trk_seg_t& ph_seg_site_k,
-                                    bool_t& ph_seg_site_k_v) {
+                                    emtf_qual1_t& feat_emtf_qual1_site_k, emtf_time_t& feat_emtf_time_site_k,
+                                    trk_seg_t& ph_seg_site_k, bool_t& ph_seg_site_k_v) {
   static_assert(is_same<T, trkbuilding_internal_config::stage_0_out_t>::value, "T type check failed");
 
   // hls-pragmas begin
@@ -419,6 +422,7 @@ LOOP_ARGMIN_2:
   feat_emtf_theta1_site_k = x_i.emtf_theta1;
   feat_emtf_theta2_site_k = x_i.emtf_theta2;
   feat_emtf_qual1_site_k = x_i.emtf_qual1;
+  feat_emtf_time_site_k = x_i.emtf_time;
   ph_seg_site_k = x_i.trk_seg;
   ph_seg_site_k_v = x_i.seg_valid;
 }
@@ -428,12 +432,13 @@ template <typename Site>
 void trkbuilding_match_ph_site_op(
     const emtf_phi_t emtf_phi[model_config::n_in], const emtf_bend_t emtf_bend[model_config::n_in],
     const emtf_theta1_t emtf_theta1[model_config::n_in], const emtf_theta2_t emtf_theta2[model_config::n_in],
-    const emtf_qual1_t emtf_qual1[model_config::n_in], const seg_zones_t seg_zones[model_config::n_in],
-    const seg_tzones_t seg_tzones[model_config::n_in], const seg_valid_t seg_valid[model_config::n_in],
-    const trk_qual_t& curr_trk_qual, const trk_patt_t& curr_trk_patt, const trk_col_t& curr_trk_col,
-    const trk_zone_t& curr_trk_zone, const trk_tzone_t& curr_trk_tzone, emtf_phi_t& feat_emtf_phi_site_k,
-    emtf_bend_t& feat_emtf_bend_site_k, emtf_theta1_t& feat_emtf_theta1_site_k, emtf_theta2_t& feat_emtf_theta2_site_k,
-    emtf_qual1_t& feat_emtf_qual1_site_k, trk_seg_t& ph_seg_site_k, bool_t& ph_seg_site_k_v) {
+    const emtf_qual1_t emtf_qual1[model_config::n_in], const emtf_time_t emtf_time[model_config::n_in],
+    const seg_zones_t seg_zones[model_config::n_in], const seg_tzones_t seg_tzones[model_config::n_in],
+    const seg_valid_t seg_valid[model_config::n_in], const trk_qual_t& curr_trk_qual, const trk_patt_t& curr_trk_patt,
+    const trk_col_t& curr_trk_col, const trk_zone_t& curr_trk_zone, const trk_tzone_t& curr_trk_tzone,
+    emtf_phi_t& feat_emtf_phi_site_k, emtf_bend_t& feat_emtf_bend_site_k, emtf_theta1_t& feat_emtf_theta1_site_k,
+    emtf_theta2_t& feat_emtf_theta2_site_k, emtf_qual1_t& feat_emtf_qual1_site_k, emtf_time_t& feat_emtf_time_site_k,
+    trk_seg_t& ph_seg_site_k, bool_t& ph_seg_site_k_v) {
   // hls-pragmas begin
 #pragma HLS PIPELINE II = trkbuilding_config::target_ii
 #pragma HLS INTERFACE ap_ctrl_none port = return
@@ -462,6 +467,7 @@ void trkbuilding_match_ph_site_op(
   emtf_theta1_t emtf_theta1_mhph[num_site_segments];
   emtf_theta2_t emtf_theta2_mhph[num_site_segments];
   emtf_qual1_t emtf_qual1_mhph[num_site_segments];
+  emtf_time_t emtf_time_mhph[num_site_segments];
   seg_zones_t seg_zones_mhph[num_site_segments];
   seg_tzones_t seg_tzones_mhph[num_site_segments];
   seg_valid_t seg_valid_mhph[num_site_segments];
@@ -475,6 +481,7 @@ void trkbuilding_match_ph_site_op(
 #pragma HLS ARRAY_PARTITION variable = emtf_theta1_mhph complete dim = 0
 #pragma HLS ARRAY_PARTITION variable = emtf_theta2_mhph complete dim = 0
 #pragma HLS ARRAY_PARTITION variable = emtf_qual1_mhph complete dim = 0
+#pragma HLS ARRAY_PARTITION variable = emtf_time_mhph complete dim = 0
 #pragma HLS ARRAY_PARTITION variable = seg_zones_mhph complete dim = 0
 #pragma HLS ARRAY_PARTITION variable = seg_tzones_mhph complete dim = 0
 #pragma HLS ARRAY_PARTITION variable = seg_valid_mhph complete dim = 0
@@ -510,6 +517,7 @@ LOOP_PHI_1:
       emtf_theta1_mhph[i] = emtf_theta1[iseg];
       emtf_theta2_mhph[i] = emtf_theta2[iseg];
       emtf_qual1_mhph[i] = emtf_qual1[iseg];
+      emtf_time_mhph[i] = emtf_time[iseg];
       seg_zones_mhph[i] = seg_zones[iseg];
       seg_tzones_mhph[i] = seg_tzones[iseg];
       seg_valid_mhph[i] = seg_valid[iseg];
@@ -520,6 +528,7 @@ LOOP_PHI_1:
       emtf_theta1_mhph[i] = 0;
       emtf_theta2_mhph[i] = 0;
       emtf_qual1_mhph[i] = 0;
+      emtf_time_mhph[i] = 0;
       seg_zones_mhph[i] = 0;
       seg_tzones_mhph[i] = 0;
       seg_valid_mhph[i] = 0;
@@ -553,23 +562,25 @@ LOOP_PHI_1:
 
   // Pack stage_0_out
   trkbuilding_match_ph_pack_op(emtf_phi_mhph, emtf_bend_mhph, emtf_theta1_mhph, emtf_theta2_mhph, emtf_qual1_mhph,
-                               trk_seg_mhph, ph_diff, ph_diff_v, curr_trk_col_corr, stage_0_out);
+                               emtf_time_mhph, trk_seg_mhph, ph_diff, ph_diff_v, curr_trk_col_corr, stage_0_out);
 
   // Find ph_seg_site_k, ph_seg_site_k_v
   trkbuilding_match_ph_argmin_op(stage_0_out, feat_emtf_phi_site_k, feat_emtf_bend_site_k, feat_emtf_theta1_site_k,
-                                 feat_emtf_theta2_site_k, feat_emtf_qual1_site_k, ph_seg_site_k, ph_seg_site_k_v);
+                                 feat_emtf_theta2_site_k, feat_emtf_qual1_site_k, feat_emtf_time_site_k, ph_seg_site_k,
+                                 ph_seg_site_k_v);
 }
 
 template <typename T = void>
 void trkbuilding_match_ph_op(
     const emtf_phi_t emtf_phi[model_config::n_in], const emtf_bend_t emtf_bend[model_config::n_in],
     const emtf_theta1_t emtf_theta1[model_config::n_in], const emtf_theta2_t emtf_theta2[model_config::n_in],
-    const emtf_qual1_t emtf_qual1[model_config::n_in], const seg_zones_t seg_zones[model_config::n_in],
-    const seg_tzones_t seg_tzones[model_config::n_in], const seg_valid_t seg_valid[model_config::n_in],
-    const trk_qual_t& curr_trk_qual, const trk_patt_t& curr_trk_patt, const trk_col_t& curr_trk_col,
-    const trk_zone_t& curr_trk_zone, const trk_tzone_t& curr_trk_tzone, emtf_phi_t feat_emtf_phi[num_emtf_sites],
-    emtf_bend_t feat_emtf_bend[num_emtf_sites], emtf_theta_t feat_emtf_theta_ambi[num_emtf_sites * 2],
-    emtf_qual_t feat_emtf_qual[num_emtf_sites], trk_seg_t ph_seg[num_emtf_sites], bool_t ph_seg_v[num_emtf_sites]) {
+    const emtf_qual1_t emtf_qual1[model_config::n_in], const emtf_time_t emtf_time[model_config::n_in],
+    const seg_zones_t seg_zones[model_config::n_in], const seg_tzones_t seg_tzones[model_config::n_in],
+    const seg_valid_t seg_valid[model_config::n_in], const trk_qual_t& curr_trk_qual, const trk_patt_t& curr_trk_patt,
+    const trk_col_t& curr_trk_col, const trk_zone_t& curr_trk_zone, const trk_tzone_t& curr_trk_tzone,
+    emtf_phi_t feat_emtf_phi[num_emtf_sites], emtf_bend_t feat_emtf_bend[num_emtf_sites],
+    emtf_theta_t feat_emtf_theta_ambi[num_emtf_sites * 2], emtf_qual_t feat_emtf_qual[num_emtf_sites],
+    emtf_time_t feat_emtf_time[num_emtf_sites], trk_seg_t ph_seg[num_emtf_sites], bool_t ph_seg_v[num_emtf_sites]) {
   // hls-pragmas begin
 #pragma HLS PIPELINE II = trkbuilding_config::target_ii
 #pragma HLS INTERFACE ap_ctrl_none port = return
@@ -581,53 +592,53 @@ void trkbuilding_match_ph_op(
 
   // Loop over sites manually
   trkbuilding_match_ph_site_op<m_site_0_tag>(
-      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, seg_zones, seg_tzones, seg_valid, curr_trk_qual,
-      curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi[0], feat_emtf_bend[0],
-      feat_emtf_theta1[0], feat_emtf_theta2[0], feat_emtf_qual[0], ph_seg[0], ph_seg_v[0]);
+      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_time, seg_zones, seg_tzones, seg_valid,
+      curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi[0], feat_emtf_bend[0],
+      feat_emtf_theta1[0], feat_emtf_theta2[0], feat_emtf_qual[0], feat_emtf_time[0], ph_seg[0], ph_seg_v[0]);
   trkbuilding_match_ph_site_op<m_site_1_tag>(
-      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, seg_zones, seg_tzones, seg_valid, curr_trk_qual,
-      curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi[1], feat_emtf_bend[1],
-      feat_emtf_theta1[1], feat_emtf_theta2[1], feat_emtf_qual[1], ph_seg[1], ph_seg_v[1]);
+      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_time, seg_zones, seg_tzones, seg_valid,
+      curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi[1], feat_emtf_bend[1],
+      feat_emtf_theta1[1], feat_emtf_theta2[1], feat_emtf_qual[1], feat_emtf_time[1], ph_seg[1], ph_seg_v[1]);
   trkbuilding_match_ph_site_op<m_site_2_tag>(
-      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, seg_zones, seg_tzones, seg_valid, curr_trk_qual,
-      curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi[2], feat_emtf_bend[2],
-      feat_emtf_theta1[2], feat_emtf_theta2[2], feat_emtf_qual[2], ph_seg[2], ph_seg_v[2]);
+      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_time, seg_zones, seg_tzones, seg_valid,
+      curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi[2], feat_emtf_bend[2],
+      feat_emtf_theta1[2], feat_emtf_theta2[2], feat_emtf_qual[2], feat_emtf_time[2], ph_seg[2], ph_seg_v[2]);
   trkbuilding_match_ph_site_op<m_site_3_tag>(
-      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, seg_zones, seg_tzones, seg_valid, curr_trk_qual,
-      curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi[3], feat_emtf_bend[3],
-      feat_emtf_theta1[3], feat_emtf_theta2[3], feat_emtf_qual[3], ph_seg[3], ph_seg_v[3]);
+      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_time, seg_zones, seg_tzones, seg_valid,
+      curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi[3], feat_emtf_bend[3],
+      feat_emtf_theta1[3], feat_emtf_theta2[3], feat_emtf_qual[3], feat_emtf_time[3], ph_seg[3], ph_seg_v[3]);
   trkbuilding_match_ph_site_op<m_site_4_tag>(
-      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, seg_zones, seg_tzones, seg_valid, curr_trk_qual,
-      curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi[4], feat_emtf_bend[4],
-      feat_emtf_theta1[4], feat_emtf_theta2[4], feat_emtf_qual[4], ph_seg[4], ph_seg_v[4]);
+      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_time, seg_zones, seg_tzones, seg_valid,
+      curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi[4], feat_emtf_bend[4],
+      feat_emtf_theta1[4], feat_emtf_theta2[4], feat_emtf_qual[4], feat_emtf_time[4], ph_seg[4], ph_seg_v[4]);
   trkbuilding_match_ph_site_op<m_site_5_tag>(
-      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, seg_zones, seg_tzones, seg_valid, curr_trk_qual,
-      curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi[5], feat_emtf_bend[5],
-      feat_emtf_theta1[5], feat_emtf_theta2[5], feat_emtf_qual[5], ph_seg[5], ph_seg_v[5]);
+      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_time, seg_zones, seg_tzones, seg_valid,
+      curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi[5], feat_emtf_bend[5],
+      feat_emtf_theta1[5], feat_emtf_theta2[5], feat_emtf_qual[5], feat_emtf_time[5], ph_seg[5], ph_seg_v[5]);
   trkbuilding_match_ph_site_op<m_site_6_tag>(
-      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, seg_zones, seg_tzones, seg_valid, curr_trk_qual,
-      curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi[6], feat_emtf_bend[6],
-      feat_emtf_theta1[6], feat_emtf_theta2[6], feat_emtf_qual[6], ph_seg[6], ph_seg_v[6]);
+      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_time, seg_zones, seg_tzones, seg_valid,
+      curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi[6], feat_emtf_bend[6],
+      feat_emtf_theta1[6], feat_emtf_theta2[6], feat_emtf_qual[6], feat_emtf_time[6], ph_seg[6], ph_seg_v[6]);
   trkbuilding_match_ph_site_op<m_site_7_tag>(
-      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, seg_zones, seg_tzones, seg_valid, curr_trk_qual,
-      curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi[7], feat_emtf_bend[7],
-      feat_emtf_theta1[7], feat_emtf_theta2[7], feat_emtf_qual[7], ph_seg[7], ph_seg_v[7]);
+      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_time, seg_zones, seg_tzones, seg_valid,
+      curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi[7], feat_emtf_bend[7],
+      feat_emtf_theta1[7], feat_emtf_theta2[7], feat_emtf_qual[7], feat_emtf_time[7], ph_seg[7], ph_seg_v[7]);
   trkbuilding_match_ph_site_op<m_site_8_tag>(
-      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, seg_zones, seg_tzones, seg_valid, curr_trk_qual,
-      curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi[8], feat_emtf_bend[8],
-      feat_emtf_theta1[8], feat_emtf_theta2[8], feat_emtf_qual[8], ph_seg[8], ph_seg_v[8]);
+      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_time, seg_zones, seg_tzones, seg_valid,
+      curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi[8], feat_emtf_bend[8],
+      feat_emtf_theta1[8], feat_emtf_theta2[8], feat_emtf_qual[8], feat_emtf_time[8], ph_seg[8], ph_seg_v[8]);
   trkbuilding_match_ph_site_op<m_site_9_tag>(
-      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, seg_zones, seg_tzones, seg_valid, curr_trk_qual,
-      curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi[9], feat_emtf_bend[9],
-      feat_emtf_theta1[9], feat_emtf_theta2[9], feat_emtf_qual[9], ph_seg[9], ph_seg_v[9]);
+      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_time, seg_zones, seg_tzones, seg_valid,
+      curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi[9], feat_emtf_bend[9],
+      feat_emtf_theta1[9], feat_emtf_theta2[9], feat_emtf_qual[9], feat_emtf_time[9], ph_seg[9], ph_seg_v[9]);
   trkbuilding_match_ph_site_op<m_site_10_tag>(
-      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, seg_zones, seg_tzones, seg_valid, curr_trk_qual,
-      curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi[10], feat_emtf_bend[10],
-      feat_emtf_theta1[10], feat_emtf_theta2[10], feat_emtf_qual[10], ph_seg[10], ph_seg_v[10]);
+      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_time, seg_zones, seg_tzones, seg_valid,
+      curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi[10], feat_emtf_bend[10],
+      feat_emtf_theta1[10], feat_emtf_theta2[10], feat_emtf_qual[10], feat_emtf_time[10], ph_seg[10], ph_seg_v[10]);
   trkbuilding_match_ph_site_op<m_site_11_tag>(
-      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, seg_zones, seg_tzones, seg_valid, curr_trk_qual,
-      curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi[11], feat_emtf_bend[11],
-      feat_emtf_theta1[11], feat_emtf_theta2[11], feat_emtf_qual[11], ph_seg[11], ph_seg_v[11]);
+      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_time, seg_zones, seg_tzones, seg_valid,
+      curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi[11], feat_emtf_bend[11],
+      feat_emtf_theta1[11], feat_emtf_theta2[11], feat_emtf_qual[11], feat_emtf_time[11], ph_seg[11], ph_seg_v[11]);
 }
 
 // _____________________________________________________________________________
@@ -903,15 +914,13 @@ LOOP_THETA_2:
 
 // _____________________________________________________________________________
 template <typename T = void>
-void trkbuilding_extract_features_op(const emtf_phi_t feat_emtf_phi[num_emtf_sites],
-                                     const emtf_bend_t feat_emtf_bend[num_emtf_sites],
-                                     const emtf_theta_t feat_emtf_theta[num_emtf_sites],
-                                     const emtf_qual_t feat_emtf_qual[num_emtf_sites],
-                                     const trk_seg_t ph_seg[num_emtf_sites], const bool_t th_seg_v[num_emtf_sites],
-                                     const emtf_phi_t& ph_median, const emtf_phi_t& ph_sector,
-                                     const emtf_theta_t& th_median, const trk_qual_t& curr_trk_qual,
-                                     trk_seg_t curr_trk_seg[num_emtf_sites], trk_seg_v_t& curr_trk_seg_v,
-                                     trk_feat_t curr_trk_feat[num_emtf_features], trk_valid_t& curr_trk_valid) {
+void trkbuilding_extract_features_op(
+    const emtf_phi_t feat_emtf_phi[num_emtf_sites], const emtf_bend_t feat_emtf_bend[num_emtf_sites],
+    const emtf_theta_t feat_emtf_theta[num_emtf_sites], const emtf_qual_t feat_emtf_qual[num_emtf_sites],
+    const emtf_time_t feat_emtf_time[num_emtf_sites], const trk_seg_t ph_seg[num_emtf_sites],
+    const bool_t th_seg_v[num_emtf_sites], const emtf_phi_t& ph_median, const emtf_phi_t& ph_sector,
+    const emtf_theta_t& th_median, const trk_qual_t& curr_trk_qual, trk_seg_t curr_trk_seg[num_emtf_sites],
+    trk_seg_v_t& curr_trk_seg_v, trk_feat_t curr_trk_feat[num_emtf_features], trk_valid_t& curr_trk_valid) {
   // hls-pragmas begin
 #pragma HLS PIPELINE II = trkbuilding_config::target_ii
 #pragma HLS INTERFACE ap_ctrl_none port = return
@@ -1025,7 +1034,12 @@ LOOP_EXTRACT_2:
 
   // Set curr_trk_valid
   {
-    curr_trk_valid = static_cast<bool>(curr_trk_seg_v);  // bitwise OR reduced
+    const emtf_time_t early_threshold = -2;  // early if emtf_time < early_threshold
+    bool not_early = ((feat_emtf_time[0] < early_threshold) + (feat_emtf_time[1] < early_threshold) +
+                      (feat_emtf_time[2] < early_threshold) + (feat_emtf_time[3] < early_threshold) +
+                      (feat_emtf_time[4] < early_threshold)) <= 1;  // allow at most 1 early segment from CSC
+    bool not_empty = static_cast<bool>(curr_trk_seg_v);             // bitwise OR reduced
+    curr_trk_valid = (not_early and not_empty);
   }
 }
 
@@ -1057,6 +1071,7 @@ void trkbuilding_op(const emtf_phi_t emtf_phi[model_config::n_in], const emtf_be
   emtf_theta_t feat_emtf_theta_ambi[num_emtf_sites * 2];
   emtf_theta_t feat_emtf_theta[num_emtf_sites];
   emtf_qual_t feat_emtf_qual[num_emtf_sites];
+  emtf_time_t feat_emtf_time[num_emtf_sites];
   trk_seg_t ph_seg[num_emtf_sites];
   bool_t ph_seg_v[num_emtf_sites];
   trk_seg_t th_seg[num_emtf_sites];
@@ -1068,6 +1083,7 @@ void trkbuilding_op(const emtf_phi_t emtf_phi[model_config::n_in], const emtf_be
 #pragma HLS ARRAY_PARTITION variable = feat_emtf_theta_ambi complete dim = 0
 #pragma HLS ARRAY_PARTITION variable = feat_emtf_theta complete dim = 0
 #pragma HLS ARRAY_PARTITION variable = feat_emtf_qual complete dim = 0
+#pragma HLS ARRAY_PARTITION variable = feat_emtf_time complete dim = 0
 #pragma HLS ARRAY_RESHAPE variable = ph_seg complete dim = 0
 #pragma HLS ARRAY_RESHAPE variable = ph_seg_v complete dim = 0
 #pragma HLS ARRAY_RESHAPE variable = th_seg complete dim = 0
@@ -1080,18 +1096,19 @@ void trkbuilding_op(const emtf_phi_t emtf_phi[model_config::n_in], const emtf_be
 
   trkbuilding_find_ph_median_op(curr_trk_col, ph_median, ph_sector);
 
-  trkbuilding_match_ph_op(emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, seg_zones, seg_tzones, seg_valid,
-                          curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, feat_emtf_phi,
-                          feat_emtf_bend, feat_emtf_theta_ambi, feat_emtf_qual, ph_seg, ph_seg_v);
+  trkbuilding_match_ph_op(emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_time, seg_zones, seg_tzones,
+                          seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone,
+                          feat_emtf_phi, feat_emtf_bend, feat_emtf_theta_ambi, feat_emtf_qual, feat_emtf_time, ph_seg,
+                          ph_seg_v);
 
   trkbuilding_find_th_median_op(feat_emtf_theta_ambi, th_median);
 
   trkbuilding_match_th_op(feat_emtf_theta_ambi, th_median, feat_emtf_theta, th_seg, th_seg_v);
 
   // Note: only ph_seg and th_seg_v are used. th_seg and ph_seg_v are ignored.
-  trkbuilding_extract_features_op(feat_emtf_phi, feat_emtf_bend, feat_emtf_theta, feat_emtf_qual, ph_seg, th_seg_v,
-                                  ph_median, ph_sector, th_median, curr_trk_qual, curr_trk_seg, curr_trk_seg_v,
-                                  curr_trk_feat, curr_trk_valid);
+  trkbuilding_extract_features_op(feat_emtf_phi, feat_emtf_bend, feat_emtf_theta, feat_emtf_qual, feat_emtf_time,
+                                  ph_seg, th_seg_v, ph_median, ph_sector, th_median, curr_trk_qual, curr_trk_seg,
+                                  curr_trk_seg_v, curr_trk_feat, curr_trk_valid);
 }
 
 // _____________________________________________________________________________

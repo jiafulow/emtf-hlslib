@@ -20,7 +20,7 @@ void myproject(const top_in_t in0[TOP_N_IN], top_out_t out[TOP_N_OUT]) {
 
   // Unpack from in0
   // Note: the following are currently unused and will be synthesized away
-  // - emtf_qual2, emtf_time, seg_cscfr, seg_gemdl, seg_bx
+  // - emtf_qual2, seg_cscfr, seg_gemdl, seg_bx
   emtf_phi_t emtf_phi[model_config::n_in];
   emtf_bend_t emtf_bend[model_config::n_in];
   emtf_theta1_t emtf_theta1[model_config::n_in];
