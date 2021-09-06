@@ -190,6 +190,7 @@ LOOP_IN1:
   trk_seg_v_t trk_seg_rm_v[duperemoval_config::n_out];
   trk_feat_t trk_feat_rm[duperemoval_config::n_out * num_emtf_features];
   trk_valid_t trk_valid_rm[duperemoval_config::n_out];
+  trk_origin_t trk_origin_rm[duperemoval_config::n_out];
   trk_invpt_t trk_invpt[fullyconnect_config::n_out];
   trk_phi_t trk_phi[fullyconnect_config::n_out];
   trk_eta_t trk_eta[fullyconnect_config::n_out];
@@ -206,6 +207,7 @@ LOOP_IN1:
 #pragma HLS ARRAY_PARTITION variable = trk_seg_rm_v complete dim = 0
 #pragma HLS ARRAY_PARTITION variable = trk_feat_rm complete dim = 0
 #pragma HLS ARRAY_PARTITION variable = trk_valid_rm complete dim = 0
+#pragma HLS ARRAY_PARTITION variable = trk_origin_rm complete dim = 0
 #pragma HLS ARRAY_PARTITION variable = trk_invpt complete dim = 0
 #pragma HLS ARRAY_PARTITION variable = trk_phi complete dim = 0
 #pragma HLS ARRAY_PARTITION variable = trk_eta complete dim = 0
@@ -244,7 +246,7 @@ LOOP_TRK_1:
   // Layer 5 - Duplicate removal
 
   duperemoval_layer<m_zone_any_tag>(trk_seg, trk_seg_v, trk_feat, trk_valid, trk_seg_rm, trk_seg_rm_v, trk_feat_rm,
-                                    trk_valid_rm);
+                                    trk_valid_rm, trk_origin_rm);
 
   // Layer 6 - Fully connected
 

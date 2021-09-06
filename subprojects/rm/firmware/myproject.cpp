@@ -27,6 +27,7 @@ void myproject(const top_in_t in0[TOP_N_IN], top_out_t out[TOP_N_OUT]) {
   trk_seg_v_t trk_seg_rm_v[duperemoval_config::n_out];
   trk_feat_t trk_feat_rm[duperemoval_config::n_out * num_emtf_features];
   trk_valid_t trk_valid_rm[duperemoval_config::n_out];
+  trk_origin_t trk_origin_rm[duperemoval_config::n_out];
 
   // hls-pragmas begin
 #pragma HLS ARRAY_PARTITION variable = trk_seg complete dim = 0
@@ -37,6 +38,7 @@ void myproject(const top_in_t in0[TOP_N_IN], top_out_t out[TOP_N_OUT]) {
 #pragma HLS ARRAY_PARTITION variable = trk_seg_rm_v complete dim = 0
 #pragma HLS ARRAY_PARTITION variable = trk_feat_rm complete dim = 0
 #pragma HLS ARRAY_PARTITION variable = trk_valid_rm complete dim = 0
+#pragma HLS ARRAY_PARTITION variable = trk_origin_rm complete dim = 0
   // hls-pragmas end
 
   // Loop over in0
@@ -72,7 +74,7 @@ LOOP_IN0:
 
   // Call
   duperemoval_layer<m_zone_any_tag>(trk_seg, trk_seg_v, trk_feat, trk_valid, trk_seg_rm, trk_seg_rm_v, trk_feat_rm,
-                                    trk_valid_rm);
+                                    trk_valid_rm, trk_origin_rm);
 
   // Copy to output: trk_feat_rm, trk_seg_rm
 LOOP_OUT:
