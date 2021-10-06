@@ -55,7 +55,7 @@ enum struct TrackDataType {
 // emtf_theta2_t | 8         | 0
 // emtf_qual1_t  | 4         | 0
 // emtf_qual2_t  | 4         | 0
-// emtf_time_t   | 6         | 1
+// emtf_time_t   | 4         | 1
 // seg_zones_t   | 3         | 0
 // seg_tzones_t  | 3         | 0
 // seg_cscfr_t   | 1         | 0
@@ -114,7 +114,7 @@ struct segment_data_bw_traits<SegmentDataType::emtf_qual2> {
 };
 template <>
 struct segment_data_bw_traits<SegmentDataType::emtf_time> {
-  static const int value = 6;
+  static const int value = 4;
 };
 template <>
 struct segment_data_bw_traits<SegmentDataType::seg_zones> {
