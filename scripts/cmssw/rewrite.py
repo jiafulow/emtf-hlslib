@@ -1,4 +1,8 @@
 import os
+import sys
+
+if sys.version_info[:2] < (3, 7):
+  raise Exception('This script requires Python 3.7+')
 
 
 # Input filenames

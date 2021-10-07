@@ -10,7 +10,7 @@ fname = 'nnet_weights.json'
 outname = 'nnet_weights.h'
 
 # C++ code fragments (header, footer, opening, closing)
-nodes0, nodes1, nodes2, nodes_in, nodes_out = (24, 24, 16, 40, 1)
+nodes0, nodes1, nodes2, nodes_in, nodes_out = (28, 24, 16, 40, 1)
 
 header = [
   '#ifndef __EMTF_HLSLIB_NNET_WEIGHTS_H__',

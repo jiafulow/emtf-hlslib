@@ -157,15 +157,15 @@ if __name__ == '__main__':
     #print(json.dumps(obj))
 
     patterns = np.array(obj['patterns'], dtype=np.int32)
-    patt_brightness = np.array(obj['patt_brightness'], dtype=np.int32)
+    patt_activations = np.array(obj['patt_activations'], dtype=np.int32)
 
     # Some rearrangement.
     patt_start = [patterns[i, j, :, 0] for i in range(num_emtf_zones) for j in range(num_emtf_patterns)]
     patt_mid = [patterns[i, j, :, 1] for i in range(num_emtf_zones) for j in range(num_emtf_patterns)]
     patt_stop = [patterns[i, j, :, 2] for i in range(num_emtf_zones) for j in range(num_emtf_patterns)]
     patt_pad = [np.abs(patterns[i, :, :, 0] - reference).max(axis=0) for i in range(num_emtf_zones)]
-    patt_brightness = [patt_brightness[i] for i in range(num_emtf_zones)]
-    patt_all = patt_start + patt_mid + patt_stop + patt_pad + patt_brightness
+    patt_activations = [patt_activations[i] for i in range(num_emtf_zones)]
+    patt_all = patt_start + patt_mid + patt_stop + patt_pad + patt_activations
     #print(patt_all)
     assert len(patt_all) == len(opening)
     write_fn(patt_all)
