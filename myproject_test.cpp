@@ -33,10 +33,10 @@ int main(int argc, char** argv) {
   for (auto ievt : event_list) {
     // Skip events that have known mismatches
     //
-    // 55: trk_invpt[0] value off by one
-    // 89: trk_invpt[0] value off by one
+    // - 22: trk_invpt[0] value off by one
+    // - 84: trk_invpt[0] value off by one
     auto should_skip = [](int ievt) -> bool {
-      static const std::set<int> s = {55, 89};
+      static const std::set<int> s = {22, 84};
       return s.find(ievt) != s.end();
     };
 
