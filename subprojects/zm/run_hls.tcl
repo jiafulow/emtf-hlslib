@@ -33,10 +33,10 @@ open_solution -reset $SOLN
 # Define technology and clock rate
 set_part $XPART
 create_clock -period $CLKP -name default
-set_clock_uncertainty 20.0%
+set_clock_uncertainty 23.2%
 
 # Set any optimization directives
-#config_array_partition -maximum_size 2048
+config_array_partition -maximum_size 2048
 config_array_partition -auto_partition_threshold 64
 config_array_partition -auto_promotion_threshold 64
 config_array_partition -include_extern_globals
@@ -45,6 +45,8 @@ config_compile -pipeline_loops 64
 config_compile -name_max_length 60
 config_interface -trim_dangling_port
 config_schedule -relax_ii_for_timing
+config_export -vivado_report_level 1
+config_export -vivado_phys_opt all
 # End of directives
 
 # ########################################################
