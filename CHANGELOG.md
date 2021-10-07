@@ -1,5 +1,10 @@
 # emtf-hlslib
 
+## v3.1.4 (2021-10-06)
+
+- Reduce emtf_time bitwidth from 6-bit to 4-bit
+- Add 'trk_origin_rm' output in duperemoval layer
+
 ## v3.1.3 (2021-08-29)
 
 - Add more trait classes.
