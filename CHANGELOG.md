@@ -1,9 +1,19 @@
 # emtf-hlslib
 
-## v3.1.4 (2021-10-06)
+## v3.2.0 (2021-10-19)
 
-- Reduce emtf_time bitwidth from 6-bit to 4-bit
-- Add 'trk_origin_rm' output in duperemoval layer
+- Update pattern bank and nnet weights.
+- Replace test bench.
+- Patch the 'run_hls.tcl' scripts to:
+  - increase maximum array size to 2048.
+  - increase clock uncertainty from 20.0% to 23.2%.
+  - generate more reports.
+  - perform phys_opt_design.
+
+## v3.1.4 (2021-10-07)
+
+- Reduce emtf_time bitwidth from 6-bit to 4-bit.
+- Add 'trk_origin_rm' output in duperemoval layer.
 
 ## v3.1.3 (2021-08-29)
 
